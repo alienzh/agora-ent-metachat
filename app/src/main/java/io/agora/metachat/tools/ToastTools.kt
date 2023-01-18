@@ -1,8 +1,9 @@
 package io.agora.metachat.tools
 
-import android.app.Activity
 import android.widget.Toast
 import androidx.annotation.StringRes
+import io.agora.metachat.MChatApp
+import io.agora.metachat.tools.internal.InternalToast
 
 /**
  * @author create by zhangwei03
@@ -10,32 +11,54 @@ import androidx.annotation.StringRes
 object ToastTools {
 
     @JvmStatic
-    fun toastShort(activity: Activity, @StringRes stringRes: Int) {
-        toast(activity, stringRes, Toast.LENGTH_SHORT)
+    fun showCommon(msg: String, duration: Int = Toast.LENGTH_SHORT) {
+        show(msg, InternalToast.COMMON, duration)
     }
 
     @JvmStatic
-    fun toastShort(activity: Activity, message: String) {
-        toast(activity, message, Toast.LENGTH_SHORT)
+    fun showCommon(@StringRes stringRes: Int, duration: Int = Toast.LENGTH_SHORT) {
+        show(stringRes, InternalToast.COMMON, duration)
     }
 
     @JvmStatic
-    fun toastLong(activity: Activity, @StringRes stringRes: Int) {
-        toast(activity, stringRes, Toast.LENGTH_LONG)
+    fun showTips(msg: String, duration: Int = Toast.LENGTH_SHORT) {
+        show(msg, InternalToast.TIPS, duration)
     }
 
     @JvmStatic
-    fun toastLong(activity: Activity, message: String) {
-        toast(activity, message, Toast.LENGTH_LONG)
+    fun showTips(@StringRes stringRes: Int, duration: Int = Toast.LENGTH_SHORT) {
+        show(stringRes, InternalToast.TIPS, duration)
     }
 
     @JvmStatic
-    private fun toast(activity: Activity, @StringRes stringRes: Int, length: Int) {
-        Toast.makeText(activity, stringRes, length).show()
+    fun showError(msg: String, duration: Int = Toast.LENGTH_SHORT) {
+        show(msg, InternalToast.ERROR, duration)
     }
 
     @JvmStatic
-    private fun toast(activity: Activity, message: String, length: Int) {
-        Toast.makeText(activity, message, length).show()
+    fun showError(@StringRes stringRes: Int, duration: Int = Toast.LENGTH_SHORT) {
+        show(stringRes, InternalToast.TIPS, duration)
+    }
+
+    @JvmStatic
+    private fun show(
+        @StringRes stringRes: Int,
+        toastType: Int = InternalToast.COMMON,
+        duration: Int = Toast.LENGTH_SHORT
+    ) {
+        show(MChatApp.instance().getString(stringRes), toastType, duration)
+    }
+
+    @JvmStatic
+    private fun show(msg: String, toastType: Int = InternalToast.COMMON, duration: Int = Toast.LENGTH_SHORT) {
+        if (ThreadTools.get().isMainThread) {
+            InternalToast.init(MChatApp.instance())
+            InternalToast.show(msg, toastType, duration)
+        } else {
+            ThreadTools.get().runOnMainThread {
+                InternalToast.init(MChatApp.instance())
+                InternalToast.show(msg, toastType, duration)
+            }
+        }
     }
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="mchat_title_view">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="layout_constraintEnd_toEndOf">parent</item>
+        <item name="layout_constraintTop_toTopOf">parent</item>
+    </style>
+
+    <style name="mchat_btn_full">
+        <item name="android:layout_width">242dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:textColor">@color/mchat_white</item>
+        <item name="android:textSize">@dimen/mchat_sp_16</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/mchat_bg_def_btn_selector</item>
+    </style>
+
+    <style name="mchat_image_round">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="mchat_semi_circle_style">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeBottomLeft">66%</item>
+        <item name="cornerSizeBottomRight">66%</item>
+    </style>
+</resources>

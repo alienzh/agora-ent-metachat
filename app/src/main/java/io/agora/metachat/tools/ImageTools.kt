@@ -15,7 +15,7 @@ object ImageTools {
     fun loadImage(view: ImageView, url: String?) {
         Glide.with(view)
             .load(url)
-            .error(R.drawable.metachat_user_image)
+            .error(R.drawable.mchat_user_image)
             .into(view)
     }
 
@@ -23,7 +23,7 @@ object ImageTools {
     fun loadImage(view: ImageView, @DrawableRes res: Int) {
         Glide.with(view)
             .load(res)
-            .error(R.drawable.metachat_user_image)
+            .error(R.drawable.mchat_user_image)
             .into(view)
     }
 }

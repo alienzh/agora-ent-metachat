@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mchat_app_name">元语聊</string>
+    <string name="mchat_agora_io">Agora.io</string>
+    <string name="mchat_room_empty_data">暂无房间</string>
+    <string name="mchat_room_unavailable_tip">房间不存在，请刷新列表重试</string>
+    <string name="mchat_room_incorrect_password">密码错误，请重试</string>
+    <string name="mchat_join_room_failed">加入房间失败</string>
+    <string name="mchat_loading">加载中…</string>
+    <string name="mchat_introduce">欢迎来到声网Meta，在这个元宇宙世界中，你能体验到声网各项元宇宙技术，跟随引导一起来探索体验吧!</string>
+    <string name="mchat_join">加入</string>
+    <string name="mchat_room_id">房间号：%s</string>
+    <string name="mchat_cancel">取消</string>
+    <string name="mchat_confirm">确认</string>
+    <string name="mchat_create_a_room">创建房间</string>
+    <string name="mchat_create">创建</string>
+    <string name="mchat_room_enter_password_tips">请输入4位数密码</string>
+    <string name="mchat_room_create_error">创建房间失败</string>
+    <string name="mchat_room_name">房间名</string>
+    <string name="mchat_random">随机</string>
+    <string name="mchat_room_create_room_name_hint">设置房间名称</string>
+    <string name="mchat_room_create_encrypt">加密房间?</string>
+    <string name="mchat_public">公开</string>
+    <string name="mchat_encrypted">加密</string>
+    <string name="mchat_room_set_password_tips">请输入4位数字密码</string>
+    <string name="mchat_room_create_empty_name">房间名不能为空</string>
+    <string name="mchat_update">更换</string>
+    <string name="mchat_badge">徽章</string>
+    <string name="mchat_nickname">昵称</string>
+    <string name="mchat_enter_a_nickname">请输入昵称</string>
+    <string name="mchat_nickname_error_tips">必须包含2&#8211;12个字符</string>
+    <string name="mchat_gender">性别</string>
+    <string name="mchat_male">男</string>
+    <string name="mchat_female">女</string>
+    <string name="mchat_select_avatar">选择虚拟形象</string>
+    <string name="mchat_select_your_profile_picture">请选择头像</string>
+    <string name="mchat_select_your_badge">请选择徽章</string>
+    <string name="mchat_choose_your_avatar">%1$s，请选择您的虚拟形象</string>
+    <string name="mchat_confirm_and_enter">创建房间并进入</string>
+
+    <string-array name="mchat_room_name">
+        <item>和你一起看月亮</item>
+        <item>治愈</item>
+        <item>一锤定音</item>
+        <item>有酒吗</item>
+        <item>早安序曲</item>
+        <item>近在远方</item>
+        <item>风中诗</item>
+        <item>那年风月</item>
+        <item>三万余年</item>
+        <item>七十二街</item>
+        <item>情怀如诗</item>
+        <item>简遇而安</item>
+        <item>十里笙歌</item>
+        <item>回风舞雪</item>
+        <item>梦初醒处</item>
+        <item>别来无恙</item>
+        <item>三里清风</item>
+        <item>烟雨万重</item>
+        <item>水洗晴空</item>
+        <item>轻风淡月</item>
+    </string-array>
+</resources>

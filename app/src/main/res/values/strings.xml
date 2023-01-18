@@ -1,3 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">agora-ent-matechat</string>
+    <string name="mchat_app_name">MateChat</string>
+    <string name="mchat_agora_io">Agora.io</string>
+    <string name="mchat_room_empty_data">No Chat Room Yet</string>
+    <string name="mchat_room_unavailable_tip">The room does not exist, refresh and try again</string>
+    <string name="mchat_room_incorrect_password">Incorrect Password</string>
+    <string name="mchat_join_room_failed">Join room failed</string>
+    <string name="mchat_loading">Loading…</string>
+    <string name="mchat_introduce">Welcome to Agora Meta demo. In this demo, you can experience various metaverse features of Agora provides. Please follow the guide to explore and learn more.</string>
+    <string name="mchat_join">Join</string>
+    <string name="mchat_room_id">Room ID：%s</string>
+    <string name="mchat_cancel">Cancel</string>
+    <string name="mchat_confirm">Confirm</string>
+    <string name="mchat_create_a_room">Create a room</string>
+    <string name="mchat_create">Create</string>
+    <string name="mchat_room_enter_password_tips">Enter 4 Digit Password</string>
+    <string name="mchat_room_create_error">Create Room Error</string>
+    <string name="mchat_room_name">Room Name</string>
+    <string name="mchat_random">Random</string>
+    <string name="mchat_room_create_room_name_hint">Set Room Name</string>
+    <string name="mchat_room_create_encrypt">Do you want to encrypt the room?</string>
+    <string name="mchat_public">Public</string>
+    <string name="mchat_encrypted">Encrypted</string>
+    <string name="mchat_room_set_password_tips">Please set the 4-digit room password</string>
+    <string name="mchat_room_create_empty_name">No Room Name</string>
+    <string name="mchat_update">Update</string>
+    <string name="mchat_badge">Badge</string>
+    <string name="mchat_nickname">Nickname</string>
+    <string name="mchat_nickname_error_tips">must contain 2&#8211;12 characters</string>
+    <string name="mchat_enter_a_nickname">Please enter a nickname</string>
+    <string name="mchat_gender">Gender</string>
+    <string name="mchat_male">Male</string>
+    <string name="mchat_female">Female</string>
+    <string name="mchat_select_avatar">Select avatar</string>
+    <string name="mchat_select_your_profile_picture">Select your profile picture</string>
+    <string name="mchat_select_your_badge">Select your badge</string>
+    <string name="mchat_choose_your_avatar">%1$s, please choose your avatar</string>
+    <string name="mchat_confirm_and_enter">Confirm room and enter</string>
+
+    <string-array name="mchat_room_name">
+        <item>Jenoah</item>
+        <item>York</item>
+        <item>Keila</item>
+        <item>Adelaide</item>
+        <item>Kima</item>
+        <item>Chyanne</item>
+        <item>Reno</item>
+        <item>Granville</item>
+        <item>Cyrene</item>
+        <item>Valencia</item>
+        <item>Enna</item>
+        <item>Nara</item>
+        <item>Asgard</item>
+        <item>Hogwarts</item>
+        <item>Gryffindor</item>
+        <item>Hufflepuff</item>
+        <item>Ravenclaw</item>
+        <item>Slytherin</item>
+        <item>Shangri-La</item>
+        <item>Alaska</item>
+    </string-array>
 </resources>

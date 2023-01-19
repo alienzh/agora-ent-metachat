@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/mchat_bg_avatar_role"
-    tools:context=".home.MChatAvatarActivity">
+    tools:context=".home.MChatVirtualAvatarActivity">
 
     <LinearLayout
         android:id="@+id/linear_avatar_back"
@@ -65,7 +65,7 @@
         android:layout_marginTop="@dimen/mchat_sp_20"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         app:spanCount="5"
-        tools:listitem="@layout/mchat_item_avatar_list"
+        tools:listitem="@layout/mchat_item_virtual_avatar_list"
         app:layout_constraintTop_toBottomOf="@id/tv_choose_avatar_tips"/>
 
     <LinearLayout

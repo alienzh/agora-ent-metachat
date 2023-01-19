@@ -7,7 +7,11 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
+import android.widget.EditText
 import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -15,16 +19,12 @@ import androidx.fragment.app.DialogFragment
 
 abstract class BaseFragmentDialog<B : ViewBinding> : DialogFragment() {
 
-    var mBinding: B? = null
+    lateinit var binding: B
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        mBinding = getViewBinding(inflater, container)
-        return mBinding?.root
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        mBinding = null
+        val binding = getViewBinding(inflater, container) ?: return null
+        this.binding = binding
+        return this.binding.root
     }
 
     protected abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): B?
@@ -54,5 +54,21 @@ abstract class BaseFragmentDialog<B : ViewBinding> : DialogFragment() {
 
     open fun onHandleOnBackPressed() {
         dismiss()
+    }
+
+    fun hideKeyboard() {
+        activity?.apply {
+            val imm = getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE) as InputMethodManager
+            if (window.attributes.softInputMode != WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN) {
+                if (currentFocus != null) {
+                    imm.hideSoftInputFromWindow(currentFocus?.windowToken, InputMethodManager.HIDE_NOT_ALWAYS)
+                }
+            }
+        }
+    }
+
+    open fun showKeyboard(editText: EditText) {
+        val imm = editText.context.getSystemService(AppCompatActivity.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.showSoftInput(editText, 0)
     }
 }

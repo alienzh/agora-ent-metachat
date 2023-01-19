@@ -3,6 +3,7 @@ package io.agora.metachat.home
 import android.content.res.TypedArray
 import android.graphics.Rect
 import android.os.Bundle
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +25,8 @@ import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter.BaseViewHolder
 import io.agora.metachat.baseui.adapter.listener.OnItemClickListener
 import io.agora.metachat.databinding.MchatFragmentRoomListBinding
 import io.agora.metachat.databinding.MchatItemRoomListBinding
+import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.home.dialog.MChatEncryptionInputDialog
 import io.agora.metachat.service.MChatRoomModel
 import io.agora.metachat.tools.*
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -61,9 +64,9 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
             WindowInsetsCompat.CONSUMED
         }
         roomAdapter = BaseRecyclerAdapter(null, object : OnItemClickListener<MChatRoomModel> {
-            override fun onItemClick(data: MChatRoomModel, view: View, position: Int, viewType: Long) {
+            override fun onItemClick(roomModel: MChatRoomModel, view: View, position: Int, viewType: Long) {
                 if (FastClickTools.isFastClick(view)) return
-                goCreateRole()
+                goCreateRole(roomModel)
             }
         }, MChatRoomViewHolder::class.java)
         binding.rvRoomList.apply {
@@ -93,8 +96,28 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
         binding.linearCreateRoomIntroduce.setOnClickListener(OnIntervalClickListener(this::onClickCreateRoom))
     }
 
-    private fun goCreateRole() {
-        findNavController().navigate(R.id.action_roomListFragment_to_crateRoleFragment)
+    private fun goCreateRole(roomModel: MChatRoomModel) {
+        val args = Bundle().apply {
+            putString(MChatConstant.Params.KEY_ROOM_NAME, roomModel.roomName)
+            putString(MChatConstant.Params.KEY_ROOM_ID, roomModel.roomId)
+            putInt(MChatConstant.Params.KEY_ROOM_COVER_INDEX, roomModel.roomCoverIndex)
+        }
+        if (roomModel.isPrivate) {
+            MChatEncryptionInputDialog()
+                .setDialogCancelable(true)
+                .setOnClickListener(object : MChatEncryptionInputDialog.OnClickBottomListener {
+                    override fun onCancelClick() {}
+                    override fun onConfirmClick(password: String) {
+                        if (TextUtils.equals(password, roomModel.roomPassword)) {
+                            findNavController().navigate(R.id.action_roomListFragment_to_crateRoleFragment, args)
+                        } else {
+                            ToastTools.showTips(R.string.mchat_room_incorrect_password)
+                        }
+                    }
+                }).show(childFragmentManager, "encryption dialog")
+        } else {
+            findNavController().navigate(R.id.action_roomListFragment_to_crateRoleFragment, args)
+        }
     }
 
     private fun onClickCreateRoom(view: View) {

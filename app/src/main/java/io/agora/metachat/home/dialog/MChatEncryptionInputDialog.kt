@@ -1,6 +1,7 @@
-package io.agora.metachat.widget.encryption
+package io.agora.metachat.home.dialog
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -16,7 +17,7 @@ import io.agora.metachat.databinding.MchatDialogEncryptionBinding
 /**
  * 输入密码 dialog
  */
-class MChatRoomEncryptionInputDialog constructor() : BaseFragmentDialog<MchatDialogEncryptionBinding>() {
+class MChatEncryptionInputDialog constructor() : BaseFragmentDialog<MchatDialogEncryptionBinding>() {
     private val BOND = 1
     private var isCancel = false
 
@@ -26,20 +27,16 @@ class MChatRoomEncryptionInputDialog constructor() : BaseFragmentDialog<MchatDia
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        dialog?.setCanceledOnTouchOutside(false)
-
-        mBinding?.apply {
+        binding.apply {
             if (!TextUtils.isEmpty(titleText)) {
                 tvTitle.text = titleText
             }
-
             if (!TextUtils.isEmpty(leftText)) {
                 mbLeft.text = leftText
             }
             if (!TextUtils.isEmpty(rightText)) {
                 mbRight.text = rightText
             }
-
             mbLeft.setOnClickListener {
                 clickListener?.onCancelClick()
                 dismiss()
@@ -48,6 +45,9 @@ class MChatRoomEncryptionInputDialog constructor() : BaseFragmentDialog<MchatDia
                 clickListener?.onConfirmClick(etInputPassword.text.toString())
                 dismiss()
             }
+            etInputPassword.setBackgroundColor(Color.TRANSPARENT)
+            etInputPassword.isFocusable = true
+            etInputPassword.isFocusableInTouchMode = true
             etInputPassword.requestFocus()
             dialog?.setCancelable(isCancel)
             dialog?.setCanceledOnTouchOutside(isCancel)

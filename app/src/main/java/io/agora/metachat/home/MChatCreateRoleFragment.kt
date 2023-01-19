@@ -15,9 +15,11 @@ import androidx.navigation.fragment.findNavController
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiFragment
 import io.agora.metachat.databinding.MchatFragmentCreateRoleBinding
+import io.agora.metachat.game.dialog.MChatBeginnerDialog
 import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.home.dialog.MChatBadgeDialog
+import io.agora.metachat.home.dialog.MChatPortraitDialog
 import io.agora.metachat.tools.LogTools
-import io.agora.metachat.tools.ToastTools
 import io.agora.metachat.widget.OnIntervalClickListener
 import java.util.*
 
@@ -28,7 +30,7 @@ import java.util.*
  */
 class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>() {
 
-    companion object{
+    companion object {
         private const val defaultPortrait = R.drawable.mchat_portrait0
         private const val defaultBadge = R.drawable.mchat_badge_level0
     }
@@ -128,11 +130,11 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     }
 
     private fun onClickPortrait(view: View) {
-        ToastTools.showCommon("click portrait")
+        MChatPortraitDialog().show(childFragmentManager, "portrait")
     }
 
     private fun onClickBadge(view: View) {
-        ToastTools.showCommon("click badge")
+        MChatBadgeDialog().show(childFragmentManager, "badge")
     }
 
     private fun onClickNicknameRandom(view: View) {
@@ -160,7 +162,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             return
         }
         activity?.let {
-            MChatAvatarActivity.startActivity(
+            MChatVirtualAvatarActivity.startActivity(
                 context = it,
                 roomName = roomName,
                 roomCoverIndex = roomCoverIndex,

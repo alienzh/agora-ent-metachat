@@ -15,7 +15,7 @@
     <color name="mchat_black_80">#CC000000</color>
     <color name="mchat_black_85">#D9000000</color>
     <color name="mchat_black_90">#E6000000</color>
-    <color name="mchat_white">#FFFFFFFF</color>
+    <color name="mchat_white">#FFFFFF</color>
     <color name="mchat_white_10">#1AFFFFFF</color>
     <color name="mchat_white_20">#33FFFFFF</color>
     <color name="mchat_white_30">#4DFFFFFF</color>
@@ -44,4 +44,8 @@
     <color name="mchat_481ea4">#481EA4</color>
     <color name="mchat_756c92">#756C92</color>
     <color name="mchat_f9f9f9_85">#D9F9F9F9</color>
+    <color name="mchat_dedaea">#DEDAEA</color>
+    <color name="mchat_756e98">#756E98</color>
+    <color name="mchat_f8f5fa">#F8F5FA</color>
+    <color name="mchat_4b31ad">#4B31AD</color>
 </resources>

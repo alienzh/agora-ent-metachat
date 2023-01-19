@@ -16,9 +16,10 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiActivity
 import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter
 import io.agora.metachat.baseui.adapter.listener.OnItemClickListener
-import io.agora.metachat.databinding.MchatActivityAvatarBinding
-import io.agora.metachat.databinding.MchatItemAvatarListBinding
+import io.agora.metachat.databinding.MchatActivityVirtualAvatarBinding
+import io.agora.metachat.databinding.MchatItemVirtualAvatarListBinding
 import io.agora.metachat.game.MChatGameActivity
+import io.agora.metachat.game.dialog.MChatBeginnerDialog
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
@@ -27,7 +28,7 @@ import io.agora.metachat.widget.OnIntervalClickListener
  *
  * virtual avatar
  */
-class MChatAvatarActivity : BaseUiActivity<MchatActivityAvatarBinding>() {
+class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBinding>() {
 
     companion object {
 
@@ -35,7 +36,7 @@ class MChatAvatarActivity : BaseUiActivity<MchatActivityAvatarBinding>() {
             context: Context, roomName: String, roomCoverIndex: Int, roomPassword: String,
             nickName: String, portraitIndex: Int, badgeIndex: Int, gender: Int
         ) {
-            val intent = Intent(context, MChatAvatarActivity::class.java).apply {
+            val intent = Intent(context, MChatVirtualAvatarActivity::class.java).apply {
                 putExtra(MChatConstant.Params.KEY_ROOM_NAME, roomName)
                 putExtra(MChatConstant.Params.KEY_ROOM_COVER_INDEX, roomCoverIndex)
                 putExtra(MChatConstant.Params.KEY_ROOM_PASSWORD, roomPassword)
@@ -63,15 +64,15 @@ class MChatAvatarActivity : BaseUiActivity<MchatActivityAvatarBinding>() {
 
     private var defaultVirtualAvatar = R.drawable.mchat_female0
 
-    private var avatarAdapter: BaseRecyclerAdapter<MchatItemAvatarListBinding, Int, MChatVirtualAvatarViewHolder>? =
+    private var avatarAdapter: BaseRecyclerAdapter<MchatItemVirtualAvatarListBinding, Int, MChatVirtualAvatarViewHolder>? =
         null
 
-    override fun getViewBinding(inflater: LayoutInflater): MchatActivityAvatarBinding? {
-        return MchatActivityAvatarBinding.inflate(inflater)
+    override fun getViewBinding(inflater: LayoutInflater): MchatActivityVirtualAvatarBinding? {
+        return MchatActivityVirtualAvatarBinding.inflate(inflater)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val insetsController = WindowCompat.getInsetsController(window,window.decorView)
+        val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         insetsController.hide(WindowInsetsCompat.Type.systemBars())
         super.onCreate(savedInstanceState)
         initData()
@@ -110,6 +111,7 @@ class MChatAvatarActivity : BaseUiActivity<MchatActivityAvatarBinding>() {
         )
         avatarAdapter = BaseRecyclerAdapter(virtualAvatars, object : OnItemClickListener<Int> {
             override fun onItemClick(data: Int, view: View, position: Int, viewType: Long) {
+                if (selVirtualAvatarIndex == position) return
                 selVirtualAvatarIndex = position
                 binding.ivCurrentAvatar.setImageResource(data)
                 avatarAdapter?.selectedIndex = selVirtualAvatarIndex
@@ -141,15 +143,21 @@ class MChatAvatarActivity : BaseUiActivity<MchatActivityAvatarBinding>() {
             gender = userGender,
             virtualAvatarIndex = selVirtualAvatarIndex
         )
+
+        // TODO: test
+//        MChatBeginnerDialog(MChatBeginnerDialog.BEGINNER_TYPE).show(supportFragmentManager,"beginner")
     }
 
     private fun onClickBack(view: View) {
         finish()
+
+        // TODO: test
+//        MChatBeginnerDialog(MChatBeginnerDialog.VISITOR_TYPE).show(supportFragmentManager,"visitor")
     }
 
     /**virtual avatar viewHolder*/
-    class MChatVirtualAvatarViewHolder constructor(val binding: MchatItemAvatarListBinding) :
-        BaseRecyclerAdapter.BaseViewHolder<MchatItemAvatarListBinding, Int>(binding) {
+    class MChatVirtualAvatarViewHolder constructor(val binding: MchatItemVirtualAvatarListBinding) :
+        BaseRecyclerAdapter.BaseViewHolder<MchatItemVirtualAvatarListBinding, Int>(binding) {
         override fun binding(data: Int?, selectedIndex: Int) {
             data ?: return
             binding.ivUserAvatar.setImageResource(data)

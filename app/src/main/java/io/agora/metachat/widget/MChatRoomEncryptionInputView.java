@@ -1,4 +1,4 @@
-package io.agora.metachat.widget.encryption;
+package io.agora.metachat.widget;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -47,11 +47,11 @@ public class MChatRoomEncryptionInputView extends AppCompatEditText {
         TypedArray t = mC.obtainStyledAttributes(attrs, R.styleable.mchat_encryption_input_style);
         if (t != null) {
             textLength = t.getInt(R.styleable.mchat_encryption_input_style_mchat_textLength, 6);
-            spaceX = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_space, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 15, getResources().getDisplayMetrics()));
+            spaceX = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_space, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, getResources().getDisplayMetrics()));
             spaceY = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_space, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, getResources().getDisplayMetrics()));
             strokeWidth = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_strokeWidth, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics()));
             round = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_round, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3, getResources().getDisplayMetrics()));
-            circle = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_circle, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 7, getResources().getDisplayMetrics()));
+            circle = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_circle, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics()));
             textSize = t.getDimensionPixelSize(R.styleable.mchat_encryption_input_style_mchat_textSize, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 16, getResources().getDisplayMetrics()));
             checkedColor = t.getColor(R.styleable.mchat_encryption_input_style_mchat_checkedColor, 0xff44ce61);
             defaultColor = t.getColor(R.styleable.mchat_encryption_input_style_mchat_defaultColor, 0xffd0d0d0);
@@ -78,25 +78,23 @@ public class MChatRoomEncryptionInputView extends AppCompatEditText {
         setLongClickable(false);
         setTextIsSelectable(false);
         setCursorVisible(false);
-        l = new Paint();
-        l.setStrokeWidth(3);
-        l.setStyle(Paint.Style.FILL);
-        l.setColor(waitInputColor);
     }
 
     @Override
     protected void onTextChanged(CharSequence text, int start, int lengthBefore, int lengthAfter) {
         super.onTextChanged(text, start, lengthBefore, lengthAfter);
-        if (mText == null) {
-            return;
-        }
+//        if (mText == null) {
+//            return;
+//        }
         //如果字数不超过用户设置的总字数，就赋值给成员变量mText；
         // 如果字数大于用户设置的总字数，就只保留用户设置的几位数字，并把光标制动到最后，让用户可以删除；
         if (text.toString().length() <= textLength) {
             mText = text.toString();
         } else {
             setText(mText);
-            setSelection(getText().toString().length());  //光标制动到最后
+            if (getText()!=null){
+                setSelection(getText().toString().length());  //光标制动到最后
+            }
             //调用setText(mText)之后键盘会还原，再次把键盘设置为数字键盘；
             setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_NORMAL);
         }
@@ -138,11 +136,7 @@ public class MChatRoomEncryptionInputView extends AppCompatEditText {
         textPaint.setStyle(Paint.Style.FILL);
         textPaint.setColor(textColor);
 
-//      Log.e(TAG, "getMeasuredWidth: "+ getMeasuredWidth());
-//      Log.e(TAG, "getMeasuredHeight: "+ getMeasuredHeight());
-//      int Wide = Math.min(getMeasuredHeight(), getMeasuredWidth() / textLength);
         int Wide = getMeasuredWidth() / textLength;
-//      Log.e(TAG, "Wide: "+ Wide);
         RectF rect = null;
         for (int i = 0; i < textLength; i++) {
             //区分已输入和未输入的边框颜色
@@ -157,6 +151,10 @@ public class MChatRoomEncryptionInputView extends AppCompatEditText {
             rectFS.add(rect);
 
             if (isWaitInput && i == mText.length()) {  //显示待输入的线
+                l = new Paint();
+                l.setStrokeWidth(3);
+                l.setStyle(Paint.Style.FILL);
+                l.setColor(waitInputColor);
                 canvas.drawLine(i * Wide + Wide / 2, getMeasuredHeight() / 2 - getMeasuredHeight() / 5, i * Wide + Wide / 2, getMeasuredHeight() / 2 + getMeasuredHeight() / 5, l);
             }
         }
@@ -166,10 +164,6 @@ public class MChatRoomEncryptionInputView extends AppCompatEditText {
                 canvas.drawCircle(rectFS.get(j).centerX(), rectFS.get(j).centerY(), circle, textPaint);
             } else {
                 canvas.drawText(mText.substring(j, j + 1), rectFS.get(j).centerX() - (textSize - spaceX) / 2, rectFS.get(j).centerY() + (textSize - spaceY) / 2, textPaint);
-//                Rect textRect = new Rect();
-//                textPaint.getTextBounds(mText.substring(j, j + 1), 0, 1, textRect);
-//                canvas.drawText(mText.substring(j, j + 1), rectFS.get(j).left + (rectFS.get(j).right - rectFS.get(j).left) / 2 - textRect.width() / 2,
-//                        rectFS.get(j).top + ((rectFS.get(j).bottom - rectFS.get(j).top) / 2) + textRect.height() / 2, textPaint);
             }
         }
     }
@@ -247,14 +241,14 @@ public class MChatRoomEncryptionInputView extends AppCompatEditText {
     /**
      * 设置已输入密码框颜色
      */
-    public void setcheckedColorColor(int checkedColor) {
+    public void setCheckedColorColor(int checkedColor) {
         this.checkedColor = checkedColor;
     }
 
     /**
      * 设置未输入密码框颜色
      */
-    public void setdefaultColorColor(int defaultColor) {
+    public void setDefaultColorColor(int defaultColor) {
         this.defaultColor = defaultColor;
     }
 

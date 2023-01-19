@@ -107,7 +107,7 @@
 
     </RadioGroup>
 
-    <io.agora.metachat.widget.encryption.MChatRoomEncryptionInputView
+    <io.agora.metachat.widget.MChatRoomEncryptionInputView
         android:id="@+id/et_password"
         android:layout_width="0dp"
         android:layout_height="48dp"

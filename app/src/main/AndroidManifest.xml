@@ -25,7 +25,9 @@
 
         <activity
             android:name=".home.MChatMainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -33,10 +35,10 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".home.MChatAvatarActivity"
+            android:name=".home.MChatVirtualAvatarActivity"
             android:exported="false"
             android:screenOrientation="landscape"
-            android:theme="@style/Theme.MetaChatScene"/>
+            android:theme="@style/Theme.MetaChatScene" />
 
         <activity
             android:name=".game.MChatGameActivity"

@@ -159,7 +159,7 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
             binding.ivRoomCover.setImageResource(getRoomCoverRes(data.roomCoverIndex))
             binding.tvRoomName.text = data.roomName
             binding.tvRoomId.text = context.getString(R.string.mchat_room_id, data.roomId)
-            binding.tvMembers.text = "${data.roomMembers}"
+            binding.tvMembers.text = "${data.memberCount}"
         }
 
         @DrawableRes

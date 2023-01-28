@@ -21,7 +21,7 @@ object MChatKeyCenter {
         return MChatApp.instance().getSharedPreferences(SHARED_NAME, Context.MODE_PRIVATE)
     }
 
-    fun getUserId(): Int {
+    private fun getUserId(): Int {
         var userId: Int = sp()?.getInt("userId", 0) ?: 0
         if (userId == 0) {
             userId = abs(UUID.randomUUID().hashCode())
@@ -32,10 +32,26 @@ object MChatKeyCenter {
         return userId
     }
 
+    fun accountCreated(): Boolean {
+        return sp()?.getBoolean("accountCreated", false) ?: false
+    }
+
+    fun setAccountCreated() {
+        sp()?.edit()?.let {
+            it.putBoolean("accountCreated", true)?.apply()
+        }
+    }
+
+    /**
+     * 用户id
+     */
     val curUserId: Int = getUserId()
 
-    const val RTC_APP_ID: String = BuildConfig.APP_ID
-    const val RTC_APP_CERT: String = BuildConfig.APP_CERTIFICATE
+    val imPassword: String = "12345678"
+
+    const val RTC_APP_ID: String = BuildConfig.RTC_APP_ID
+    const val RTC_APP_CERT: String = BuildConfig.RTC_APP_CERT
+    const val IM_APP_KEY: String = BuildConfig.IM_APP_KEY
 
     lateinit var RTM_TOKEN: String
 

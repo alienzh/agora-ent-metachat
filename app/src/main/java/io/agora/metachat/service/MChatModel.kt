@@ -13,7 +13,7 @@ interface MChatBaseModel : IKeepProguard, Serializable
 data class MChatCreateRoomInputModel constructor(
     val roomName: String = "",
     val roomId: String = "",
-    var roomIconIndex: Int = 0,
+    var roomCoverIndex: Int = 0,
     val isPrivate: Boolean = false,
     val password: String = "",
 ) : MChatBaseModel
@@ -44,7 +44,7 @@ data class MChatRoomModel constructor(
     var roomCoverIndex: Int = 0,
     var createdAt: Long = 0L,
     var roomPassword: String = "",
-    var roomMembers: Int = 0,
+    var memberCount: Int = 0,
     var ownerId: Int = -1,
 ) : MChatBaseModel
 

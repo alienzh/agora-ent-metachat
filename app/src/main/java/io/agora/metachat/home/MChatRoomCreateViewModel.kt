@@ -41,7 +41,7 @@ class MChatRoomCreateViewModel : ViewModel() {
     fun createRoom(roomName: String, roomIconIndex: Int, password: String? = null) {
         val createRoomModel = MChatCreateRoomInputModel(
             roomName = roomName,
-            roomIconIndex = roomIconIndex,
+            roomCoverIndex = roomIconIndex,
             isPrivate = !password.isNullOrEmpty(),
             password = password ?: ""
         )
@@ -66,7 +66,7 @@ class MChatRoomCreateViewModel : ViewModel() {
         chatServiceProtocol.joinRoom(joinRoomInputModel) { error, result ->
             when (error) {
                 MChatServiceProtocol.ERR_OK -> _joinRoomLiveData.postValue(result)
-                MChatServiceProtocol.ERR_ROOM_UNAVAILABLE -> {
+                MChatServiceProtocol.ERR_GROUP_UNAVAILABLE -> {
                     ToastTools.showError(R.string.mchat_room_unavailable_tip)
                     LogTools.e(R.string.mchat_room_unavailable_tip)
                     _joinRoomLiveData.postValue(null)

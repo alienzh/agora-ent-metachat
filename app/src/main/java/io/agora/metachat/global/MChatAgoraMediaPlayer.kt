@@ -1,6 +1,5 @@
 package io.agora.metachat.global
 
-import android.app.Application
 import io.agora.base.VideoFrame
 import io.agora.mediaplayer.Constants
 import io.agora.mediaplayer.IMediaPlayerObserver

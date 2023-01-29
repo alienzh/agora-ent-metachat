@@ -1,5 +1,6 @@
 package io.agora.metachat.baseui
 
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,13 +8,32 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
+import io.agora.metachat.R
 
 abstract class BaseUiFragment<B : ViewBinding> : Fragment() {
 
     lateinit var binding: B
+
+    private var loadingDialog: AlertDialog? = null
+
+    open fun showLoading(cancelable: Boolean) {
+        if (loadingDialog == null) {
+            loadingDialog = AlertDialog.Builder(requireActivity()).setView(R.layout.mchat_view_base_loading).create().apply {
+                // 背景修改成透明
+                window?.decorView?.setBackgroundColor(Color.TRANSPARENT)
+            }
+        }
+        loadingDialog?.setCancelable(cancelable)
+        loadingDialog?.show()
+    }
+
+    open fun dismissLoading() {
+        loadingDialog?.dismiss()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val binding = getViewBinding(inflater, container) ?: return null

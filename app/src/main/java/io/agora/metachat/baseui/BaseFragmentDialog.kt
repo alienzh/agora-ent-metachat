@@ -19,12 +19,11 @@ import androidx.fragment.app.DialogFragment
 
 abstract class BaseFragmentDialog<B : ViewBinding> : DialogFragment() {
 
-    lateinit var binding: B
+    var binding: B?=null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val binding = getViewBinding(inflater, container) ?: return null
-        this.binding = binding
-        return this.binding.root
+        binding = getViewBinding(inflater, container)
+        return this.binding?.root
     }
 
     protected abstract fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): B?

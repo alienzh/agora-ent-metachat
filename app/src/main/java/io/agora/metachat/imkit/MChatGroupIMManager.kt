@@ -7,7 +7,6 @@ import com.hyphenate.EMGroupChangeListener
 import com.hyphenate.EMMessageListener
 import com.hyphenate.chat.*
 import com.hyphenate.chat.adapter.EMAError
-import com.hyphenate.exceptions.HyphenateException
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.service.MChatServiceProtocol
 import io.agora.metachat.tools.DeviceTools
@@ -77,7 +76,7 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
             if (!MChatKeyCenter.accountCreated()) {
                 try {
                     EMClient.getInstance().createAccount(imUid, imPassword)
-                } catch (e: HyphenateException) {
+                } catch (e: Exception) {
                     LogTools.e(TAG, "im create account error:${e.message}")
                 }
             }

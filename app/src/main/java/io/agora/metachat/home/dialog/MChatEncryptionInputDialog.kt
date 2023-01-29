@@ -27,7 +27,7 @@ class MChatEncryptionInputDialog constructor() : BaseFragmentDialog<MchatDialogE
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.apply {
+        binding?.apply {
             if (!TextUtils.isEmpty(titleText)) {
                 tvTitle.text = titleText
             }

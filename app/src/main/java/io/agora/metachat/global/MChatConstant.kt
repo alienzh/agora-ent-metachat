@@ -20,7 +20,23 @@ object MChatConstant {
         const val KEY_BADGE_INDEX: String = "key_badge_index"
         const val KEY_GENDER: String = "key_gender"
         const val KEY_VIRTUAL_AVATAR: String = "key_virtual_avatar"
+        const val KEY_IS_CREATE: String = "key_is_create"
     }
+
+    object Scene {
+        const val SCENE_NONE = -1
+        const val SCENE_GAME = 0
+        const val SCENE_DRESS = 1
+    }
+
+    /**
+     * https://test.cdn.sbnh.cn/9ad87c1738bf0485b7f243ee5cfb409f.mp4
+     * http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/fulldemoStatic/15c116aca7590992f261143935d6f2cb.mov
+     */
+    const val VIDEO_URL = "http://agora.fronted.love/yyl.mov"
+    const val DEFAULT_PORTRAIT = "https://accpic.sd-rtn.com/pic/test/png/2.png"
+    const val PLAY_ADVERTISING_VIDEO_REPEAT = -1
+    const val KEY_UNITY_MESSAGE_DRESS_SETTING = "dressSetting"
 
     private const val badgeUrl0 =
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_0.png"

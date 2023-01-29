@@ -13,6 +13,8 @@
 APP_ID=xxxxx
 #app certificate
 APP_CERTIFICATE=xxxxx
+#im app key
+IM_APP_KEY=xxxxx
 ```
 
 3.Run the example

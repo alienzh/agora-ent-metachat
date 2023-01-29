@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import androidx.annotation.DrawableRes
 import androidx.core.view.*
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.divider.MaterialDividerItemDecoration
 import io.agora.metachat.global.MChatConstant
@@ -19,8 +20,8 @@ import io.agora.metachat.baseui.adapter.listener.OnItemClickListener
 import io.agora.metachat.databinding.MchatActivityVirtualAvatarBinding
 import io.agora.metachat.databinding.MchatItemVirtualAvatarListBinding
 import io.agora.metachat.game.MChatGameActivity
-import io.agora.metachat.game.dialog.MChatBeginnerDialog
 import io.agora.metachat.tools.DeviceTools
+import io.agora.metachat.tools.LogTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
 /**
@@ -33,10 +34,11 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     companion object {
 
         fun startActivity(
-            context: Context, roomName: String, roomCoverIndex: Int, roomPassword: String,
+            context: Context, isCreate: Boolean, roomName: String, roomCoverIndex: Int, roomPassword: String,
             nickName: String, portraitIndex: Int, badgeIndex: Int, gender: Int
         ) {
             val intent = Intent(context, MChatVirtualAvatarActivity::class.java).apply {
+                putExtra(MChatConstant.Params.KEY_IS_CREATE, isCreate)
                 putExtra(MChatConstant.Params.KEY_ROOM_NAME, roomName)
                 putExtra(MChatConstant.Params.KEY_ROOM_COVER_INDEX, roomCoverIndex)
                 putExtra(MChatConstant.Params.KEY_ROOM_PASSWORD, roomPassword)
@@ -49,14 +51,17 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
         }
     }
 
+    private lateinit var mChatViewModel: MChatRoomCreateViewModel
+
+    private val roomId by lazy { intent.getStringExtra(MChatConstant.Params.KEY_ROOM_ID) ?: "" }
     private val roomName by lazy { intent.getStringExtra(MChatConstant.Params.KEY_ROOM_NAME) ?: "" }
     private val roomCoverIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_ROOM_COVER_INDEX, 0) }
     private val roomPassword by lazy { intent.getStringExtra(MChatConstant.Params.KEY_ROOM_PASSWORD) ?: "" }
-
     private val nickName by lazy { intent.getStringExtra(MChatConstant.Params.KEY_NICKNAME) ?: "" }
     private val portraitIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_PORTRAIT_INDEX, 0) }
     private val badgeIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_BADGE_INDEX, 0) }
     private val userGender by lazy { intent.getIntExtra(MChatConstant.Params.KEY_GENDER, MChatConstant.Gender.FEMALE) }
+    private val isFromCreate: Boolean by lazy { intent.getBooleanExtra(MChatConstant.Params.KEY_IS_CREATE, false) }
 
     /**virtual avatar */
     private lateinit var virtualAvatarArray: TypedArray
@@ -74,9 +79,12 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     override fun onCreate(savedInstanceState: Bundle?) {
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        LogTools.d("$roomName $roomPassword $roomCoverIndex $nickName $portraitIndex $badgeIndex $userGender")
         super.onCreate(savedInstanceState)
+        mChatViewModel = ViewModelProvider(this).get(MChatRoomCreateViewModel::class.java)
         initData()
         initView()
+        roomObservable()
     }
 
     private fun initData() {
@@ -104,10 +112,9 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
                 add(getVirtualAvatarRes(i))
             }
         }
+        binding.tvChooseAvatarTips.text = resources.getString(R.string.mchat_choose_your_avatar, nickName)
         binding.ivCurrentAvatar.setImageResource(
-            virtualAvatarArray.getResourceId(
-                selVirtualAvatarIndex, defaultVirtualAvatar
-            )
+            virtualAvatarArray.getResourceId(selVirtualAvatarIndex, defaultVirtualAvatar)
         )
         avatarAdapter = BaseRecyclerAdapter(virtualAvatars, object : OnItemClickListener<Int> {
             override fun onItemClick(data: Int, view: View, position: Int, viewType: Long) {
@@ -132,27 +139,44 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
         binding.linearAvatarBack.setOnClickListener(OnIntervalClickListener(this::onClickBack))
     }
 
-    private fun onClickEnterGame(view: View) {
-        val currentTime = System.currentTimeMillis()
-        MChatGameActivity.startActivity(
-            context = this,
-            roomId = currentTime.toString(),
-            nickName = nickName,
-            portraitIndex = portraitIndex,
-            badgeIndex = badgeIndex,
-            gender = userGender,
-            virtualAvatarIndex = selVirtualAvatarIndex
-        )
+    private fun roomObservable() {
+        mChatViewModel.createRoomObservable().observe(this){
+            mChatViewModel.joinRoom(it.roomId,it.password)
+        }
+        mChatViewModel.joinRoomObservable().observe(this){
+            dismissLoading()
+            MChatGameActivity.startActivity(
+                context = this,
+                roomId = it.roomId,
+                nickName = nickName,
+                portraitIndex = portraitIndex,
+                badgeIndex = badgeIndex,
+                gender = userGender,
+                virtualAvatarIndex = selVirtualAvatarIndex
+            )
+        }
+    }
 
+    private fun onClickEnterGame(view: View) {
+        showLoading(false)
+        if (isFromCreate) {
+            mChatViewModel.createRoom(roomName, roomCoverIndex, roomPassword)
+        } else {
+            mChatViewModel.joinRoom(roomId, roomPassword)
+        }
         // TODO: test
 //        MChatBeginnerDialog(MChatBeginnerDialog.BEGINNER_TYPE).show(supportFragmentManager,"beginner")
     }
 
     private fun onClickBack(view: View) {
         finish()
-
         // TODO: test
 //        MChatBeginnerDialog(MChatBeginnerDialog.VISITOR_TYPE).show(supportFragmentManager,"visitor")
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dismissLoading()
     }
 
     /**virtual avatar viewHolder*/

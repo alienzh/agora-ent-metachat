@@ -31,7 +31,6 @@ class MChatCreateRoomFragment : BaseUiFragment<MchatFragmentCreateRoomBinding>()
         private const val defaultCover = R.drawable.mchat_room_cover0
     }
 
-    private lateinit var mChatViewModel: MChatRoomCreateViewModel
     private var roomCoverIndex = 0
 
     /**room cover*/
@@ -47,10 +46,8 @@ class MChatCreateRoomFragment : BaseUiFragment<MchatFragmentCreateRoomBinding>()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        mChatViewModel = ViewModelProvider(this).get(MChatRoomCreateViewModel::class.java)
         initData()
         initView()
-        roomObservable()
     }
 
     private fun initData() {
@@ -97,6 +94,7 @@ class MChatCreateRoomFragment : BaseUiFragment<MchatFragmentCreateRoomBinding>()
         val args = Bundle().apply {
             putString(MChatConstant.Params.KEY_ROOM_NAME, roomName)
             putInt(MChatConstant.Params.KEY_ROOM_COVER_INDEX, roomCoverIndex)
+            putBoolean(MChatConstant.Params.KEY_IS_CREATE, true)
             if (isPrivate) {
                 val roomPassword = binding.etPassword.text.toString().trim { it <= ' ' }
                 putString(MChatConstant.Params.KEY_ROOM_PASSWORD, roomPassword)
@@ -114,10 +112,6 @@ class MChatCreateRoomFragment : BaseUiFragment<MchatFragmentCreateRoomBinding>()
 
     private fun onClickBack(view: View) {
         findNavController().popBackStack()
-    }
-
-    private fun roomObservable() {
-
     }
 
     override fun onResume() {

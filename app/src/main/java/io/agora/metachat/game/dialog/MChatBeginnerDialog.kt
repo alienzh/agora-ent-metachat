@@ -14,7 +14,6 @@ import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter
 import io.agora.metachat.databinding.MchatDialogBeginnerGuideBinding
 import io.agora.metachat.databinding.MchatItemBeginnerGuideBinding
 import io.agora.metachat.tools.DeviceTools
-import io.agora.metachat.tools.ResourcesTools
 
 /**
  * @author create by zhangwei03
@@ -36,7 +35,9 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setDialogSize(binding.root)
+        binding?.root?.let {
+            setDialogSize(it)
+        }
         initData()
         initView()
     }
@@ -50,28 +51,30 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
     }
 
     private fun initView() {
-        binding.tvTitle.text =
-            if (type == BEGINNER_TYPE) {
-                resources.getString(R.string.mchat_beginner_guide)
-            } else {
-                resources.getString(R.string.mchat_visitor_mode_title)
+        binding?.apply {
+            tvTitle.text =
+                if (type == BEGINNER_TYPE) {
+                    resources.getString(R.string.mchat_beginner_guide)
+                } else {
+                    resources.getString(R.string.mchat_visitor_mode_title)
+                }
+            ivClose.setOnClickListener {
+                dismiss()
             }
-        binding.ivClose.setOnClickListener {
-            dismiss()
+            val contents = mutableListOf<String>().apply {
+                if (type == BEGINNER_TYPE) {
+                    add(resources.getString(R.string.mchat_beginner_guide_precautions))
+                } else {
+                    add(resources.getString(R.string.mchat_visitor_mode_precautions))
+                }
+                for (i in guideArray.indices) {
+                    add(guideArray[i])
+                }
+            }
+            guideAdapter = BaseRecyclerAdapter(contents, null, MChatGuideViewHolder::class.java)
+            rvContent.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+            rvContent.adapter = guideAdapter
         }
-        val contents = mutableListOf<String>().apply {
-            if (type == BEGINNER_TYPE) {
-                add(resources.getString(R.string.mchat_beginner_guide_precautions))
-            } else {
-                add(resources.getString(R.string.mchat_visitor_mode_precautions))
-            }
-            for (i in guideArray.indices) {
-                add(guideArray[i])
-            }
-        }
-        guideAdapter = BaseRecyclerAdapter(contents, null, MChatGuideViewHolder::class.java)
-        binding.rvContent.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-        binding.rvContent.adapter = guideAdapter
     }
 
     private fun setDialogSize(view: View) {
@@ -96,7 +99,7 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
                 binding.ivGuideNumber.isVisible = true
                 binding.tvGuideContent.isVisible = true
                 val numberResName = "mchat_guide_$bindingAdapterPosition"
-                var numberDrawable = ResourcesTools.getDrawableId(context, numberResName)
+                var numberDrawable = DeviceTools.getDrawableId(context, numberResName)
                 if (numberDrawable == 0) numberDrawable = R.drawable.mchat_guide_1
                 binding.ivGuideNumber.setImageResource(numberDrawable)
                 binding.tvGuideContent.text = data

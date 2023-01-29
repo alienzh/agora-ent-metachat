@@ -41,8 +41,54 @@
     <string name="mchat_beginner_guide_title">Beginner Guide</string>
     <string name="mchat_beginner_guide_precautions">How to use MetaChat:</string>
     <string name="mchat_visitor_mode">Visitor mode</string>
+    <string name="mchat_audio_chat_mode">Audio chat mode</string>
     <string name="mchat_visitor_mode_title">Visitor tips</string>
     <string name="mchat_visitor_mode_precautions">Precautions for visitor mode:</string>
+    <string name="mchat_room_quit">Quit room</string>
+    <string name="mchat_room_disbanded">The room has been closed</string>
+    <string name="mchat_room_maximum_limit">The number of people has exceeded the maximum limit</string>
+    <string name="mchat_delete_room_alert_msg">Are you sure to delete the room?</string>
+    <string name="mchat_delete_room_notify_alert_title">The owner has delete the room, please confirm to leave the room</string>
+    <string name="mchat_download_title">Download tips</string>
+    <string name="mchat_download_content">If this is the first time you enter a room, you need to download the %1$s data package</string>
+    <string name="mchat_download_now">Download</string>
+    <string name="mchat_download_next_time">Next time</string>
+    <string name="mchat_downloading">Downloading</string>
+    <string name="mchat_permission_for_camera">Is this app allowed to use the camera?</string>
+    <string name="mchat_permission_for_microphone">Do you allow this app to use your microphone?</string>
+    <string name="mchat_choose_a_song">Choose a song</string>
+    <string name="mchat_selected">Selected</string>
+    <string name="mchat_recommend_songs">Recommend Songs</string>
+    <string name="mchat_tiktok_hot_songs">TikTok hot songs</string>
+    <string name="mchat_chinese_archaic_style_popular_songs">Chinese Archaic Style Popular Songs</string>
+    <string name="mchat_ktv_popular_songs">KTV Popular Songs</string>
+    <string name="mchat_christmas_songs">Christmas Songs</string>
+    <string name="mchat_console">Console</string>
+    <string name="mchat_original_singing">Original singing</string>
+    <string name="mchat_original_singing_tips">Click the button to switch the original singing and accompaniment</string>
+    <string name="mchat_earphone_monitoring">Earphone Monitoring</string>
+    <string name="mchat_earphone_monitoring_tips">Please insert the earphone to use the earreturn function</string>
+    <string name="mchat_change_key_of_song">Change Key of Song</string>
+    <string name="mchat_volume">Volume</string>
+    <string name="mchat_accompaniment_music">Enable Accompaniment Music</string>
+    <string name="mchat_recording_studio">Recording Studio</string>
+    <string name="mchat_concert">Concert</string>
+    <string name="mchat_hollow_sound">Hollow Sound</string>
+    <string name="mchat_spatial_audio_background">Enable Spatial Audio Background</string>
+    <string name="mchat_vocal_distortion">Vocal Distortion</string>
+    <string name="mchat_vocal_air_attenuation_factor">Vocal Air Attenuation Factor</string>
+    <string name="mchat_user_view_setting">User View Setting</string>
+    <string name="mchat_1st_person_perspective_view">1st person perspective view</string>
+    <string name="mchat_3st_person_perspective_view">3st person perspective view</string>
+    <string name="mchat_omni_perspective_view">Omni-perspective view</string>
+    <string name="mchat_disc_setting">Disc setting</string>
+    <string name="mchat_general">General</string>
+    <string name="mchat_operation">Operation</string>
+    <string name="mchat_sound">Sound</string>
+    <string name="mchat_room">Room</string>
+    <string name="mchat_portrait">Portrait</string>
+    <string name="mchat_virtual_avatar">"Avatar"</string>
+    <string name="mchat_quit">Quit</string>
 
     <string-array name="mchat_room_name">
         <item>Jenoah</item>
@@ -68,15 +114,15 @@
     </string-array>
 
     <string-array name="mchat_beginner_guide_content">
-        <item>进入Demo场景前，您可以创建自己的虚拟角色，包括选择头像、昵称、虚拟形象</item>
-        <item>进入Demo场景后，您可以操作虚拟角色，在3D语聊房间中通过空间音频进行语聊、唱歌，也可以走到NPC的身边通过空间音频感受录制好的语料</item>
-        <item>若选择下麦，您将进入游客模式，游客是"隐形"的，您可以看到场景内参与语聊的用户但是无法与这些用户互动</item>
-        <item>若靠近电视机，您可以选择进入点歌台，歌曲和MV都由声网内容中心提供版权曲库，您可以进行点歌、切歌、查看榜单等操作</item>
+        <item>Create your character, including picture, name and avatar.</item>
+        <item>Inside the room, walk around, chat or sing.</item>
+        <item>In visitor mode, your mic is off and you\'re invisible.</item>
+        <item>Pro tip: Near the TV is a karaoke station!</item>
     </string-array>
 
     <string-array name="mchat_visitor_mode_content">
-        <item>游客可以看到场景内参与语聊的用户但是无法与这些用户互动</item>
-        <item>游客上“隐形”的，其他所有用户都看不到您</item>
-        <item>上麦即可参与语聊和互动，其他用户便会看到您了</item>
+        <item>Visitors can see users participating in conversation in the scene, but they cannot interact with these users </item>
+        <item>Visitors are "invisible", and all other users can\'t see you</item>
+        <item>You can participate in conversation and interaction when you enable mic, and other users will see you</item>
     </string-array>
 </resources>

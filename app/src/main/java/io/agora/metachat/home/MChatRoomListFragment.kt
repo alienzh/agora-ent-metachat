@@ -63,6 +63,11 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
             binding.root.setPaddingRelative(0, systemInset.top, 0, 0)
             WindowInsetsCompat.CONSUMED
         }
+        if (DeviceTools.getIsZh()) {
+            binding.ivMchatCreateIntroduce.setImageResource(R.drawable.mchat_room_create_cn)
+        } else {
+            binding.ivMchatCreateIntroduce.setImageResource(R.drawable.mchat_room_create_en)
+        }
         roomAdapter = BaseRecyclerAdapter(null, object : OnItemClickListener<MChatRoomModel> {
             override fun onItemClick(roomModel: MChatRoomModel, view: View, position: Int, viewType: Long) {
                 if (FastClickTools.isFastClick(view)) return
@@ -109,6 +114,7 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
                     override fun onCancelClick() {}
                     override fun onConfirmClick(password: String) {
                         if (TextUtils.equals(password, roomModel.roomPassword)) {
+                            args.putString(MChatConstant.Params.KEY_ROOM_PASSWORD, roomModel.roomPassword)
                             findNavController().navigate(R.id.action_roomListFragment_to_crateRoleFragment, args)
                         } else {
                             ToastTools.showTips(R.string.mchat_room_incorrect_password)

@@ -14,10 +14,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiFragment
+import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatFragmentCreateRoleBinding
-import io.agora.metachat.game.dialog.MChatBeginnerDialog
+import io.agora.metachat.game.MChatContext
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.home.dialog.MChatBadgeDialog
+import io.agora.metachat.home.dialog.MChatDownloadDialog
 import io.agora.metachat.home.dialog.MChatPortraitDialog
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -36,7 +38,6 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     }
 
     private lateinit var mChatViewModel: MChatRoomCreateViewModel
-
     private var nicknameIllegal = false
 
     private var portraitIndex = 0
@@ -54,6 +55,10 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
 
     private val random by lazy { Random() }
 
+    private val roomId: String by lazy {
+        arguments?.getString(MChatConstant.Params.KEY_ROOM_ID) ?: ""
+    }
+
     private val roomName: String by lazy {
         arguments?.getString(MChatConstant.Params.KEY_ROOM_NAME) ?: ""
     }
@@ -66,6 +71,12 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         arguments?.getString(MChatConstant.Params.KEY_ROOM_PASSWORD) ?: ""
     }
 
+    private val isFromCreate: Boolean by lazy {
+        arguments?.getBoolean(MChatConstant.Params.KEY_IS_CREATE) ?: false
+    }
+
+    private var downloadDialog: MChatDownloadDialog? = null
+
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatFragmentCreateRoleBinding? {
         return MchatFragmentCreateRoleBinding.inflate(inflater)
     }
@@ -73,6 +84,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         mChatViewModel = ViewModelProvider(this).get(MChatRoomCreateViewModel::class.java)
+        LogTools.d("$roomName $roomPassword $roomCoverIndex")
         initData()
         initView()
         roomObservable()
@@ -125,16 +137,71 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         }
     }
 
+    private fun roomObservable() {
+        mChatViewModel.sceneListObservable().observe(viewLifecycleOwner) {
+            if (it.isNullOrEmpty()) return@observe
+            for (i in it.indices) {
+                val mchatSceneInfo = it[i]
+                if (mchatSceneInfo.sceneId == 8L) { //todo 8为内容中心测试的ID号
+                    mChatViewModel.prepareScene(mchatSceneInfo)
+                    break
+                }
+            }
+        }
+        mChatViewModel.selectSceneObservable().observe(viewLifecycleOwner) {
+            downloadDialog?.dismiss()
+            downloadDialog = null
+            dismissLoading()
+            goVirtualAvatarPage()
+        }
+        mChatViewModel.requestDownloadingObservable().observe(viewLifecycleOwner) {
+            if (it) {
+                CommonFragmentAlertDialog()
+                    .titleText(resources.getString(R.string.mchat_download_title))
+                    .contentText(resources.getString(R.string.mchat_download_content, "350M")) // todo
+                    .leftText(resources.getString(R.string.mchat_download_next_time))
+                    .rightText(resources.getString(R.string.mchat_download_now))
+                    .setOnClickListener(object : CommonFragmentAlertDialog.OnClickBottomListener {
+                        override fun onConfirmClick() {
+                            mChatViewModel.downloadScene(MChatContext.instance().getSceneInfo())
+                        }
+                    }).show(childFragmentManager, "downloadTips")
+            }
+        }
+        mChatViewModel.downloadingProgressObservable().observe(viewLifecycleOwner) {
+            if (downloadDialog == null) {
+                downloadDialog = MChatDownloadDialog()
+                    .setCancelCallback {
+                        mChatViewModel.cancelDownloadScene(MChatContext.instance().getSceneInfo())
+                    }
+                downloadDialog?.show(childFragmentManager, "downloadProgress")
+            } else if (it < 0) {
+                downloadDialog?.dismiss()
+                downloadDialog = null
+                return@observe
+            }
+            if (it>0){
+                downloadDialog?.updateProgress(it)
+            }
+        }
+    }
+
     private fun onClickBack(view: View) {
         findNavController().popBackStack()
     }
 
+    /**show portrait dialog*/
     private fun onClickPortrait(view: View) {
-        MChatPortraitDialog().show(childFragmentManager, "portrait")
+        MChatPortraitDialog().setConfirmCallback {
+            this.portraitIndex = it
+        }.show(childFragmentManager, "portrait")
     }
 
+    /**show badge dialog*/
     private fun onClickBadge(view: View) {
-        MChatBadgeDialog().show(childFragmentManager, "badge")
+        MChatBadgeDialog().setConfirmCallback {
+            this.badgeIndex = it
+        }.show(childFragmentManager, "badge")
     }
 
     private fun onClickNicknameRandom(view: View) {
@@ -161,9 +228,18 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             binding.etNickname.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_light_gray_stroke_red)
             return
         }
+        showLoading(false)
+        MChatContext.instance().initRoleInfo(nickname,gender)
+        MChatContext.instance().getRoleInfo()?.avatar = "" // todo
+        mChatViewModel.getScenes()
+    }
+
+    private fun goVirtualAvatarPage() {
+        val nickname = binding.etNickname.text?.toString() ?: ""
         activity?.let {
             MChatVirtualAvatarActivity.startActivity(
                 context = it,
+                isCreate = isFromCreate,
                 roomName = roomName,
                 roomCoverIndex = roomCoverIndex,
                 roomPassword = roomPassword,
@@ -175,7 +251,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         }
     }
 
-    private fun roomObservable() {
+    private fun beforeStartGameTask(callback: (error: Int) -> Unit) {
 
     }
 
@@ -185,5 +261,10 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             insetsController.isAppearanceLightStatusBars = false
         }
         super.onResume()
+        if (MChatConstant.Scene.SCENE_NONE != MChatContext.instance().getNextScene()) {
+            MChatContext.instance().setCurrentScene(MChatContext.instance().getNextScene())
+            MChatContext.instance().setNextScene(MChatConstant.Scene.SCENE_NONE)
+            mChatViewModel.getScenes()
+        }
     }
 }

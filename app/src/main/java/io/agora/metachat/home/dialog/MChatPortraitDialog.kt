@@ -23,7 +23,7 @@ import io.agora.metachat.widget.OnIntervalClickListener
 /**
  * @author create by zhangwei03
  */
-class MChatPortraitDialog : BaseFragmentDialog<MchatDialogSelectPortraitBinding>() {
+class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPortraitBinding>() {
 
     private lateinit var portraitArray: TypedArray
     private var defaultPortrait = R.drawable.mchat_portrait0
@@ -31,6 +31,12 @@ class MChatPortraitDialog : BaseFragmentDialog<MchatDialogSelectPortraitBinding>
 
     private var portraitAdapter: BaseRecyclerAdapter<MchatItemPortraitListBinding, Int, MChatPortraitViewHolder>? =
         null
+
+    private var confirmCallback: ((selPortraitIndex: Int) -> Unit)? = null
+
+    fun setConfirmCallback(confirmCallback: ((selPortraitIndex: Int) -> Unit)) = apply {
+        this.confirmCallback = confirmCallback
+    }
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogSelectPortraitBinding {
         return MchatDialogSelectPortraitBinding.inflate(inflater)
@@ -54,24 +60,26 @@ class MChatPortraitDialog : BaseFragmentDialog<MchatDialogSelectPortraitBinding>
         }
         portraitAdapter = BaseRecyclerAdapter(portraits, object : OnItemClickListener<Int> {
             override fun onItemClick(data: Int, view: View, position: Int, viewType: Long) {
-                if (selPortraitIndex==position) return
+                if (selPortraitIndex == position) return
                 selPortraitIndex = position
                 portraitAdapter?.selectedIndex = selPortraitIndex
                 portraitAdapter?.notifyDataSetChanged()
             }
         }, MChatPortraitViewHolder::class.java)
         portraitAdapter?.selectedIndex = selPortraitIndex
-        binding.rvPortrait.apply {
-            addItemDecoration(
-                MaterialDividerItemDecoration(binding.root.context, MaterialDividerItemDecoration.HORIZONTAL).apply {
-                    dividerThickness = DeviceTools.dp2px(26).toInt()
-                    dividerColor = Color.TRANSPARENT
-                })
-            layoutManager = GridLayoutManager(binding.root.context, 3)
-            adapter = portraitAdapter
+        binding?.apply {
+            rvPortrait.apply {
+                addItemDecoration(
+                    MaterialDividerItemDecoration(root.context, MaterialDividerItemDecoration.HORIZONTAL).apply {
+                        dividerThickness = DeviceTools.dp2px(26).toInt()
+                        dividerColor = Color.TRANSPARENT
+                    })
+                layoutManager = GridLayoutManager(root.context, 3)
+                adapter = portraitAdapter
+            }
+            mbLeft.setOnClickListener(OnIntervalClickListener(this@MChatPortraitDialog::onClickCancel))
+            mbRight.setOnClickListener(OnIntervalClickListener(this@MChatPortraitDialog::onClickConfirm))
         }
-        binding.mbLeft.setOnClickListener(OnIntervalClickListener(this::onClickCancel))
-        binding.mbRight.setOnClickListener(OnIntervalClickListener(this::onClickConfirm))
     }
 
     private fun onClickCancel(view: View) {
@@ -79,7 +87,7 @@ class MChatPortraitDialog : BaseFragmentDialog<MchatDialogSelectPortraitBinding>
     }
 
     private fun onClickConfirm(view: View) {
-       ToastTools.showCommon("portrait index:$selPortraitIndex")
+        ToastTools.showCommon("portrait index:$selPortraitIndex")
     }
 
     @DrawableRes

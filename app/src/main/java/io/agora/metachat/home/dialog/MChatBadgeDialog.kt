@@ -23,7 +23,7 @@ import io.agora.metachat.widget.OnIntervalClickListener
 /**
  * @author create by zhangwei03
  */
-class MChatBadgeDialog : BaseFragmentDialog<MchatDialogSelectBadgeBinding>() {
+class MChatBadgeDialog constructor(): BaseFragmentDialog<MchatDialogSelectBadgeBinding>() {
 
     private lateinit var badgeArray: TypedArray
     private var defaultBadge = R.drawable.mchat_badge_level0
@@ -31,6 +31,12 @@ class MChatBadgeDialog : BaseFragmentDialog<MchatDialogSelectBadgeBinding>() {
 
     private var badgeAdapter: BaseRecyclerAdapter<MchatItemBadgeListBinding, Int, MChatBadgeViewHolder>? =
         null
+
+    private var confirmCallback: ((selBadgeIndex: Int) -> Unit)? = null
+
+    fun setConfirmCallback(confirmCallback: ((selBadgeIndex: Int) -> Unit)) = apply{
+        this.confirmCallback = confirmCallback
+    }
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogSelectBadgeBinding {
         return MchatDialogSelectBadgeBinding.inflate(inflater)
@@ -61,17 +67,19 @@ class MChatBadgeDialog : BaseFragmentDialog<MchatDialogSelectBadgeBinding>() {
             }
         }, MChatBadgeViewHolder::class.java)
         badgeAdapter?.selectedIndex = selBadgeIndex
-        binding.rvBadge.apply {
-            addItemDecoration(
-                MaterialDividerItemDecoration(binding.root.context, MaterialDividerItemDecoration.HORIZONTAL).apply {
-                    dividerThickness = DeviceTools.dp2px(16).toInt()
-                    dividerColor = Color.TRANSPARENT
-                })
-            layoutManager = GridLayoutManager(binding.root.context, 3)
-            adapter = badgeAdapter
+        binding?.apply {
+            binding?.rvBadge?.apply {
+                addItemDecoration(
+                    MaterialDividerItemDecoration(root.context, MaterialDividerItemDecoration.HORIZONTAL).apply {
+                        dividerThickness = DeviceTools.dp2px(16).toInt()
+                        dividerColor = Color.TRANSPARENT
+                    })
+                layoutManager = GridLayoutManager(root.context, 3)
+                adapter = badgeAdapter
+            }
+            mbLeft.setOnClickListener(OnIntervalClickListener(this@MChatBadgeDialog::onClickCancel))
+            mbRight.setOnClickListener(OnIntervalClickListener(this@MChatBadgeDialog::onClickConfirm))
         }
-        binding.mbLeft.setOnClickListener(OnIntervalClickListener(this::onClickCancel))
-        binding.mbRight.setOnClickListener(OnIntervalClickListener(this::onClickConfirm))
     }
 
     private fun onClickCancel(view: View) {

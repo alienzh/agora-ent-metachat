@@ -43,9 +43,14 @@ object MChatKeyCenter {
     }
 
     /**
-     * 用户id
+     * rtc uid
      */
-    val curUserId: Int = getUserId()
+    val curUid: Int = getUserId()
+
+    /**
+     * im uid
+     */
+    val imUid: String = getUserId().toString()
 
     val imPassword: String = "12345678"
 
@@ -58,7 +63,7 @@ object MChatKeyCenter {
     init {
         try {
             RTM_TOKEN = RtmTokenBuilder().buildToken(
-                RTC_APP_ID, RTC_APP_CERT, curUserId.toString(),
+                RTC_APP_ID, RTC_APP_CERT, curUid.toString(),
                 RtmTokenBuilder.Role.Rtm_User, 0
             )
         } catch (e: Exception) {
@@ -71,7 +76,7 @@ object MChatKeyCenter {
         var rtcToken: String = ""
         try {
             rtcToken = RtcTokenBuilder().buildTokenWithUid(
-                RTC_APP_ID, RTC_APP_CERT, channelId, curUserId,
+                RTC_APP_ID, RTC_APP_CERT, channelId, curUid,
                 RtcTokenBuilder.Role.Role_Publisher, 0
             )
         } catch (e: Exception) {

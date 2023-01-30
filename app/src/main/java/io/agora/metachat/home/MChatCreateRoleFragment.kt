@@ -1,10 +1,15 @@
 package io.agora.metachat.home
 
+import android.app.Activity
 import android.content.res.TypedArray
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -76,6 +81,14 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     }
 
     private var downloadDialog: MChatDownloadDialog? = null
+
+    private val actLaunch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { actResult->
+        if (actResult.resultCode == Activity.RESULT_OK){
+            // 进入游戏成功,回到列表页面
+            LogTools.d("go game success navigate to roomListFragment")
+            findNavController().navigate(R.id.action_crateRoomFragment_to_roomListFragment)
+        }
+    }
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatFragmentCreateRoleBinding? {
         return MchatFragmentCreateRoleBinding.inflate(inflater)
@@ -158,7 +171,11 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             if (it) {
                 CommonFragmentAlertDialog()
                     .titleText(resources.getString(R.string.mchat_download_title))
-                    .contentText(resources.getString(R.string.mchat_download_content, "350M")) // todo
+                    .contentText(
+                        resources.getString(
+                            R.string.mchat_download_content, MChatConstant.KEY_UNITY_RESOURCES_SIZE
+                        )
+                    )
                     .leftText(resources.getString(R.string.mchat_download_next_time))
                     .rightText(resources.getString(R.string.mchat_download_now))
                     .setOnClickListener(object : CommonFragmentAlertDialog.OnClickBottomListener {
@@ -180,7 +197,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
                 downloadDialog = null
                 return@observe
             }
-            if (it>0){
+            if (it > 0) {
                 downloadDialog?.updateProgress(it)
             }
         }
@@ -229,7 +246,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             return
         }
         showLoading(false)
-        MChatContext.instance().initRoleInfo(nickname,gender)
+        MChatContext.instance().initRoleInfo(nickname, gender)
         MChatContext.instance().getRoleInfo()?.avatar = "" // todo
         mChatViewModel.getScenes()
     }
@@ -238,9 +255,11 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         val nickname = binding.etNickname.text?.toString() ?: ""
         activity?.let {
             MChatVirtualAvatarActivity.startActivity(
+                actLaunch,
                 context = it,
                 isCreate = isFromCreate,
                 roomName = roomName,
+                roomId = roomId,
                 roomCoverIndex = roomCoverIndex,
                 roomPassword = roomPassword,
                 nickName = nickname,
@@ -249,10 +268,6 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
                 gender = gender
             )
         }
-    }
-
-    private fun beforeStartGameTask(callback: (error: Int) -> Unit) {
-
     }
 
     override fun onResume() {

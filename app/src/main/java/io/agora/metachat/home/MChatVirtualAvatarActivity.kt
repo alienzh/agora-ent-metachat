@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.DrawableRes
 import androidx.core.view.*
 import androidx.lifecycle.ViewModelProvider
@@ -34,12 +35,22 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     companion object {
 
         fun startActivity(
-            context: Context, isCreate: Boolean, roomName: String, roomCoverIndex: Int, roomPassword: String,
-            nickName: String, portraitIndex: Int, badgeIndex: Int, gender: Int
+            launcher: ActivityResultLauncher<Intent>,
+            context: Context,
+            isCreate: Boolean,
+            roomName: String,
+            roomId: String,
+            roomCoverIndex: Int,
+            roomPassword: String,
+            nickName: String,
+            portraitIndex: Int,
+            badgeIndex: Int,
+            gender: Int
         ) {
             val intent = Intent(context, MChatVirtualAvatarActivity::class.java).apply {
                 putExtra(MChatConstant.Params.KEY_IS_CREATE, isCreate)
                 putExtra(MChatConstant.Params.KEY_ROOM_NAME, roomName)
+                putExtra(MChatConstant.Params.KEY_ROOM_ID, roomId)
                 putExtra(MChatConstant.Params.KEY_ROOM_COVER_INDEX, roomCoverIndex)
                 putExtra(MChatConstant.Params.KEY_ROOM_PASSWORD, roomPassword)
                 putExtra(MChatConstant.Params.KEY_NICKNAME, nickName)
@@ -47,7 +58,7 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
                 putExtra(MChatConstant.Params.KEY_BADGE_INDEX, badgeIndex)
                 putExtra(MChatConstant.Params.KEY_GENDER, gender)
             }
-            context.startActivity(intent)
+            launcher.launch(intent)
         }
     }
 
@@ -140,20 +151,25 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     }
 
     private fun roomObservable() {
-        mChatViewModel.createRoomObservable().observe(this){
-            mChatViewModel.joinRoom(it.roomId,it.password)
+        mChatViewModel.createRoomObservable().observe(this) {
+            mChatViewModel.joinRoom(it.roomId, it.password)
         }
-        mChatViewModel.joinRoomObservable().observe(this){
+        mChatViewModel.joinRoomObservable().observe(this) { joinOutput ->
             dismissLoading()
-            MChatGameActivity.startActivity(
-                context = this,
-                roomId = it.roomId,
-                nickName = nickName,
-                portraitIndex = portraitIndex,
-                badgeIndex = badgeIndex,
-                gender = userGender,
-                virtualAvatarIndex = selVirtualAvatarIndex
-            )
+            if (joinOutput != null) {
+                setResult(RESULT_OK)
+                finish()
+                MChatGameActivity.startActivity(
+                    context = this,
+                    roomId = joinOutput.roomId,
+                    nickName = nickName,
+                    portraitIndex = portraitIndex,
+                    badgeIndex = badgeIndex,
+                    gender = userGender,
+                    virtualAvatarIndex = selVirtualAvatarIndex
+                )
+            } else {
+            }
         }
     }
 

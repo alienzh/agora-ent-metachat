@@ -5,8 +5,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogDownloadBinding
+import io.agora.metachat.global.MChatConstant
 
 /**
  * @author create by zhangwei03
@@ -29,8 +31,12 @@ class MChatDownloadDialog constructor() : BaseFragmentDialog<MchatDialogDownload
     }
 
     private fun initView() {
-        binding?.mbCancel?.setOnClickListener {
-            cancelCallback?.invoke()
+        binding?.apply {
+            mbCancel.setOnClickListener {
+                cancelCallback?.invoke()
+            }
+            mtContent.text =
+                resources.getString(R.string.mchat_download_content, MChatConstant.KEY_UNITY_RESOURCES_SIZE)
         }
     }
 

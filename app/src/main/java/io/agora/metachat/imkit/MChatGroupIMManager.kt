@@ -1,11 +1,9 @@
 package io.agora.metachat.imkit
 
 import android.content.Context
-import com.hyphenate.EMCallBack
-import com.hyphenate.EMConnectionListener
-import com.hyphenate.EMGroupChangeListener
-import com.hyphenate.EMMessageListener
+import com.hyphenate.*
 import com.hyphenate.chat.*
+import com.hyphenate.chat.EMGroupManager.EMGroupStyle
 import com.hyphenate.chat.adapter.EMAError
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.service.MChatServiceProtocol
@@ -26,6 +24,7 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
 
     companion object {
         private const val TAG = "MChatroomIMManager"
+        private const val GROUP_MAX_USERS = 20 // 群组默认最大20人
 
         private val groupIMManager by lazy {
             MChatGroupIMManager()
@@ -53,31 +52,23 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
     }
 
     /**
-     * 需要在详情页初始化，防止groupId 为空或者不正确
-     */
-    fun initGroup(groupId: String, ownerId: String) {
-        this.groupId = groupId
-        this.ownerId = ownerId
-        // 注册消息监听
-        EMClient.getInstance().chatManager().addMessageListener(this)
-        // 注册群组监听
-        EMClient.getInstance().groupManager().addGroupChangeListener(this)
-    }
-
-    /**
      * 创建房间或者加入房间前需要创建环信账号(如果本地没有的话)，登录环信IM
      * @param loginCallBack on io thread
+     *  <-- http://docs-im-beta.easemob.com/document/android/overview.html -->
      */
-    fun beforeCreateOrJoinRoomLoginTask(loginCallBack: (error: Int) -> Unit) {
+    fun loginIMTask(loginCallBack: (error: Int) -> Unit) {
         ThreadTools.get().runOnIOThread {
-            val imUid = MChatKeyCenter.curUserId.toString()
+            val imUid = MChatKeyCenter.imUid
             val imPassword = MChatKeyCenter.imPassword
             // 本地没有账号则创建im 账号
             if (!MChatKeyCenter.accountCreated()) {
                 try {
                     EMClient.getInstance().createAccount(imUid, imPassword)
+                    MChatKeyCenter.setAccountCreated()
                 } catch (e: Exception) {
                     LogTools.e(TAG, "im create account error:${e.message}")
+                    loginCallBack.invoke(MChatServiceProtocol.ERR_CREATE_ACCOUNT_ERROR)
+                    return@runOnIOThread
                 }
             }
             EMClient.getInstance().login(imUid, imPassword, object : EMCallBack {
@@ -97,6 +88,116 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
                 }
             })
         }
+    }
+
+    /**
+     * 创建群组
+     * @param createCallBack 异步回调
+     * <-- http://docs-im-beta.easemob.com/document/android/group_manage.html -->
+     */
+    fun createGroupTask(groupName: String, createCallBack: (groupId: String, error: Int) -> Unit) {
+        val option = EMGroupOptions().apply {
+            maxUsers = GROUP_MAX_USERS
+            style = EMGroupStyle.EMGroupStylePublicOpenJoin
+        }
+        EMClient.getInstance().groupManager().asyncCreateGroup(groupName, null, emptyArray(), null, option, object :
+            EMValueCallBack<EMGroup> {
+            override fun onSuccess(value: EMGroup) {
+                val groupId = value.groupId
+                LogTools.d(TAG, "im create group success:${value.groupName},$groupId")
+                createCallBack.invoke(groupId, MChatServiceProtocol.ERR_CREATE_GROUP_SUCCESS)
+            }
+
+            override fun onError(code: Int, errorMsg: String?) {
+                LogTools.e(TAG, "im create group failed code:$code,errorMsg:$errorMsg")
+                createCallBack.invoke("", MChatServiceProtocol.ERR_CREATE_GROUP_ERROR)
+            }
+        })
+    }
+
+    /**
+     * 加入群组
+     * @param groupId 群组id
+     * @param ownerId 房主id
+     * @param joinGroupCallback 异步回调
+     */
+    fun joinGroupTask(groupId: String, ownerId: String, joinGroupCallback: (error: Int) -> Unit) {
+        loginIMTask { loginResult ->
+            if (loginResult == MChatServiceProtocol.ERR_LOGIN_SUCCESS) {
+                EMClient.getInstance().groupManager().asyncJoinGroup(groupId, object : EMCallBack {
+                    override fun onSuccess() {
+                        this@MChatGroupIMManager.groupId = groupId
+                        this@MChatGroupIMManager.ownerId = ownerId
+                        // 注册消息监听
+                        EMClient.getInstance().chatManager().addMessageListener(this@MChatGroupIMManager)
+                        // 注册群组监听
+                        EMClient.getInstance().groupManager().addGroupChangeListener(this@MChatGroupIMManager)
+                        LogTools.e(TAG, "im join group success")
+                        joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_SUCCESS)
+                    }
+
+                    override fun onError(code: Int, errorMsg: String?) {
+                        if (code == EMAError.GROUP_ALREADY_JOINED) {
+                            LogTools.e(TAG, "User already joined the group")
+                            joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_SUCCESS)
+                        } else {
+                            LogTools.e(TAG, "im join group failed code:$code,errorMsg:$errorMsg")
+                            joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_ERROR)
+                        }
+                    }
+                })
+            } else {
+                joinGroupCallback.invoke(loginResult)
+            }
+        }
+    }
+
+    /**
+     * 离开群组，普通用户退出群组，房主离开则解散群组
+     */
+    fun leaveGroupTask() {
+        if (checkEmptyGroup()) return
+        if (ownerId.isNotEmpty() && ownerId == MChatKeyCenter.imUid) { // 房主
+            EMClient.getInstance().groupManager().asyncDestroyGroup(groupId, object : EMCallBack {
+                override fun onSuccess() {
+                    LogTools.d(TAG, "im destroy group success:$groupId")
+                    reset()
+                }
+
+                override fun onError(code: Int, error: String?) {
+                    LogTools.d(TAG, "im destroy group failed code:$code,error:$error")
+                }
+            })
+        } else {
+            EMClient.getInstance().groupManager().asyncLeaveGroup(groupId, object : EMCallBack {
+                override fun onSuccess() {
+                    LogTools.d(TAG, "im leave group success:$groupId")
+                    reset()
+                }
+
+                override fun onError(code: Int, error: String?) {
+                    LogTools.d(TAG, "im leave group failed code:$code,error:$error")
+                }
+            })
+        }
+    }
+
+    private fun checkEmptyGroup(): Boolean {
+        if (groupId.isEmpty()) {
+            LogTools.e(TAG, "group id is null!")
+            return true
+        }
+        return false
+    }
+
+    fun reset() {
+        // 移除消息监听
+        EMClient.getInstance().chatManager().removeMessageListener(this)
+        // 移除群组监听
+        EMClient.getInstance().groupManager().removeGroupChangeListener(this)
+        allNormalList.clear()
+        groupId = ""
+        ownerId = ""
     }
 
     //--------------------Connection start-----------------

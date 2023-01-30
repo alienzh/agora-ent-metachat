@@ -1,6 +1,9 @@
 package io.agora.metachat.service
 
 import android.content.Context
+import com.hyphenate.chat.EMClient
+import com.hyphenate.chat.EMGroupManager.EMGroupStyle
+import com.hyphenate.chat.EMGroupOptions
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.imkit.MChatGroupIMManager
 import io.agora.metachat.imkit.MChatSubscribeDelegate
@@ -10,7 +13,7 @@ import io.agora.metachat.tools.ThreadTools
 import io.agora.syncmanager.rtm.*
 import io.agora.syncmanager.rtm.Sync.DataListCallback
 import io.agora.syncmanager.rtm.Sync.JoinSceneCallback
-import kotlin.random.Random
+
 
 /**
  * @author create by zhangwei03
@@ -169,47 +172,56 @@ class MChatSyncManagerServiceImp constructor(
         inputModel: MChatCreateRoomInputModel, completion: (error: Int, result: MChatCreateRoomOutputModel?) -> Unit
     ) {
         // 1、根据用户输入信息创建房间信息
-        val currentMilliseconds = System.currentTimeMillis()
         val chatRoomModel = MChatRoomModel().apply {
-            roomId = currentMilliseconds.toString()
             isPrivate = inputModel.isPrivate
             roomName = inputModel.roomName
             roomCoverIndex = inputModel.roomCoverIndex
-            createdAt = currentMilliseconds
             roomPassword = inputModel.password
-            ownerId = MChatKeyCenter.curUserId
+            ownerId = MChatKeyCenter.curUid
         }
         // 2.登录环信IM
-        MChatGroupIMManager.instance().beforeCreateOrJoinRoomLoginTask {
-            if (it == MChatServiceProtocol.ERR_LOGIN_SUCCESS) {
+        MChatGroupIMManager.instance().loginIMTask { loginResult ->
+            if (loginResult == MChatServiceProtocol.ERR_LOGIN_SUCCESS) {
                 // 3、创建群组
-                initScene {
-                    val scene = Scene().apply {
-                        id = chatRoomModel.roomId
-                        userId = chatRoomModel.ownerId.toString()
-                        property = GsonTools.beanToMap(chatRoomModel)
-                    }
-                    Sync.Instance().createScene(scene, object : Sync.Callback {
-                        override fun onSuccess() {
-                            LogTools.d(TAG, "syncManager createScene success sceneId:${scene.id}")
-                            roomMap[chatRoomModel.roomId] = chatRoomModel
-                            ThreadTools.get().runOnMainThread {
-                                val ret = MChatCreateRoomOutputModel(chatRoomModel.roomId, chatRoomModel.roomPassword)
-                                completion.invoke(MChatServiceProtocol.ERR_OK, ret)
+                MChatGroupIMManager.instance().createGroupTask(inputModel.roomName) { groupId, createResult ->
+                    if (createResult == MChatServiceProtocol.ERR_CREATE_GROUP_SUCCESS) {
+                        // 4、创建syncManager 房间
+                        chatRoomModel.roomId = groupId
+                        chatRoomModel.createdAt = System.currentTimeMillis()
+                        initScene {
+                            val scene = Scene().apply {
+                                id = chatRoomModel.roomId
+                                userId = chatRoomModel.ownerId.toString()
+                                property = GsonTools.beanToMap(chatRoomModel)
                             }
-                        }
+                            Sync.Instance().createScene(scene, object : Sync.Callback {
+                                override fun onSuccess() {
+                                    LogTools.d(TAG, "syncManager createScene success sceneId:${scene.id}")
+                                    roomMap[chatRoomModel.roomId] = chatRoomModel
+                                    ThreadTools.get().runOnMainThread {
+                                        val ret =
+                                            MChatCreateRoomOutputModel(chatRoomModel.roomId, chatRoomModel.roomPassword)
+                                        completion.invoke(MChatServiceProtocol.ERR_OK, ret)
+                                    }
+                                }
 
-                        override fun onFail(e: SyncManagerException?) {
-                            LogTools.d(TAG, "syncManager createScene failed sceneId:${scene.id},${e?.message}")
-                            ThreadTools.get().runOnMainThread {
-                                completion.invoke(MChatServiceProtocol.ERR_OK, null)
-                            }
+                                override fun onFail(e: SyncManagerException?) {
+                                    LogTools.d(TAG, "syncManager createScene failed sceneId:${scene.id},${e?.message}")
+                                    ThreadTools.get().runOnMainThread {
+                                        completion.invoke(MChatServiceProtocol.ERR_FAILED, null)
+                                    }
+                                }
+                            })
                         }
-                    })
+                    } else {
+                        ThreadTools.get().runOnMainThread {
+                            completion.invoke(MChatServiceProtocol.ERR_OK, null)
+                        }
+                    }
                 }
             } else {
                 ThreadTools.get().runOnMainThread {
-                    completion.invoke(MChatServiceProtocol.ERR_PASSWORD_ERROR, null)
+                    completion.invoke(loginResult, null)
                 }
             }
         }
@@ -219,6 +231,7 @@ class MChatSyncManagerServiceImp constructor(
         inputModel: MChatJoinRoomInputModel, completion: (error: Int, result: MChatJoinRoomOutputModel?) -> Unit
     ) {
         initScene {
+            //1. check room
             val curRoomInfo = roomMap[inputModel.roomId]
             if (curRoomInfo == null) {
                 LogTools.e(TAG, "joinRoom The room is not existent ")
@@ -230,9 +243,11 @@ class MChatSyncManagerServiceImp constructor(
                 completion.invoke(MChatServiceProtocol.ERR_PASSWORD_ERROR, null)
                 return@initScene
             }
+            //2. join scene
             Sync.Instance().joinScene(inputModel.roomId, object : JoinSceneCallback {
                 override fun onSuccess(sceneReference: SceneReference?) {
                     mSceneReference = sceneReference
+                    currRoomId = inputModel.roomId
                     LogTools.d(TAG, "joinRoom success:${sceneReference?.id}")
                     curRoomInfo.memberCount = curRoomInfo.memberCount + 1
                     val updateMap = hashMapOf<String, Any>().apply {
@@ -242,15 +257,25 @@ class MChatSyncManagerServiceImp constructor(
                         override fun onSuccess(result: IObject?) {
                             LogTools.d(TAG, "joinRoom update success:${result?.id}")
                             resetCacheInfo(currRoomId, false)
-                            ThreadTools.get().runOnMainThread {
-                                val outputModel = MChatJoinRoomOutputModel().apply {
-                                    roomId = inputModel.roomId
-                                    roomName = curRoomInfo.roomName
-                                    roomIconIndex = curRoomInfo.roomCoverIndex
-                                    ownerId = curRoomInfo.ownerId
+                            //3. join im group
+                            MChatGroupIMManager.instance()
+                                .joinGroupTask(inputModel.roomId, curRoomInfo.ownerId.toString()) { joinGroupResult ->
+                                    if (joinGroupResult == MChatServiceProtocol.ERR_JOIN_GROUP_SUCCESS) {
+                                        ThreadTools.get().runOnMainThread {
+                                            val outputModel = MChatJoinRoomOutputModel().apply {
+                                                roomId = inputModel.roomId
+                                                roomName = curRoomInfo.roomName
+                                                roomIconIndex = curRoomInfo.roomCoverIndex
+                                                ownerId = curRoomInfo.ownerId
+                                            }
+                                            completion.invoke(MChatServiceProtocol.ERR_OK, outputModel)
+                                        }
+                                    } else {
+                                        ThreadTools.get().runOnMainThread {
+                                            completion.invoke(MChatServiceProtocol.ERR_FAILED, null)
+                                        }
+                                    }
                                 }
-                                completion.invoke(MChatServiceProtocol.ERR_OK, outputModel)
-                            }
                         }
 
                         override fun onFail(e: SyncManagerException?) {
@@ -275,7 +300,7 @@ class MChatSyncManagerServiceImp constructor(
 
     override fun leaveRoom(completion: (error: Int) -> Unit) {
         val curRoomInfo = roomMap[currRoomId] ?: return
-        if (curRoomInfo.ownerId == MChatKeyCenter.curUserId) {
+        if (curRoomInfo.ownerId == MChatKeyCenter.curUid) {
             // 移除房间
             mSceneReference?.delete(object : Sync.Callback {
                 override fun onSuccess() {

@@ -20,10 +20,15 @@ interface MChatServiceProtocol {
     companion object {
         const val ERR_OK = 0
         const val ERR_FAILED = 1
-        const val ERR_LOGIN_ERROR = 2
-        const val ERR_LOGIN_SUCCESS = 3
-        const val ERR_GROUP_UNAVAILABLE = 4
-        const val ERR_PASSWORD_ERROR = 5
+        const val ERR_CREATE_ACCOUNT_ERROR = 2
+        const val ERR_LOGIN_ERROR = 3
+        const val ERR_LOGIN_SUCCESS = 4
+        const val ERR_GROUP_UNAVAILABLE = 5
+        const val ERR_PASSWORD_ERROR = 6
+        const val ERR_CREATE_GROUP_ERROR = 7
+        const val ERR_CREATE_GROUP_SUCCESS = 8
+        const val ERR_JOIN_GROUP_ERROR = 9
+        const val ERR_JOIN_GROUP_SUCCESS = 10
 
         private val instance by lazy {
             MChatSyncManagerServiceImp(MChatApp.instance()) { error ->

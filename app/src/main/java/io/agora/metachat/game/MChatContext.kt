@@ -12,6 +12,7 @@ import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.tools.GsonTools
 import io.agora.metachat.tools.LogTools
+import io.agora.metachat.tools.ThreadTools
 import io.agora.rtc2.ChannelMediaOptions
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
@@ -91,7 +92,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
                     mAppId = MChatKeyCenter.RTC_APP_ID
                     mRtmToken = MChatKeyCenter.RTM_TOKEN
                     mLocalDownloadPath = context.filesDir?.path ?: ""
-                    mUserId = MChatKeyCenter.curUserId.toString()
+                    mUserId = MChatKeyCenter.curUid.toString()
                     mEventHandler = this@MChatContext
                 }
                 ret += metaChatService?.initialize(config) ?: -1
@@ -109,6 +110,16 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     }
 
     fun destroy() {
+        if (ThreadTools.get().isMainThread){
+            innerDestroy()
+        }else{
+            ThreadTools.get().runOnMainThread {
+                innerDestroy()
+            }
+        }
+    }
+
+    private fun innerDestroy(){
         IMetachatService.destroy()
         metaChatService = null
         RtcEngine.destroy()
@@ -376,7 +387,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         if (errorCode == 0) {
             isInScene = true
             rtcEngine?.joinChannel(
-                MChatKeyCenter.getRtcToken(roomName), roomName, MChatKeyCenter.curUserId,
+                MChatKeyCenter.getRtcToken(roomName), roomName, MChatKeyCenter.curUid,
                 ChannelMediaOptions().apply {
                     autoSubscribeAudio = true
                     clientRoleType = Constants.CLIENT_ROLE_BROADCASTER
@@ -426,7 +437,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         )
         spatialAudioEngine?.let {
             val userId = uid?.toIntOrNull() ?: -1
-            if (MChatKeyCenter.curUserId == userId) {
+            if (MChatKeyCenter.curUid == userId) {
                 it.updateSelfPosition(posInfo.mPosition, posInfo.mForward, posInfo.mRight, posInfo.mUp)
             } else if (mJoinedRtc) {
                 it.updateRemotePosition(userId, RemoteVoicePositionInfo().apply {

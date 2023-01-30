@@ -125,7 +125,7 @@ class MChatRoomCreateViewModel : ViewModel(), IMetachatEventHandler {
                 mSyncPosition = false
             }
         }, MetachatUserInfo().apply {
-            mUserId = MChatKeyCenter.curUserId.toString()
+            mUserId = MChatKeyCenter.curUid.toString()
             mUserName = mchatContext.getRoleInfo()?.name ?: mUserId
             mUserIconUrl = mchatContext.getRoleInfo()?.avatar ?: MChatConstant.DEFAULT_PORTRAIT
         })

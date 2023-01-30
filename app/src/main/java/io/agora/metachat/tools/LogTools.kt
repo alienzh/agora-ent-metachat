@@ -10,7 +10,7 @@ import io.agora.metachat.tools.internal.EntLogger
  */
 object LogTools {
 
-    private const val TAG = "MChat-Android"
+    private const val TAG = "MChat"
 
     private val entLogger = EntLogger(EntLogger.Config("MChat"))
 

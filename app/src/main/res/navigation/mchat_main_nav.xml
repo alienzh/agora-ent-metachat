@@ -45,5 +45,14 @@
         android:id="@+id/crateRoleFragment"
         android:name="io.agora.metachat.home.MChatCreateRoleFragment"
         android:label="MChatCreateRoleFragment"
-        tools:layout="@layout/mchat_fragment_create_role" />
+        tools:layout="@layout/mchat_fragment_create_role" >
+
+        <action
+            android:id="@+id/action_crateRoomFragment_to_roomListFragment"
+            app:destination="@id/roomListFragment"
+            app:enterAnim="@anim/mchat_slide_in_right"
+            app:exitAnim="@anim/mchat_slide_out_left"
+            app:popEnterAnim="@anim/mchat_slide_in_left"
+            app:popExitAnim="@anim/mchat_slide_out_right" />
+    </fragment>
 </navigation>

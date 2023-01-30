@@ -37,6 +37,7 @@ object MChatConstant {
     const val DEFAULT_PORTRAIT = "https://accpic.sd-rtn.com/pic/test/png/2.png"
     const val PLAY_ADVERTISING_VIDEO_REPEAT = -1
     const val KEY_UNITY_MESSAGE_DRESS_SETTING = "dressSetting"
+    const val KEY_UNITY_RESOURCES_SIZE = "350M"
 
     private const val badgeUrl0 =
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_0.png"
@@ -44,7 +45,6 @@ object MChatConstant {
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_1.png"
     private const val badgeUrl2 =
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_2.png"
-
     fun getBadgeUrl(badgeIndex: Int): String {
         return when (badgeIndex) {
             0 -> badgeUrl0

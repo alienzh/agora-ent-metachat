@@ -44,6 +44,7 @@ class MChatBadgeDialog constructor(): BaseFragmentDialog<MchatDialogSelectBadgeB
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog?.setCanceledOnTouchOutside(false)
         initData()
         initView()
     }

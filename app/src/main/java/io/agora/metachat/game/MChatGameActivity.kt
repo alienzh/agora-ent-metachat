@@ -9,14 +9,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.TextureView
 import android.view.TextureView.SurfaceTextureListener
+import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
+import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiActivity
 import io.agora.metachat.databinding.MchatActivityGameBinding
+import io.agora.metachat.game.dialog.MChatBeginnerDialog
+import io.agora.metachat.game.dialog.MChatMessageDialog
+import io.agora.metachat.game.dialog.MChatSettingsDialog
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.tools.LogTools
+import io.agora.metachat.tools.ToastTools
+import io.agora.metachat.widget.OnIntervalClickListener
 import pub.devrel.easypermissions.EasyPermissions
 import pub.devrel.easypermissions.PermissionRequest
 
@@ -60,6 +68,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private var mReCreateScene = false
     private var mSurfaceSizeChange = false
 
+    private var messageDialog: MChatMessageDialog? = null
+
     override fun getViewBinding(inflater: LayoutInflater): MchatActivityGameBinding {
         return MchatActivityGameBinding.inflate(inflater)
     }
@@ -69,20 +79,10 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         insetsController.hide(WindowInsetsCompat.Type.systemBars())
         super.onCreate(savedInstanceState)
         gameViewModel = ViewModelProvider(this).get(MChatGameViewModel::class.java)
-        gameViewModel.resetSceneState()
+        initView()
         requestPermission()
-        initUnityView()
         gameObservable()
-    }
-
-    private fun gameObservable() {
-        gameViewModel.isEnterSceneObservable().observe(this){}
-        gameViewModel.enableMicObservable().observe(this){}
-        gameViewModel.enableSpeakerObservable().observe(this){}
-        gameViewModel.isBroadcasterObservable().observe(this){}
-        gameViewModel.exitGameObservable().observe(this){
-            finish()
-        }
+        initUnityView()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -95,6 +95,63 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
     }
 
+    private fun initView() {
+        binding.tvMicOnline.setOnClickListener(OnIntervalClickListener(this::onClickMicOnline))
+        binding.ivMuteRemote.setOnClickListener(OnIntervalClickListener(this::onClickMuteRemote))
+        binding.ivMuteLocal.setOnClickListener(OnIntervalClickListener(this::onClickMuteLocal))
+        binding.ivSettings.setOnClickListener(OnIntervalClickListener(this::onClickSettings))
+        binding.ivMsg.setOnClickListener(OnIntervalClickListener(this::onClickMsg))
+        binding.tvVisitorMode.setOnClickListener(OnIntervalClickListener(this::onClickVisitor))
+        binding.tvNoviceGuide.setOnClickListener(OnIntervalClickListener(this::onClickNovice))
+    }
+
+    // 上下麦
+    private fun onClickMicOnline(view: View) {
+        ToastTools.showCommon("onClickMicOnline")
+        gameViewModel.sendOnlineEvent()
+    }
+
+    // 禁远端
+    private fun onClickMuteRemote(view: View) {
+        ToastTools.showCommon("onClickMuteRemote")
+        gameViewModel.sendMuteRemoteEvent()
+    }
+
+    // 禁本地
+    private fun onClickMuteLocal(view: View) {
+        ToastTools.showCommon("onClickMuteLocal")
+        gameViewModel.sendMuteLocalEvent()
+    }
+
+    // 设置
+    private fun onClickSettings(view: View) {
+        MChatSettingsDialog().show(supportFragmentManager, "settings dialog")
+    }
+
+    // 聊天
+    private fun onClickMsg(view: View) {
+        ToastTools.showCommon("onClickMsg")
+        if (messageDialog == null) {
+            messageDialog = MChatMessageDialog()
+        }
+        messageDialog?.show(supportFragmentManager, "message dialog")
+    }
+
+    // 游客模式说明
+    private fun onClickVisitor(view: View) {
+        // 上麦就是语聊模式，不显示游客模式弹框
+        if (gameViewModel.onlineMicObservable().value == true) return
+        ToastTools.showCommon("onClickVisitor")
+        MChatBeginnerDialog(MChatBeginnerDialog.VISITOR_TYPE).show(supportFragmentManager, "visitor dialog")
+    }
+
+    // 新手引导说明
+    private fun onClickNovice(view: View) {
+        ToastTools.showCommon("onClickNovice")
+        MChatBeginnerDialog(MChatBeginnerDialog.NOVICE_TYPE).show(supportFragmentManager, "novice dialog")
+    }
+
+    // 申请麦克风权限
     private fun requestPermission() {
         val perms = arrayOf(Manifest.permission.RECORD_AUDIO)
         if (EasyPermissions.hasPermissions(this, *perms)) {
@@ -102,6 +159,30 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         } else {
             // Do not have permissions, request them now
             EasyPermissions.requestPermissions(PermissionRequest.Builder(this, RC_PERMISSIONS, *perms).build())
+        }
+    }
+
+    private fun gameObservable() {
+        gameViewModel.isEnterSceneObservable().observe(this) {}
+        gameViewModel.onlineMicObservable().observe(this) {
+            if (it) {
+                binding.layoutUser.setBackgroundResource(R.drawable.mchat_bg_rect_radius18_gradient_pure)
+                binding.tvMicOnline.setBackgroundResource(R.drawable.mchat_bg_rect_radius14_stroke_white15)
+                binding.ivMuteLocal.isVisible = true
+            } else {
+                binding.layoutUser.setBackgroundResource(R.drawable.mchat_bg_rect_radius18_black40)
+                binding.tvMicOnline.setBackgroundResource(R.drawable.mchat_bg_rect_radius14_purple)
+                binding.ivMuteLocal.isVisible = false
+            }
+        }
+        gameViewModel.muteRemoteObservable().observe(this) {
+            binding.ivMuteRemoteFlag.isVisible = !it
+        }
+        gameViewModel.muteLocalObservable().observe(this) {
+            binding.ivMuteLocalFlag.isVisible = !it
+        }
+        gameViewModel.exitGameObservable().observe(this) {
+            finish()
         }
     }
 
@@ -128,9 +209,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                 ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             binding.unityContainer.addView(it, layoutParams)
         }
-
     }
-
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)

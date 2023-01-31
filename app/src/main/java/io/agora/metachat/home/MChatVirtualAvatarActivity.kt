@@ -180,14 +180,10 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
         } else {
             mChatViewModel.joinRoom(roomId, roomPassword)
         }
-        // TODO: test
-//        MChatBeginnerDialog(MChatBeginnerDialog.BEGINNER_TYPE).show(supportFragmentManager,"beginner")
     }
 
     private fun onClickBack(view: View) {
         finish()
-        // TODO: test
-//        MChatBeginnerDialog(MChatBeginnerDialog.VISITOR_TYPE).show(supportFragmentManager,"visitor")
     }
 
     override fun onDestroy() {

@@ -9,6 +9,7 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogDownloadBinding
 import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.widget.OnIntervalClickListener
 
 /**
  * @author create by zhangwei03
@@ -27,18 +28,22 @@ class MChatDownloadDialog constructor() : BaseFragmentDialog<MchatDialogDownload
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog?.setCanceledOnTouchOutside(false)
         initView()
     }
 
     private fun initView() {
-        binding?.apply {
-            mbCancel.setOnClickListener {
-                cancelCallback?.invoke()
-            }
-            mtContent.text =
+        binding?.let {
+            it.mbCancel.setOnClickListener(OnIntervalClickListener(this::onClickCancel))
+            it.mtContent.text =
                 resources.getString(R.string.mchat_download_content, MChatConstant.KEY_UNITY_RESOURCES_SIZE)
         }
     }
+
+    private fun onClickCancel(view: View) {
+        cancelCallback?.invoke()
+    }
+
 
     fun updateProgress(progress: Int) {
         if (progress < 0 || progress > 100) return

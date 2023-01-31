@@ -20,10 +20,12 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
     private lateinit var chatServiceProtocol: MChatServiceProtocol
     private var groupId: String = ""
     private var ownerId: String = ""
-    private val allNormalList = mutableListOf<ChatMessageData>()
+    private val allNormalList = mutableListOf<MChatMessageModel>()
 
     companion object {
         private const val TAG = "MChatroomIMManager"
+        private const val KEY_NICKNAME = "nickname"
+        private const val KEY_PORTRAIT_INDEX = "portrait_index"
         private const val GROUP_MAX_USERS = 20 // 群组默认最大20人
 
         private val groupIMManager by lazy {
@@ -32,6 +34,12 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
 
         @JvmStatic
         fun instance(): MChatGroupIMManager = groupIMManager
+    }
+
+    fun getAllMsgList():List<MChatMessageModel> = allNormalList
+
+    fun isRoomOwner(): Boolean {
+        return ownerId.isNotEmpty() && ownerId == MChatKeyCenter.imUid
     }
 
     fun initConfig(context: Context, imKey: String) {
@@ -157,7 +165,7 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
      */
     fun leaveGroupTask() {
         if (checkEmptyGroup()) return
-        if (ownerId.isNotEmpty() && ownerId == MChatKeyCenter.imUid) { // 房主
+        if (isRoomOwner()) { // 房主
             EMClient.getInstance().groupManager().asyncDestroyGroup(groupId, object : EMCallBack {
                 override fun onSuccess() {
                     LogTools.d(TAG, "im destroy group success:$groupId")
@@ -236,31 +244,55 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
             val message = parseChatMessage(emMessage)
             allNormalList.add(message)
             for (listener in chatServiceProtocol.getSubscribeDelegates()) {
-                listener.onReceiveTextMsg(message.conversationId, message)
+                listener.onReceiveTextMsg(message.conversationId ?: "", message)
             }
         }
+    }
+
+    /**
+     * 发送文本消息
+     * @param content 文本内容
+     * @param nickName 用户昵称
+     * @param sendMsgCallback 回调
+     */
+    fun sendTxtMsg(content: String, nickName: String, sendMsgCallback: (result: Boolean) -> Unit) {
+        if (checkEmptyGroup()) return
+        val message: EMMessage = EMMessage.createTextSendMessage(content, groupId)
+        message.setAttribute("userName", nickName)
+        message.chatType = EMMessage.ChatType.GroupChat
+        message.setMessageStatusCallback(object : EMCallBack {
+            override fun onSuccess() {
+                LogTools.e(TAG, "sendTxtMsg success")
+                allNormalList.add(parseChatMessage(message))
+                sendMsgCallback.invoke(true)
+            }
+
+            override fun onError(code: Int, error: String?) {
+                LogTools.e(TAG, "sendTxtMsg failed code:$code,error:$error")
+                sendMsgCallback.invoke(false)
+            }
+        })
+        EMClient.getInstance().chatManager().sendMessage(message)
     }
 
     /**
      * 解析环信IM 消息
      * @param chatMessage 环信IM 消息对象，代表一条发送或接收到的消息。
      */
-    fun parseChatMessage(chatMessage: EMMessage): ChatMessageData {
-        val chatMessageData = ChatMessageData()
-        chatMessageData.setForm(chatMessage.from)
-        chatMessageData.to = chatMessage.to
-        chatMessageData.conversationId = chatMessage.conversationId()
-        chatMessageData.messageId = chatMessage.msgId
-        if (chatMessage.body is EMTextMessageBody) {
-            chatMessageData.type = "text"
-            chatMessageData.content = (chatMessage.body as EMTextMessageBody).message
-        } else if (chatMessage.body is EMCustomMessageBody) {
-            chatMessageData.type = "custom"
-            chatMessageData.event = (chatMessage.body as EMCustomMessageBody).event()
-            chatMessageData.customParams = (chatMessage.body as EMCustomMessageBody).params
+    fun parseChatMessage(chatMessage: EMMessage): MChatMessageModel {
+        val chatMsgModel = MChatMessageModel().apply {
+            from = chatMessage.from
+            to = chatMessage.to
+            conversationId = chatMessage.conversationId()
+            messageId = chatMessage.msgId
+            timeStamp = chatMessage.msgTime
+            nickname = chatMessage.ext()[KEY_NICKNAME]?.toString()
+            portraitIndex = chatMessage.ext()[KEY_PORTRAIT_INDEX]?.toString()?.toIntOrNull() ?: -1
         }
-        chatMessageData.ext = chatMessage.ext()
-        return chatMessageData
+        if (chatMessage.body is EMTextMessageBody) {
+            chatMsgModel.content = (chatMessage.body as EMTextMessageBody).message
+        }
+        return chatMsgModel
     }
     //--------------------Message end-----------------
 

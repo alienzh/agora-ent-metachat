@@ -38,6 +38,7 @@
     <string name="mchat_choose_your_avatar">%1$s，请选择您的虚拟形象</string>
     <string name="mchat_confirm_and_enter">创建房间并进入</string>
     <string name="mchat_beginner_guide">新手指导</string>
+    <string name="mchat_novice_guide">新手引导</string>
     <string name="mchat_beginner_guide_title">新手指导</string>
     <string name="mchat_beginner_guide_precautions">使用metachat demo 的操作如下：</string>
     <string name="mchat_visitor_mode">游客模式</string>
@@ -81,7 +82,7 @@
     <string name="mchat_1st_person_perspective_view">第一人称</string>
     <string name="mchat_3st_person_perspective_view">第三人称</string>
     <string name="mchat_omni_perspective_view">上帝视角</string>
-    <string name="mchat_disc_setting">轮盘设置</string>
+    <string name="mchat_profile_settings">设置</string>
     <string name="mchat_general">通用</string>
     <string name="mchat_operation">操作</string>
     <string name="mchat_sound">声音</string>
@@ -89,6 +90,17 @@
     <string name="mchat_portrait">头像</string>
     <string name="mchat_virtual_avatar">虚拟形象</string>
     <string name="mchat_quit">退出</string>
+    <string name="mchat_offline">上麦</string>
+    <string name="mchat_online">下麦</string>
+    <string name="mchat_volume_setting">音量设置</string>
+    <string name="mchat_volume_setting_tips">注：本设置仅在本机生效</string>
+    <string name="mchat_vol_tv">电视</string>
+    <string name="mchat_vol_npc">圆桌NPC</string>
+    <string name="mchat_vol_recv_range">音效距离</string>
+    <string name="mchat_vol_distance_unit">衰减系数</string>
+    <string name="mchat_exit_room">离开房间？</string>
+    <string name="mchat_exit_room_tips">在你离开后房间将会关闭。</string>
+    <string name="mchat_me">我</string>
 
     <string-array name="mchat_room_name">
         <item>和你一起看月亮</item>

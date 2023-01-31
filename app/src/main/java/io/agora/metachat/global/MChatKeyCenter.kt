@@ -54,6 +54,8 @@ object MChatKeyCenter {
 
     val imPassword: String = "12345678"
 
+    var nickname: String = ""
+
     const val RTC_APP_ID: String = BuildConfig.RTC_APP_ID
     const val RTC_APP_CERT: String = BuildConfig.RTC_APP_CERT
     const val IM_APP_KEY: String = BuildConfig.IM_APP_KEY

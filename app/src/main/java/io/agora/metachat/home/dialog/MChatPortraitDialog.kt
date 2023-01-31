@@ -44,6 +44,7 @@ class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPo
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog?.setCanceledOnTouchOutside(false)
         initData()
         initView()
     }

@@ -1,11 +1,14 @@
 package io.agora.metachat.tools
 
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.res.Resources
+import android.graphics.Point
 import android.os.Build
 import android.util.Size
 import android.util.TypedValue
+import android.view.WindowManager
 import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
@@ -63,6 +66,28 @@ object DeviceTools {
     @JvmStatic
     fun sp2px(sp: Int): Float {
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp.toFloat(), Resources.getSystem().displayMetrics)
+    }
+
+    /**
+     * 获取屏幕宽度
+     */
+    @JvmStatic
+    fun screenWidth(activity: Activity): Int {
+        val wm = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val point = Point()
+        wm.defaultDisplay.getRealSize(point)
+        return point.x
+    }
+
+    /**
+     * 获取屏幕高度
+     */
+    @JvmStatic
+    fun screenHeight(activity: Activity): Int {
+        val wm = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val point = Point()
+        wm.defaultDisplay.getRealSize(point)
+        return point.x
     }
 
     @JvmStatic

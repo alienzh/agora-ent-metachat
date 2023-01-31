@@ -26,4 +26,20 @@
         <item name="cornerSizeBottomLeft">66%</item>
         <item name="cornerSizeBottomRight">66%</item>
     </style>
+
+    <style name="mchat_progressbar_style">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:progressDrawable">@drawable/mchat_bg_pb_seekbar</item>
+        <item name="android:thumb">@drawable/mchat_ic_progress_thumb20</item>
+        <item name="android:max">100</item>
+    </style>
+
+    <!--  从下往上弹出 -->
+    <style name="mchat_anim_bottom_to_top" parent="@android:style/Animation">
+        <item name="android:windowEnterAnimation">@anim/mchat_slide_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/mchat_slide_out_top</item>
+    </style>
 </resources>

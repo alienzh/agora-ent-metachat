@@ -12,7 +12,7 @@ interface MChatSubscribeDelegate {
      * @param groupId 环信IM 群组id
      * @param message 环信IM 消息
      */
-    fun onReceiveTextMsg(groupId: String, message: ChatMessageData?)
+    fun onReceiveTextMsg(groupId: String, message: MChatMessageModel?)
 
     /**
      * 用户离开群组

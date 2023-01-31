@@ -24,8 +24,8 @@
     <string name="mchat_encrypted">Encrypted</string>
     <string name="mchat_room_set_password_tips">Please set the 4-digit room password</string>
     <string name="mchat_room_create_empty_name">No Room Name</string>
-    <string name="mchat_update">Update</string>
-    <string name="mchat_badge">Badge</string>
+    <string name="mchat_update">Change</string>
+    <string name="mchat_badge">Team</string>
     <string name="mchat_nickname">Nickname</string>
     <string name="mchat_nickname_error_tips">must contain 2&#8211;12 characters</string>
     <string name="mchat_enter_a_nickname">Please enter a nickname</string>
@@ -38,13 +38,14 @@
     <string name="mchat_choose_your_avatar">%1$s, please choose your avatar</string>
     <string name="mchat_confirm_and_enter">Confirm room and enter</string>
     <string name="mchat_beginner_guide">Beginner Guide</string>
+    <string name="mchat_novice_guide">Novice\nguide</string>
     <string name="mchat_beginner_guide_title">Beginner Guide</string>
     <string name="mchat_beginner_guide_precautions">How to use MetaChat:</string>
     <string name="mchat_visitor_mode">Visitor mode</string>
     <string name="mchat_audio_chat_mode">Audio chat mode</string>
     <string name="mchat_visitor_mode_title">Visitor tips</string>
     <string name="mchat_visitor_mode_precautions">Precautions for visitor mode:</string>
-    <string name="mchat_room_quit">Quit room</string>
+    <string name="mchat_room_quit">Leave room</string>
     <string name="mchat_room_disbanded">The room has been closed</string>
     <string name="mchat_room_maximum_limit">The number of people has exceeded the maximum limit</string>
     <string name="mchat_delete_room_alert_msg">Are you sure to delete the room?</string>
@@ -81,14 +82,25 @@
     <string name="mchat_1st_person_perspective_view">1st person perspective view</string>
     <string name="mchat_3st_person_perspective_view">3st person perspective view</string>
     <string name="mchat_omni_perspective_view">Omni-perspective view</string>
-    <string name="mchat_disc_setting">Disc setting</string>
+    <string name="mchat_profile_settings">Settings</string>
     <string name="mchat_general">General</string>
     <string name="mchat_operation">Operation</string>
     <string name="mchat_sound">Sound</string>
     <string name="mchat_room">Room</string>
     <string name="mchat_portrait">Portrait</string>
-    <string name="mchat_virtual_avatar">"Avatar"</string>
+    <string name="mchat_virtual_avatar">Avatar</string>
     <string name="mchat_quit">Quit</string>
+    <string name="mchat_offline">Offline</string>
+    <string name="mchat_online">Online</string>
+    <string name="mchat_volume_setting">Volume settings</string>
+    <string name="mchat_volume_setting_tips">Note: This setting only tasks effect on the local device</string>
+    <string name="mchat_vol_tv">TV VOL</string>
+    <string name="mchat_vol_npc">NPC VOL</string>
+    <string name="mchat_vol_recv_range">Recv Range</string>
+    <string name="mchat_vol_distance_unit">Distance Unit</string>
+    <string name="mchat_exit_room">Exit Room?</string>
+    <string name="mchat_exit_room_tips">The room will close after you leave.</string>
+    <string name="mchat_me">Me</string>
 
     <string-array name="mchat_room_name">
         <item>Jenoah</item>

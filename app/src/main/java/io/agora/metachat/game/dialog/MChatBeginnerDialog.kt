@@ -20,7 +20,7 @@ import io.agora.metachat.tools.DeviceTools
  */
 class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatDialogBeginnerGuideBinding>() {
     companion object {
-        const val BEGINNER_TYPE = 1
+        const val NOVICE_TYPE = 1
         const val VISITOR_TYPE = 2
     }
 
@@ -43,7 +43,7 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
     }
 
     private fun initData() {
-        guideArray = if (type == BEGINNER_TYPE) {
+        guideArray = if (type == NOVICE_TYPE) {
             resources.getStringArray(R.array.mchat_beginner_guide_content)
         } else {
             resources.getStringArray(R.array.mchat_visitor_mode_content)
@@ -53,7 +53,7 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
     private fun initView() {
         binding?.apply {
             tvTitle.text =
-                if (type == BEGINNER_TYPE) {
+                if (type == NOVICE_TYPE) {
                     resources.getString(R.string.mchat_beginner_guide)
                 } else {
                     resources.getString(R.string.mchat_visitor_mode_title)
@@ -62,7 +62,7 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
                 dismiss()
             }
             val contents = mutableListOf<String>().apply {
-                if (type == BEGINNER_TYPE) {
+                if (type == NOVICE_TYPE) {
                     add(resources.getString(R.string.mchat_beginner_guide_precautions))
                 } else {
                     add(resources.getString(R.string.mchat_visitor_mode_precautions))

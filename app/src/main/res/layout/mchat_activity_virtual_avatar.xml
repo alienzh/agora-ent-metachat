@@ -20,7 +20,7 @@
             android:id="@+id/tv_avatar_back"
             android:layout_width="28dp"
             android:layout_height="28dp"
-            android:background="@drawable/mchat_bg_oval_black20"
+            android:background="@drawable/mchat_bg_oval_black25"
             android:src="@drawable/mchat_ic_back_white"
             android:padding="4dp"
             app:layout_constraintStart_toStartOf="parent"

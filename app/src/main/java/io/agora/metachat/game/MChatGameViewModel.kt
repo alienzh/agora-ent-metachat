@@ -16,15 +16,15 @@ import io.agora.rtc2.IRtcEngineEventHandler.ErrorCode
 class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEventHandler {
 
     private val _isEnterScene = SingleLiveData<Boolean>()
-    private val _enableMic = SingleLiveData<Boolean>()
-    private val _enableSpeaker = SingleLiveData<Boolean>()
-    private val _isBroadcaster = SingleLiveData<Boolean>()
+    private val _onlineMic = SingleLiveData<Boolean>()
+    private val _muteRemote = SingleLiveData<Boolean>()
+    private val _muteLocal = SingleLiveData<Boolean>()
     private val _exitGame = SingleLiveData<Boolean>()
 
     fun isEnterSceneObservable(): LiveData<Boolean> = _isEnterScene
-    fun enableMicObservable(): LiveData<Boolean> = _enableMic
-    fun enableSpeakerObservable(): LiveData<Boolean> = _enableSpeaker
-    fun isBroadcasterObservable(): LiveData<Boolean> = _isBroadcaster
+    fun onlineMicObservable(): LiveData<Boolean> = _onlineMic
+    fun muteRemoteObservable(): LiveData<Boolean> = _muteRemote
+    fun muteLocalObservable(): LiveData<Boolean> = _muteLocal
     fun exitGameObservable(): LiveData<Boolean> = _exitGame
 
     private var mReCreateScene = false
@@ -65,9 +65,9 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
                 return@runOnMainThread
             }
             _isEnterScene.postValue(true)
-            _enableMic.postValue(true)
-            _enableSpeaker.postValue(true)
-            _isBroadcaster.postValue(true)
+            _onlineMic.postValue(true)
+            _muteRemote.postValue(true)
+            _muteLocal.postValue(true)
             resetSceneState()
         }
     }
@@ -87,7 +87,7 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
 
     override fun onReleasedScene(status: Int) {
         if (status == ErrorCode.ERR_OK) {
-           MChatContext.instance().destroy()
+            MChatContext.instance().destroy()
         }
     }
 
@@ -105,5 +105,35 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
 
     override fun onDownloadSceneProgress(sceneId: Long, progress: Int, state: Int) {}
 
+    // 发送上下麦
+    fun sendOnlineEvent() {
+        if (_onlineMic.value == true) {
+            _onlineMic.postValue(false)
+        } else {
+            _onlineMic.postValue(true)
+        }
+    }
 
+    // 远端静音
+    fun sendMuteRemoteEvent() {
+        if (_muteRemote.value == true) {
+            _muteRemote.postValue(false)
+        } else {
+            _muteRemote.postValue(true)
+        }
+    }
+
+    // 本地静音
+    fun sendMuteLocalEvent() {
+        if (_muteLocal.value == true) {
+            _muteLocal.postValue(false)
+        } else {
+            _muteLocal.postValue(true)
+        }
+    }
+
+    // 退出房间
+    fun sendExitRoomEvent() {
+
+    }
 }

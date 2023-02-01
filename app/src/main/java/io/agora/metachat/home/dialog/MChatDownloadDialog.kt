@@ -29,6 +29,7 @@ class MChatDownloadDialog constructor() : BaseFragmentDialog<MchatDialogDownload
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         dialog?.setCanceledOnTouchOutside(false)
+        dialog?.setCancelable(false)
         initView()
     }
 

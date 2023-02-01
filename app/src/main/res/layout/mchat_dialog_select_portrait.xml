@@ -6,8 +6,8 @@
     android:layout_height="wrap_content"
     android:layout_gravity="center"
     android:background="@drawable/mchat_bg_rect_radius16_light_grey"
-    android:paddingTop="30dp"
-    android:paddingBottom="25dp">
+    android:paddingTop="25dp"
+    android:paddingBottom="20dp">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/tv_title"
@@ -37,7 +37,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="25dp"
-        android:layout_marginTop="35dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:paddingHorizontal="22dp"
         android:paddingVertical="12dp"
@@ -64,7 +64,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
-        android:layout_marginTop="35dp"
         android:layout_marginEnd="25dp"
         android:paddingHorizontal="22dp"
         android:paddingVertical="12dp"
@@ -77,5 +76,6 @@
         app:cornerRadius="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/gl50"
-        app:layout_constraintTop_toBottomOf="@id/rv_portrait" />
+        app:layout_constraintTop_toTopOf="@id/mb_left"
+        app:layout_constraintBottom_toBottomOf="@id/mb_left"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

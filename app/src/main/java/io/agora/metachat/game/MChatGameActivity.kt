@@ -91,7 +91,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         super.onNewIntent(intent)
         mTextureView?.let {
-            gameViewModel.maybeCreateScene(this@MChatGameActivity, roomId, it)
+            val result = gameViewModel.maybeCreateScene(this@MChatGameActivity, roomId, it)
+            if (result) resetViewVisibility()
         }
     }
 
@@ -105,32 +106,35 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         binding.tvNoviceGuide.setOnClickListener(OnIntervalClickListener(this::onClickNovice))
     }
 
+    private fun resetViewVisibility() {
+        binding.groupNativeView.isVisible = false
+    }
+
     // 上下麦
     private fun onClickMicOnline(view: View) {
-        ToastTools.showCommon("onClickMicOnline")
         gameViewModel.sendOnlineEvent()
     }
 
     // 禁远端
     private fun onClickMuteRemote(view: View) {
-        ToastTools.showCommon("onClickMuteRemote")
         gameViewModel.sendMuteRemoteEvent()
     }
 
     // 禁本地
     private fun onClickMuteLocal(view: View) {
-        ToastTools.showCommon("onClickMuteLocal")
         gameViewModel.sendMuteLocalEvent()
     }
 
     // 设置
     private fun onClickSettings(view: View) {
-        MChatSettingsDialog().show(supportFragmentManager, "settings dialog")
+        MChatSettingsDialog()
+            .setExitCallback {
+                MChatContext.instance().leaveScene()
+            }.show(supportFragmentManager, "settings dialog")
     }
 
     // 聊天
     private fun onClickMsg(view: View) {
-        ToastTools.showCommon("onClickMsg")
         if (messageDialog == null) {
             messageDialog = MChatMessageDialog()
         }
@@ -163,15 +167,19 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     }
 
     private fun gameObservable() {
-        gameViewModel.isEnterSceneObservable().observe(this) {}
+        gameViewModel.isEnterSceneObservable().observe(this) {
+            if (it) binding.groupNativeView.isVisible = true
+        }
         gameViewModel.onlineMicObservable().observe(this) {
             if (it) {
                 binding.layoutUser.setBackgroundResource(R.drawable.mchat_bg_rect_radius18_gradient_pure)
                 binding.tvMicOnline.setBackgroundResource(R.drawable.mchat_bg_rect_radius14_stroke_white15)
+                binding.tvMicOnline.setText(R.string.mchat_online)
                 binding.ivMuteLocal.isVisible = true
             } else {
                 binding.layoutUser.setBackgroundResource(R.drawable.mchat_bg_rect_radius18_black40)
                 binding.tvMicOnline.setBackgroundResource(R.drawable.mchat_bg_rect_radius14_purple)
+                binding.tvMicOnline.setText(R.string.mchat_offline)
                 binding.ivMuteLocal.isVisible = false
             }
         }
@@ -187,22 +195,26 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     }
 
     private fun initUnityView() {
-        mTextureView = TextureView(this).also {
+        mTextureView = TextureView(this)
+        mTextureView?.let {
             it.surfaceTextureListener = object : SurfaceTextureListener {
                 override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, i: Int, i1: Int) {
                     gameViewModel.createScene(this@MChatGameActivity, roomId, it)
+                    resetViewVisibility()
                 }
 
                 override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, i: Int, i1: Int) {
                     mSurfaceSizeChange = true
-                    gameViewModel.maybeCreateScene(this@MChatGameActivity, roomId, it)
+                    val result = gameViewModel.maybeCreateScene(this@MChatGameActivity, roomId, it)
+                    if (result) resetViewVisibility()
                 }
 
                 override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
                     return false
                 }
 
-                override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {}
+                override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {
+                }
             }
             binding.unityContainer.removeAllViews()
             val layoutParams =

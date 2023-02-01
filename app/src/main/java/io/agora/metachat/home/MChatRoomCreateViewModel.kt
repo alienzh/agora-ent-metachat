@@ -127,7 +127,7 @@ class MChatRoomCreateViewModel : ViewModel(), IMetachatEventHandler {
         }, MetachatUserInfo().apply {
             mUserId = MChatKeyCenter.curUid.toString()
             mUserName = mchatContext.getRoleInfo()?.name ?: mUserId
-            mUserIconUrl = mchatContext.getRoleInfo()?.avatar ?: MChatConstant.DEFAULT_PORTRAIT
+            mUserIconUrl = mchatContext.getRoleInfo()?.avatar ?: ""
         })
         if (mchatContext.isSceneDownloaded(sceneInfo)) {
             _selectScene.postValue(sceneInfo.mSceneId)

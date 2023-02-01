@@ -6,9 +6,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -82,8 +79,8 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
 
     private var downloadDialog: MChatDownloadDialog? = null
 
-    private val actLaunch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { actResult->
-        if (actResult.resultCode == Activity.RESULT_OK){
+    private val actLaunch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { actResult ->
+        if (actResult.resultCode == Activity.RESULT_OK) {
             // 进入游戏成功,回到列表页面
             LogTools.d("go game success navigate to roomListFragment")
             findNavController().navigate(R.id.action_crateRoomFragment_to_roomListFragment)
@@ -246,8 +243,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             return
         }
         showLoading(false)
-        MChatContext.instance().initRoleInfo(nickname, gender)
-        MChatContext.instance().getRoleInfo()?.avatar = "" // todo
+        MChatContext.instance().initRoleInfo(nickname, gender, badgeIndex)
         mChatViewModel.getScenes()
     }
 

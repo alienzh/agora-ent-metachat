@@ -87,7 +87,7 @@ object DeviceTools {
         val wm = activity.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         val point = Point()
         wm.defaultDisplay.getRealSize(point)
-        return point.x
+        return point.y
     }
 
     @JvmStatic

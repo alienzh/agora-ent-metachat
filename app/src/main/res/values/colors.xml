@@ -64,8 +64,9 @@
     <color name="mchat_756e98">#756E98</color>
     <color name="mchat_f8f5fa">#F8F5FA</color>
     <color name="mchat_4b31ad">#4B31AD</color>
-    <color name="mchat_8850FB">#8850FB</color>
-    <color name="mchat_EAE8F0">#EAE8F0</color>
-    <color name="mchat_BC5A2B">#BC5A2B</color>
-    <color name="mchat_BCBACB">#BCBACB</color>
+    <color name="mchat_8850fb">#8850FB</color>
+    <color name="mchat_eae8f0">#EAE8F0</color>
+    <color name="mchat_bc5a2b">#BC5A2B</color>
+    <color name="mchat_bcbacb">#BCBACB</color>
+    <color name="mchat_42454c">#42454C</color>
 </resources>

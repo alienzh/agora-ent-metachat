@@ -1,6 +1,7 @@
 package io.agora.metachat.imkit
 
 import android.content.Context
+import android.text.TextUtils
 import com.hyphenate.*
 import com.hyphenate.chat.*
 import com.hyphenate.chat.EMGroupManager.EMGroupStyle
@@ -21,6 +22,7 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
     private var groupId: String = ""
     private var ownerId: String = ""
     private val allNormalList = mutableListOf<MChatMessageModel>()
+    private val allData = mutableListOf<MChatMessageModel>()
 
     companion object {
         private const val TAG = "MChatroomIMManager"
@@ -36,7 +38,21 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
         fun instance(): MChatGroupIMManager = groupIMManager
     }
 
-    fun getAllMsgList():List<MChatMessageModel> = allNormalList
+    fun getAllData(): List<MChatMessageModel>{
+        return allData
+    }
+
+    fun getAllMsgList(): List<MChatMessageModel> {
+        val data = mutableListOf<MChatMessageModel>()
+        for (chatMessageData in allNormalList) {
+            if (TextUtils.equals(groupId, chatMessageData.conversationId)) {
+                data.add(chatMessageData)
+            }
+        }
+        allNormalList.removeAll(data)
+        allData.addAll(data)
+        return data
+    }
 
     fun isRoomOwner(): Boolean {
         return ownerId.isNotEmpty() && ownerId == MChatKeyCenter.imUid
@@ -146,6 +162,12 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
 
                     override fun onError(code: Int, errorMsg: String?) {
                         if (code == EMAError.GROUP_ALREADY_JOINED) {
+                            this@MChatGroupIMManager.groupId = groupId
+                            this@MChatGroupIMManager.ownerId = ownerId
+                            // 注册消息监听
+                            EMClient.getInstance().chatManager().addMessageListener(this@MChatGroupIMManager)
+                            // 注册群组监听
+                            EMClient.getInstance().groupManager().addGroupChangeListener(this@MChatGroupIMManager)
                             LogTools.e(TAG, "User already joined the group")
                             joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_SUCCESS)
                         } else {
@@ -154,11 +176,13 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
                         }
                     }
                 })
+
             } else {
                 joinGroupCallback.invoke(loginResult)
             }
         }
     }
+
 
     /**
      * 离开群组，普通用户退出群组，房主离开则解散群组
@@ -204,6 +228,7 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
         // 移除群组监听
         EMClient.getInstance().groupManager().removeGroupChangeListener(this)
         allNormalList.clear()
+        allData.clear()
         groupId = ""
         ownerId = ""
     }

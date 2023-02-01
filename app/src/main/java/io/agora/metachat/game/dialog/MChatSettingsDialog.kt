@@ -1,12 +1,11 @@
 package io.agora.metachat.game.dialog
 
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.*
+import android.view.inputmethod.EditorInfo
 import androidx.core.view.isVisible
 import io.agora.metachat.R
-import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatDialogSettingsBinding
 import io.agora.metachat.home.dialog.MChatBadgeDialog
@@ -18,7 +17,7 @@ import io.agora.metachat.widget.OnIntervalClickListener
 /**
  * @author create by zhangwei03
  */
-class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettingsBinding>() {
+class MChatSettingsDialog constructor() : MChatBlurDialog<MchatDialogSettingsBinding>() {
 
     companion object {
         private const val GENERAL = 0
@@ -38,28 +37,33 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
         return MchatDialogSettingsBinding.inflate(inflater)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        dialog?.setCanceledOnTouchOutside(false)
-        dialog?.window?.let { window ->
-            window.attributes.windowAnimations = R.style.mchat_anim_bottom_to_top
-            window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            window.requestFeature(Window.FEATURE_NO_TITLE)
-            window.setFlags(
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-            )
-        }
-        isCancelable = false
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog?.setCanceledOnTouchOutside(false)
+        dialog?.setCancelable(false)
         initView()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        dialog?.window?.let { window ->
+            // TODO: 沉浸式全屏
+            window.attributes.windowAnimations = R.style.mchat_anim_bottom_to_top
+            window.decorView.setPadding(0, 0, 0, 0)
+            window.decorView.minimumWidth = resources.displayMetrics.widthPixels
+            val params = window.attributes
+            params.height = WindowManager.LayoutParams.MATCH_PARENT
+            params.width = WindowManager.LayoutParams.MATCH_PARENT
+            params.gravity = Gravity.TOP
+            params.horizontalMargin = 0f
+            window.attributes = params
+
+        }
     }
 
     fun initView() {
         binding?.let {
+            setOnApplyWindowInsets(it.root)
             it.ivSettingsBack.setOnClickListener(OnIntervalClickListener(this::onClickSettingBack))
             it.layoutGeneralTab.setOnClickListener(OnIntervalClickListener(this::onClickGeneralTab))
             it.layoutSoundTab.setOnClickListener(OnIntervalClickListener(this::onClickSoundTab))
@@ -67,7 +71,26 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             it.layoutUserBadge.setOnClickListener(OnIntervalClickListener(this::onClickUserBadge))
             it.layoutVirtualAvatar.setOnClickListener(OnIntervalClickListener(this::onClickVirtualAvatar))
             it.layoutQuitRoom.setOnClickListener(OnIntervalClickListener(this::onClickExitRoom))
+            it.etNickname.setOnEditorActionListener { textView, actionId, keyEvent ->
+                when (actionId and EditorInfo.IME_MASK_ACTION) {
+                    EditorInfo.IME_ACTION_DONE -> {
+                        val name = binding?.etNickname?.text?.trim()?.toString()
+                        updateNickname(name)
+                    }
+                    else -> {}
+                }
+                false
+            }
         }
+    }
+
+    private fun updateNickname(name: String?) {
+        if (name.isNullOrEmpty() || name.length <= 1) {
+            ToastTools.showError(R.string.mchat_nickname_error_tips)
+            return
+        }
+        // TODO:
+        ToastTools.showCommon(name)
     }
 
     private fun onClickSettingBack(view: View) {
@@ -78,16 +101,24 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
     private fun onClickGeneralTab(view: View) {
         if (curSelected == GENERAL) return
         curSelected = GENERAL
-        binding?.layoutGeneralContent?.isVisible = false
-        binding?.layoutSoundContent?.isVisible = true
+        binding?.apply {
+            layoutGeneralTab.setBackgroundResource(R.drawable.mchat_bg_rect_radius9_purple)
+            layoutSoundTab.setBackgroundColor(Color.TRANSPARENT)
+            layoutGeneralContent.isVisible = true
+            layoutSoundContent.isVisible = false
+        }
     }
 
     // 声音点击
     private fun onClickSoundTab(view: View) {
         if (curSelected == SOUND) return
         curSelected = SOUND
-        binding?.layoutGeneralContent?.isVisible = true
-        binding?.layoutSoundContent?.isVisible = false
+        binding?.apply {
+            layoutGeneralTab.setBackgroundColor(Color.TRANSPARENT)
+            layoutSoundTab.setBackgroundResource(R.drawable.mchat_bg_rect_radius9_purple)
+            layoutGeneralContent.isVisible = false
+            layoutSoundContent.isVisible = true
+        }
     }
 
     // 点击更换头像
@@ -112,7 +143,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
 
     // 退出房间
     private fun onClickExitRoom(view: View) {
-        if (MChatGroupIMManager.instance().isRoomOwner()){
+        if (MChatGroupIMManager.instance().isRoomOwner()) {
             CommonFragmentAlertDialog()
                 .titleText(resources.getString(R.string.mchat_exit_room))
                 .contentText(resources.getString(R.string.mchat_exit_room_tips))
@@ -123,19 +154,8 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
                         exitCallback?.invoke()
                     }
                 }).show(childFragmentManager, "exit dialog")
-        }else{
+        } else {
             exitCallback?.invoke()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        dialog?.window?.let { window ->
-            val params = window.attributes
-            params.height = WindowManager.LayoutParams.MATCH_PARENT
-            params.width = WindowManager.LayoutParams.MATCH_PARENT
-            params.gravity = Gravity.TOP
-            window.attributes = params
         }
     }
 }

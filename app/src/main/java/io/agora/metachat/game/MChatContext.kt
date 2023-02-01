@@ -48,8 +48,8 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     private var sceneInfo: MetachatSceneInfo? = null
     private var modelInfo: AvatarModelInfo? = null
     private var userInfo: MetachatUserInfo? = null
-    private var roomName: String = ""
-    private var sceneView: TextureView? = null
+    private var rtcRoomId: String = ""
+    private var sceneTextureView: TextureView? = null
     private val mchatEventHandlerMap = ConcurrentHashMap<IMetachatEventHandler, Int>()
     private val mchatSceneEventHandlerMap = ConcurrentHashMap<IMetachatSceneEventHandler, Int>()
     private var mJoinedRtc = false
@@ -171,10 +171,10 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     /**
      * create scene
      */
-    fun createScene(activityContext: Context, roomName: String, tv: TextureView): Boolean {
-        LogTools.d(TAG, "createScene $roomName")
-        this.roomName = roomName
-        sceneView = tv
+    fun createScene(activityContext: Context, roomId: String, tv: TextureView): Boolean {
+        LogTools.d(TAG, "createScene $roomId")
+        this.rtcRoomId = roomId
+        sceneTextureView = tv
         if (spatialAudioEngine == null && enableSpatialAudio) {
             spatialAudioEngine = ILocalSpatialAudioEngine.create()
             val config: LocalSpatialAudioConfig = LocalSpatialAudioConfig().apply {
@@ -197,11 +197,12 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
      * enter scene
      */
     fun enterScene() {
-        LogTools.d(TAG, "enterScene $roomName")
+        LogTools.d(TAG, "enterScene $rtcRoomId")
         localUserAvatar?.let {
             it.userInfo = userInfo
             //该model的mBundleType为MetachatBundleInfo.BundleType.BUNDLE_TYPE_AVATAR类型
             it.modelInfo = modelInfo
+            // TODO:  
             if (null != roleInfo) {
                 //设置服装信息
                 val dressInfo = DressInfo()
@@ -214,15 +215,10 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
             it.enableUserPositionNotification(MChatConstant.Scene.SCENE_GAME == currentScene)
             //设置回调接口
             it.addEventHandler(this@MChatContext)
-            val config = EnterSceneConfig().apply {
-                //sceneView必须为Texture类型，为渲染unity显示的view
-                mSceneView = sceneView
-                //rtc加入channel的ID
-                mRoomName = roomName
-                //内容中心对应的ID
-                mSceneId = sceneInfo?.mSceneId ?: 0
-            }
-
+            val config = EnterSceneConfig()
+            config.mSceneView = sceneTextureView  //sceneView必须为Texture类型，为渲染unity显示的view
+            config.mRoomName = rtcRoomId  //rtc加入channel的ID
+            config.mSceneId = sceneInfo?.mSceneId ?: 0   //内容中心对应的ID
             /*
              *仅为示例格式，具体格式以项目实际为准
              *   "extraCustomInfo":{
@@ -286,7 +282,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
             ILocalSpatialAudioEngine.destroy()
             spatialAudioEngine = null
         }
-        LogTools.d(TAG, "leaveScene success $roomName")
+        LogTools.d(TAG, "leaveScene success $rtcRoomId")
         return ret == Constants.ERR_OK
     }
 
@@ -302,11 +298,12 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         return isInScene
     }
 
-    fun initRoleInfo(nickname: String, userGender: Int) {
+    fun initRoleInfo(nickname: String, userGender: Int,badgeIndex:Int) {
         currentScene = MChatConstant.Scene.SCENE_GAME
         roleInfo = RoleInfo().apply {
             name = nickname
             gender = userGender
+            avatar = MChatConstant.getBadgeUrl(badgeIndex) // todo 头像需要url,这里传徽章
             //dress default id is 1
             hair = 1
             tops = 1
@@ -387,7 +384,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         if (errorCode == 0) {
             isInScene = true
             rtcEngine?.joinChannel(
-                MChatKeyCenter.getRtcToken(roomName), roomName, MChatKeyCenter.curUid,
+                MChatKeyCenter.getRtcToken(rtcRoomId), rtcRoomId, MChatKeyCenter.curUid,
                 ChannelMediaOptions().apply {
                     autoSubscribeAudio = true
                     clientRoleType = Constants.CLIENT_ROLE_BROADCASTER

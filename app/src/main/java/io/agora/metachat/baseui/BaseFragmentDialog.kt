@@ -10,6 +10,7 @@ import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
+import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -32,7 +33,7 @@ abstract class BaseFragmentDialog<B : ViewBinding> : DialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         dialog?.window?.let {
             WindowCompat.setDecorFitsSystemWindows(it, false)
-            it.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));
+            it.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
         activity?.onBackPressedDispatcher?.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -45,7 +46,7 @@ abstract class BaseFragmentDialog<B : ViewBinding> : DialogFragment() {
         dialog?.window?.let {
             ViewCompat.setOnApplyWindowInsetsListener(root) { v: View?, insets: WindowInsetsCompat ->
                 val inset = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-                root.setPadding(inset.left, 0, inset.right, inset.bottom + root.paddingBottom)
+                root.setPadding(0, 0, 0, inset.bottom + root.paddingBottom)
                 WindowInsetsCompat.CONSUMED
             }
         }

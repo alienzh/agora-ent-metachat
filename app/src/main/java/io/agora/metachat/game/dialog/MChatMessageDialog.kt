@@ -6,13 +6,13 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.*
 import android.view.ViewGroup.MarginLayoutParams
+import android.view.inputmethod.EditorInfo
 import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.agora.metachat.R
-import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter
 import io.agora.metachat.databinding.MchatDialogMessageBinding
 import io.agora.metachat.databinding.MchatItemMessageBinding
@@ -29,7 +29,7 @@ import java.util.*
 /**
  * @author create by zhangwei03
  */
-class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBinding>() {
+class MChatMessageDialog constructor() : MChatBlurDialog<MchatDialogMessageBinding>() {
 
     private var messageAdapter: BaseRecyclerAdapter<MchatItemMessageBinding, MChatMessageModel, MChatMessageViewHolder>? =
         null
@@ -38,93 +38,96 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
         return MchatDialogMessageBinding.inflate(inflater)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        dialog?.setCanceledOnTouchOutside(false)
-        dialog?.window?.let { window ->
-            window.attributes.windowAnimations = R.style.mchat_anim_bottom_to_top
-            window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT));
-            window.requestFeature(Window.FEATURE_NO_TITLE)
-            val params = window.attributes
-            params.height = WindowManager.LayoutParams.MATCH_PARENT
-            params.width = DeviceTools.dp2px(250).toInt()
-            params.gravity = Gravity.START
-            window.attributes = params
-            window.setFlags(
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-            )
-        }
-        return super.onCreateView(inflater, container, savedInstanceState)
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog?.setCancelable(false)
+        dialog?.setCanceledOnTouchOutside(true)
         initView()
     }
 
     private fun initView() {
-        binding?.root?.let {
-            setDialogSize(it)
-        }
         messageAdapter =
-            BaseRecyclerAdapter(MChatGroupIMManager.instance().getAllMsgList(), MChatMessageViewHolder::class.java)
-        binding?.rvMessageContent?.apply {
-            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-            adapter = messageAdapter
+            BaseRecyclerAdapter(MChatGroupIMManager.instance().getAllData(), MChatMessageViewHolder::class.java)
+        binding?.apply {
+            rvMessageContent.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+            rvMessageContent.adapter = messageAdapter
+            ivSendMessage.setOnClickListener(OnIntervalClickListener(this@MChatMessageDialog::onClickSend))
+            etMessage.setOnEditorActionListener { textView, actionId, keyEvent ->
+                when (actionId and EditorInfo.IME_MASK_ACTION) {
+                    EditorInfo.IME_ACTION_DONE -> {
+                        val message = binding?.etMessage?.text?.trim()?.toString()
+                        sendMessage(message)
+                    }
+                    else -> {}
+                }
+                false
+            }
         }
-        binding?.ivSendMessage?.setOnClickListener(OnIntervalClickListener(this::onClickSend))
+    }
+
+    override fun onStart() {
+        super.onStart()
+        dialog?.window?.let { window ->
+            window.attributes.windowAnimations = R.style.mchat_anim_bottom_to_top
+            val params = window.attributes
+            params.width = DeviceTools.dp2px(295).toInt()
+            activity?.let {
+                params.height = DeviceTools.screenHeight(it)
+            }
+            params.gravity = Gravity.START
+            params.dimAmount = 0f
+            window.attributes = params
+        }
+        binding?.apply {
+            setDialogSize(root)
+        }
     }
 
     private fun setDialogSize(view: View) {
-        val layoutParams: FrameLayout.LayoutParams = view.layoutParams as FrameLayout.LayoutParams
-        layoutParams.width = DeviceTools.dp2px(250).toInt()
+//        val layoutParams: FrameLayout.LayoutParams = view.layoutParams as FrameLayout.LayoutParams
+//        layoutParams.width = DeviceTools.dp2px(250).toInt()
 //        activity?.let {
 //            layoutParams.height =
-//                DeviceTools.screenWidth(it) - DeviceTools.dp2px(60).toInt() - DeviceTools.dp2px(30).toInt()
+//                DeviceTools.screenHeight(it) - DeviceTools.dp2px(60).toInt() - DeviceTools.dp2px(30).toInt()
 //        }
-        view.layoutParams = layoutParams
+//        view.layoutParams = layoutParams
         val marginParams: MarginLayoutParams = view.layoutParams as MarginLayoutParams
-        layoutParams.topMargin = DeviceTools.dp2px(60).toInt()
-        layoutParams.bottomMargin = DeviceTools.dp2px(30).toInt()
-        layoutParams.leftMargin = DeviceTools.dp2px(45).toInt()
+        marginParams.topMargin = DeviceTools.dp2px(60).toInt()
+        marginParams.bottomMargin = DeviceTools.dp2px(30).toInt()
+        marginParams.leftMargin = DeviceTools.dp2px(45).toInt()
         view.layoutParams = marginParams
     }
 
-    private fun onClickSend(view: View) {
-        val message = binding?.tvMessageContent?.text?.trim().toString() ?: return
+
+    // 点击消息输入框，弹出软键盘
+    private fun sendMessage(message: String?) {
+        if (message.isNullOrEmpty()) return
         MChatGroupIMManager.instance().sendTxtMsg(message, MChatKeyCenter.nickname) {
             if (it) {
                 ThreadTools.get().runOnMainThread {
-                    refresh()
+                    binding?.etMessage?.setText("")
+                    refreshMessage()
                 }
             }
         }
     }
 
-    private fun refresh() {
+    private fun onClickSend(view: View) {
+        val message = binding?.etMessage?.text?.trim()?.toString()
+        sendMessage(message)
+    }
+
+    private fun refreshMessage() {
         messageAdapter?.let {
             val startPosition: Int = it.itemCount
             it.dataList.addAll(startPosition, MChatGroupIMManager.instance().getAllMsgList())
-            LogTools.e("refresh mesage startPosition:$startPosition")
+            LogTools.d("refresh message startPosition:$startPosition")
             if (it.dataList.size > 0) {
                 it.notifyItemRangeInserted(startPosition, it.dataList.size)
                 binding?.rvMessageContent?.smoothScrollToPosition(it.itemCount - 1)
             }
         }
     }
-
-//    override fun onResume() {
-//        super.onResume()
-//        dialog?.window?.let { window ->
-//            val params = window.attributes
-//            params.height = WindowManager.LayoutParams.MATCH_PARENT
-//            params.width = DeviceTools.dp2px(250).toInt()
-//            params.gravity = Gravity.START
-//            params.horizontalMargin = DeviceTools.dp2px(45)
-//            params.verticalMargin = DeviceTools.dp2px(30)
-//            window.attributes = params
-//        }
-//    }
 
     /**message list viewHolder*/
     class MChatMessageViewHolder constructor(val binding: MchatItemMessageBinding) :

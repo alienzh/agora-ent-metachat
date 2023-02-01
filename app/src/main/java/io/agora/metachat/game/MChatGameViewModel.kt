@@ -51,14 +51,15 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
         mSurfaceSizeChange = false
     }
 
-    fun maybeCreateScene(activity: Activity, roomId: String, tv: TextureView) {
+    fun maybeCreateScene(activity: Activity, roomId: String, tv: TextureView) :Boolean{
         if (mReCreateScene && mSurfaceSizeChange) {
             createScene(activity, roomId, tv)
+            return true
         }
+        return false
     }
 
     override fun onEnterSceneResult(errorCode: Int) {
-        LogTools.d("enter scene failed:$errorCode")
         ThreadTools.get().runOnMainThread {
             if (errorCode != ErrorCode.ERR_OK) {
                 LogTools.e("enter scene failed:$errorCode")
@@ -74,7 +75,7 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
 
     override fun onLeaveSceneResult(errorCode: Int) {
         ThreadTools.get().runOnMainThread {
-            _isEnterScene.postValue(true)
+            _isEnterScene.postValue(false)
             _exitGame.postValue(true)
         }
     }

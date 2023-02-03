@@ -49,7 +49,7 @@ class MChatSongOrderLayout : ConstraintLayout {
         binding.vpSongOrder.adapter = songStylePagerAdapter
         val tabMediator = TabLayoutMediator(binding.tabSongOrder, binding.vpSongOrder) { tab, position ->
             val customView =
-                LayoutInflater.from(root.context).inflate(R.layout.mchat_view_song_type_tab_item, tab.view, false)
+                LayoutInflater.from(root.context).inflate(R.layout.mchat_item_song_type_tab, tab.view, false)
             val tabText = customView.findViewById<TextView>(R.id.tv_tab_name)
             tab.customView = customView
 

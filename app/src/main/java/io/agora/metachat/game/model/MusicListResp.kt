@@ -1,5 +1,8 @@
 package io.agora.metachat.game.model
 
+import androidx.annotation.DrawableRes
+import io.agora.metachat.game.karaoke.MChatAudioEffect
+
 data class MusicListResp(
     val code: Long,
     val msg: String,
@@ -62,4 +65,10 @@ data class VideoUrlData(
 data class VideoUrl(
     val resolution: String,
     val mvUrl: String
+)
+
+data class ConsoleAudioEffect(
+    val audioEffect: MChatAudioEffect,
+    @DrawableRes val effectBg: Int,
+    val effectTxt: String,
 )

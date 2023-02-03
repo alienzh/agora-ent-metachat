@@ -12,6 +12,7 @@ import io.agora.metachat.databinding.MchatDialogSettingsBinding
 import io.agora.metachat.home.dialog.MChatBadgeDialog
 import io.agora.metachat.home.dialog.MChatPortraitDialog
 import io.agora.metachat.imkit.MChatGroupIMManager
+import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.ToastTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
@@ -50,15 +51,18 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
         dialog?.window?.let { window ->
             // TODO: 沉浸式全屏
             window.attributes.windowAnimations = R.style.mchat_anim_bottom_to_top
+            // Remove the system default rounded corner background
+            window.setBackgroundDrawableResource(android.R.color.transparent)
+            window.setDimAmount(0f)
             window.decorView.setPadding(0, 0, 0, 0)
-            window.decorView.minimumWidth = resources.displayMetrics.widthPixels
-            val params = window.attributes
-            params.height = WindowManager.LayoutParams.MATCH_PARENT
-            params.width = WindowManager.LayoutParams.MATCH_PARENT
-            params.gravity = Gravity.TOP
-            params.horizontalMargin = 0f
-            window.attributes = params
-
+            window.attributes.apply {
+                activity?.let {
+                    width = DeviceTools.screenWidth(it)
+                    height = DeviceTools.screenHeight(it)
+                }
+                gravity = Gravity.TOP
+                window.attributes = this
+            }
         }
     }
 

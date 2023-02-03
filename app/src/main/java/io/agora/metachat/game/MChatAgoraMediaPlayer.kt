@@ -32,6 +32,11 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
         }
     }
 
+    private var mediaIsPlaying: Boolean = false
+    private var playerAudioPitch: Int = 0
+    private var useOriginalTrack: Boolean = true
+    private var playerVolume: Int = 100
+
     fun initMediaPlayer(rtcEngine: RtcEngine) {
         mediaPlayer = rtcEngine.createMediaPlayer()
         mediaPlayer?.registerPlayerObserver(this)
@@ -47,6 +52,7 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
             if (it == io.agora.rtc2.Constants.ERR_OK) {
                 mediaPlayer?.setLoopCount(MChatConstant.PLAY_ADVERTISING_VIDEO_REPEAT)
                 mediaPlayer?.play()
+                mediaIsPlaying = true
             }
         }
     }
@@ -57,6 +63,7 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
             it.unRegisterPlayerObserver(this)
             it.stop()
             it.destroy()
+            mediaIsPlaying = false
         }
         mediaPlayer = null
     }
@@ -73,6 +80,28 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
             it.resume()
             it.registerVideoFrameObserver(this)
         }
+    }
+
+    /**
+     * @param pitch ranged from -12 to 12, values from
+     * outside of this range will be constrained to
+     * -12 or 12 respectively
+     */
+    @Synchronized
+    fun setPlayerAudioPitch(pitch: Int): Int {
+        playerAudioPitch = if (pitch < -12) {
+            -12
+        } else if (pitch > 12) {
+            12
+        } else {
+            pitch
+        }
+
+        var result = io.agora.rtc2.Constants.ERR_OK
+        if (mediaIsPlaying) {
+            result = mediaPlayer?.setAudioPitch(playerAudioPitch) ?: io.agora.rtc2.Constants.ERR_FAILED
+        }
+        return result
     }
 
     override fun onPlayerStateChanged(state: Constants.MediaPlayerState?, error: Constants.MediaPlayerError?) {
@@ -114,6 +143,7 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
     override fun onFrame(frame: VideoFrame?) {
         onMediaVideoFramePushListener?.onMediaVideoFramePushed(frame)
     }
+
 
     interface OnMediaVideoFramePushListener {
         fun onMediaVideoFramePushed(frame: VideoFrame?)

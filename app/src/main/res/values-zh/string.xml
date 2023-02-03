@@ -75,6 +75,7 @@
     <string name="mchat_accompaniment_music">伴奏</string>
     <string name="mchat_recording_studio">录音棚</string>
     <string name="mchat_concert">演唱会</string>
+    <string name="mchat_ktv">KTV</string>
     <string name="mchat_hollow_sound">空旷</string>
     <string name="mchat_spatial_audio_background">空间音频</string>
     <string name="mchat_vocal_distortion">人声模糊</string>

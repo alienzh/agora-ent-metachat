@@ -75,6 +75,7 @@
     <string name="mchat_accompaniment_music">Enable Accompaniment Music</string>
     <string name="mchat_recording_studio">Recording Studio</string>
     <string name="mchat_concert">Concert</string>
+    <string name="mchat_ktv">KTV</string>
     <string name="mchat_hollow_sound">Hollow Sound</string>
     <string name="mchat_spatial_audio_background">Enable Spatial Audio Background</string>
     <string name="mchat_vocal_distortion">Vocal Distortion</string>

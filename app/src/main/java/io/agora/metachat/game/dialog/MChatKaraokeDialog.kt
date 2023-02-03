@@ -7,6 +7,7 @@ import android.view.*
 import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.annotation.MainThread
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -17,6 +18,7 @@ import io.agora.metachat.game.karaoke.*
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.ToastTools
+import io.agora.metachat.widget.OnIntervalClickListener
 
 /**
  * @author create by zhangwei03
@@ -29,6 +31,7 @@ class MChatKaraokeDialog constructor(
 
     private var songOrderLayout: MChatSongOrderLayout? = null
     private var playlistLayout: MChatSongPlaylistLayout? = null
+    private var consoleLayout: MChatSongConsoleLayout? = null
 
     private val tabTitle = mutableListOf<String>()
     private var playlistTitleView: TextView? = null
@@ -49,7 +52,7 @@ class MChatKaraokeDialog constructor(
             window.attributes.apply {
                 width = WindowManager.LayoutParams.WRAP_CONTENT
                 activity?.let {
-                    height =  DeviceTools.screenHeight(it)
+                    height = DeviceTools.screenHeight(it)
                 }
                 gravity = Gravity.START
                 window.attributes = this
@@ -77,6 +80,7 @@ class MChatKaraokeDialog constructor(
             tabTitle.clear()
             tabTitle.add(resources.getString(R.string.mchat_choose_a_song))
             tabTitle.add(resources.getString(R.string.mchat_selected))
+            ivSongConsole.setOnClickListener(OnIntervalClickListener(this@MChatKaraokeDialog::onClickConsole))
             songOrderLayout = MChatSongOrderLayout(root.context).also {
                 it.chatKaraokeManager = karaokeManager
                 it.refreshSongOrder()
@@ -101,7 +105,7 @@ class MChatKaraokeDialog constructor(
                 it.chatKaraokeManager = karaokeManager
                 it.initAdapterData()
                 it.refreshPlaylist()
-                it.operateListener = object :OnPlaylistOperateListener{
+                it.operateListener = object : OnPlaylistOperateListener {
                     override fun onMusicSwitch(musicDetail: MusicDetail?) {
                         musicDetail ?: return
                         resetPlaylistTabTitle()
@@ -121,7 +125,53 @@ class MChatKaraokeDialog constructor(
                     }
                 }
             }
+            consoleLayout = MChatSongConsoleLayout(root.context).also {
+                it.chatKaraokeManager = karaokeManager
+                layoutConsoleContainer.addView(it)
+                it.onConsoleListener = object : OnConsoleListener {
+                    override fun onUseOriginal(original: Boolean) {
+                        ToastTools.showCommon("onUseOriginal")
+                    }
+
+                    override fun onEarMonitoring(monitor: Boolean) {
+                        ToastTools.showCommon("onEarMonitoring")
+                    }
+
+                    override fun onPitchChanged(pitch: Float) {
+                        ToastTools.showCommon("onPitchChanged")
+                    }
+
+                    override fun onVolumeChanged(volume: Int) {
+                        ToastTools.showCommon("onVolumeChanged")
+                    }
+
+                    override fun onAccompanyVolumeChange(volume: Int) {
+                        ToastTools.showCommon("onAccompanyVolumeChange")
+                    }
+
+                    override fun onAudioEffectChanged(effect: MChatAudioEffect) {
+                        ToastTools.showCommon("onAudioEffectChanged")
+                    }
+
+                    override fun onConsoleClosed() {
+                        ToastTools.showCommon("onConsoleClosed")
+                        layoutConsoleContainer.isVisible = false
+                        groupSongList.isVisible = true
+                        isCancelable = true
+                    }
+                }
+            }
             initViewPage()
+        }
+    }
+
+    // 点击控制台
+    private fun onClickConsole(view: View) {
+        ToastTools.showCommon("onClickConsole")
+        binding?.apply {
+            layoutConsoleContainer.isVisible = true
+            groupSongList.isVisible = false
+            isCancelable = false
         }
     }
 
@@ -130,7 +180,7 @@ class MChatKaraokeDialog constructor(
             vpSongPager.adapter = songPagerAdapter
             val tabMediator = TabLayoutMediator(tabSong, vpSongPager) { tab, position ->
                 val customView =
-                    LayoutInflater.from(root.context).inflate(R.layout.mchat_view_song_pager_tab_item, tab.view, false)
+                    LayoutInflater.from(root.context).inflate(R.layout.mchat_item_song_pager_tab, tab.view, false)
                 val tabText = customView.findViewById<TextView>(R.id.tv_tab_name)
                 tab.customView = customView
                 tabText.text = tabTitle[position]

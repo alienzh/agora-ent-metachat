@@ -1,5 +1,8 @@
 package io.agora.metachat.game.karaoke
 
+import android.content.Context
+import io.agora.metachat.R
+import io.agora.metachat.game.model.ConsoleAudioEffect
 import io.agora.metachat.game.model.MusicDetail
 
 /**
@@ -126,5 +129,31 @@ object MChatKaraokeConstructor {
             }
             else -> return mutableListOf()
         }
+    }
+
+    @JvmStatic
+    fun buildAudioEffect(context: Context): List<ConsoleAudioEffect> {
+        return mutableListOf(
+            ConsoleAudioEffect(
+                MChatAudioEffect.Studio,
+                R.drawable.mchat_bg_recording_studio,
+                context.resources.getString(R.string.mchat_recording_studio)
+            ),
+            ConsoleAudioEffect(
+                MChatAudioEffect.Concert,
+                R.drawable.mchat_bg_concert,
+                context.resources.getString(R.string.mchat_concert)
+            ),
+            ConsoleAudioEffect(
+                MChatAudioEffect.KTV,
+                R.drawable.mchat_bg_ktv,
+                context.resources.getString(R.string.mchat_ktv)
+            ),
+            ConsoleAudioEffect(
+                MChatAudioEffect.Spatial,
+                R.drawable.mchat_bg_hollow_sound,
+                context.resources.getString(R.string.mchat_hollow_sound)
+            ),
+        )
     }
 }

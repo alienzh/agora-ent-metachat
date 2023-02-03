@@ -22,7 +22,7 @@
                 <!--进度条的圆角-->
                 <corners android:radius="2dp" />
                 <!--已经加载完的进度的颜色-->
-                <solid android:color="#0A7AFF" />
+                <solid android:color="#FFFFFF" />
             </shape>
         </clip>
     </item>

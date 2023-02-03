@@ -123,7 +123,6 @@ class MChatCreateRoomFragment : BaseUiFragment<MchatFragmentCreateRoomBinding>()
     }
 
     override fun onDestroy() {
-        binding.etPassword.rest()
         super.onDestroy()
     }
 }

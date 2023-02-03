@@ -18,6 +18,7 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
 
     private var mediaPlayer: IMediaPlayer? = null
     private var onMediaVideoFramePushListener: OnMediaVideoFramePushListener? = null
+
     companion object {
 
         private const val TAG = "MChatAgoraMediaPlayer"
@@ -37,14 +38,15 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
         mediaPlayer?.registerVideoFrameObserver(this)
     }
 
-    fun setOnMediaVideoFramePushListener(onMediaVideoFramePushListener: OnMediaVideoFramePushListener) = apply{
+    fun setOnMediaVideoFramePushListener(onMediaVideoFramePushListener: OnMediaVideoFramePushListener) = apply {
         this.onMediaVideoFramePushListener = onMediaVideoFramePushListener
     }
 
-    fun play(url: String?, startPos: Long) {
-        mediaPlayer?.open(url,startPos)?.also {
-            if (it==io.agora.rtc2.Constants.ERR_OK){
+    fun play(url: String, startPos: Long = 0) {
+        mediaPlayer?.open(url, startPos)?.also {
+            if (it == io.agora.rtc2.Constants.ERR_OK) {
                 mediaPlayer?.setLoopCount(MChatConstant.PLAY_ADVERTISING_VIDEO_REPEAT)
+                mediaPlayer?.play()
             }
         }
     }
@@ -74,7 +76,7 @@ class MChatAgoraMediaPlayer : IMediaPlayerObserver, IMediaPlayerVideoFrameObserv
     }
 
     override fun onPlayerStateChanged(state: Constants.MediaPlayerState?, error: Constants.MediaPlayerError?) {
-        LogTools.d(TAG,"onPlayerStateChanged state:$state,error:$error")
+        LogTools.d(TAG, "onPlayerStateChanged state:$state,error:$error")
         if (Constants.MediaPlayerState.PLAYER_STATE_OPEN_COMPLETED == state) {
             if (mediaPlayer?.play() != io.agora.rtc2.Constants.ERR_OK) {
                 LogTools.d(TAG, "onPlayerStateChanged play success")

@@ -59,6 +59,7 @@
     <string name="mchat_permission_for_microphone">需要您的同意，才能访问麦克风</string>
     <string name="mchat_choose_a_song">点歌</string>
     <string name="mchat_selected">已点</string>
+    <string name="mchat_all_songs">全部</string>
     <string name="mchat_recommend_songs">嗨歌推荐</string>
     <string name="mchat_tiktok_hot_songs">抖音热歌</string>
     <string name="mchat_chinese_archaic_style_popular_songs">古风热歌</string>
@@ -101,6 +102,14 @@
     <string name="mchat_exit_room">离开房间？</string>
     <string name="mchat_exit_room_tips">在你离开后房间将会关闭。</string>
     <string name="mchat_me">我</string>
+    <string name="mchat_start_karaoke">我要K歌</string>
+    <string name="mchat_song_list">歌单</string>
+    <string name="mchat_end_song">离开K歌</string>
+    <string name="mchat_music_original">Original</string>
+    <string name="mchat_music_score">Score</string>
+    <string name="mchat_music_accompany">Accompany</string>
+    <string name="mchat_music_singing">演唱中</string>
+    <string name="mchat_music_source">歌曲来源咪咕音乐</string>
 
     <string-array name="mchat_room_name">
         <item>和你一起看月亮</item>

@@ -7,17 +7,18 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.DrawableRes
 import androidx.core.view.*
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.chad.library.adapter.base.BaseQuickAdapter
 import com.google.android.material.divider.MaterialDividerItemDecoration
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiActivity
-import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter
-import io.agora.metachat.baseui.adapter.listener.OnItemClickListener
 import io.agora.metachat.databinding.MchatActivityVirtualAvatarBinding
 import io.agora.metachat.databinding.MchatItemVirtualAvatarListBinding
 import io.agora.metachat.game.MChatGameActivity
@@ -80,9 +81,6 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
 
     private var defaultVirtualAvatar = R.drawable.mchat_female0
 
-    private var avatarAdapter: BaseRecyclerAdapter<MchatItemVirtualAvatarListBinding, Int, MChatVirtualAvatarViewHolder>? =
-        null
-
     override fun getViewBinding(inflater: LayoutInflater): MchatActivityVirtualAvatarBinding? {
         return MchatActivityVirtualAvatarBinding.inflate(inflater)
     }
@@ -127,25 +125,25 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
         binding.ivCurrentAvatar.setImageResource(
             virtualAvatarArray.getResourceId(selVirtualAvatarIndex, defaultVirtualAvatar)
         )
-        avatarAdapter = BaseRecyclerAdapter(virtualAvatars, object : OnItemClickListener<Int> {
-            override fun onItemClick(data: Int, view: View, position: Int, viewType: Long) {
+        val avatarAdapter = MChatVirtualAvatarAdapter()
+        avatarAdapter.setOnItemClickListener(object : BaseQuickAdapter.OnItemClickListener<Int> {
+            override fun onClick(adapter: BaseQuickAdapter<Int, *>, view: View, position: Int) {
                 if (selVirtualAvatarIndex == position) return
                 selVirtualAvatarIndex = position
-                binding.ivCurrentAvatar.setImageResource(data)
-                avatarAdapter?.selectedIndex = selVirtualAvatarIndex
-                avatarAdapter?.notifyDataSetChanged()
+                virtualAvatars[selVirtualAvatarIndex].let {
+                    binding.ivCurrentAvatar.setImageResource(it)
+                }
+                avatarAdapter.notifyDataSetChanged()
             }
-        }, MChatVirtualAvatarViewHolder::class.java)
-        avatarAdapter?.selectedIndex = selVirtualAvatarIndex
-        binding.rvAvatarList.apply {
-            addItemDecoration(
-                MaterialDividerItemDecoration(getCurActivity(), MaterialDividerItemDecoration.VERTICAL).apply {
-                    dividerThickness = DeviceTools.dp2px(15).toInt()
-                    dividerColor = Color.TRANSPARENT
-                })
-            layoutManager = GridLayoutManager(getCurActivity(), 5)
-            adapter = avatarAdapter
-        }
+        })
+        binding.rvAvatarList.addItemDecoration(
+            MaterialDividerItemDecoration(getCurActivity(), MaterialDividerItemDecoration.VERTICAL).apply {
+                dividerThickness = DeviceTools.dp2px(15).toInt()
+                dividerColor = Color.TRANSPARENT
+            })
+        binding.rvAvatarList.layoutManager = GridLayoutManager(getCurActivity(), 5)
+        binding.rvAvatarList.adapter = avatarAdapter
+        avatarAdapter.submitList(virtualAvatars)
         binding.linearEnterRoom.setOnClickListener(OnIntervalClickListener(this::onClickEnterGame))
         binding.linearAvatarBack.setOnClickListener(OnIntervalClickListener(this::onClickBack))
     }
@@ -191,13 +189,24 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
         dismissLoading()
     }
 
-    /**virtual avatar viewHolder*/
-    class MChatVirtualAvatarViewHolder constructor(val binding: MchatItemVirtualAvatarListBinding) :
-        BaseRecyclerAdapter.BaseViewHolder<MchatItemVirtualAvatarListBinding, Int>(binding) {
-        override fun binding(data: Int?, selectedIndex: Int) {
+    /**virtual avatar adapter*/
+    inner class MChatVirtualAvatarAdapter() : BaseQuickAdapter<Int, MChatVirtualAvatarAdapter.VH>() {
+        //自定义ViewHolder类
+        inner class VH constructor(
+            val parent: ViewGroup,
+            val binding: MchatItemVirtualAvatarListBinding = MchatItemVirtualAvatarListBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
+        ) : RecyclerView.ViewHolder(binding.root)
+
+        override fun onCreateViewHolder(context: Context, parent: ViewGroup, viewType: Int): VH {
+            return VH(parent)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int, data: Int?) {
             data ?: return
-            binding.ivUserAvatar.setImageResource(data)
-            binding.ivAvatarBg.isVisible = selectedIndex == bindingAdapterPosition
+            holder.binding.ivUserAvatar.setImageResource(data)
+            holder.binding.ivAvatarBg.isVisible = selVirtualAvatarIndex == position
         }
     }
 }

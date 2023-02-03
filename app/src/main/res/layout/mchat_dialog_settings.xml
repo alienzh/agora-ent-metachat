@@ -131,7 +131,7 @@
             android:imeOptions="actionDone|flagNoExtractUi"
             android:inputType="text"
             android:textColor="@color/mchat_white"
-            android:textCursorDrawable="@drawable/bg_edit_cursor"
+            android:textCursorDrawable="@drawable/mchat_bg_edit_cursor_white"
             app:layout_constraintBottom_toBottomOf="@id/tv_nickname"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/tv_nickname"

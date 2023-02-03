@@ -43,6 +43,7 @@
     <color name="mchat_white_90">#E6FFFFFF</color>
     <color name="mchat_white_95">#F2FFFFFF</color>
     <color name="mchat_transparent">#00000000</color>
+    <color name="mchat_black_999">#999999</color>
 
     <color name="mchat_e6e6e6">#E6E6E6</color>
     <color name="mchat_3c4267">#3C4267</color>
@@ -69,4 +70,5 @@
     <color name="mchat_bc5a2b">#BC5A2B</color>
     <color name="mchat_bcbacb">#BCBACB</color>
     <color name="mchat_42454c">#42454C</color>
+    <color name="mchat_2fb46d">#2FB46D</color>
 </resources>

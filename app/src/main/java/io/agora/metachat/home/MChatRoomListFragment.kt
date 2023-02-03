@@ -1,5 +1,6 @@
 package io.agora.metachat.home
 
+import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.Rect
 import android.os.Bundle
@@ -18,11 +19,9 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.chad.library.adapter.base.BaseQuickAdapter
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiFragment
-import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter
-import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter.BaseViewHolder
-import io.agora.metachat.baseui.adapter.listener.OnItemClickListener
 import io.agora.metachat.databinding.MchatFragmentRoomListBinding
 import io.agora.metachat.databinding.MchatItemRoomListBinding
 import io.agora.metachat.global.MChatConstant
@@ -43,7 +42,7 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
     }
 
     private lateinit var mChatViewModel: MChatRoomCreateViewModel
-    private var roomAdapter: BaseRecyclerAdapter<MchatItemRoomListBinding, MChatRoomModel, MChatRoomViewHolder>? = null
+    private var roomAdapter: BaseQuickAdapter<MChatRoomModel, MChatRoomAdapter.VH>? = null
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatFragmentRoomListBinding {
         return MchatFragmentRoomListBinding.inflate(inflater)
@@ -68,12 +67,15 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
         } else {
             binding.ivMchatCreateIntroduce.setImageResource(R.drawable.mchat_room_create_en)
         }
-        roomAdapter = BaseRecyclerAdapter(null, object : OnItemClickListener<MChatRoomModel> {
-            override fun onItemClick(roomModel: MChatRoomModel, view: View, position: Int, viewType: Long) {
+        roomAdapter = MChatRoomAdapter()
+        roomAdapter?.setOnItemClickListener(object : BaseQuickAdapter.OnItemClickListener<MChatRoomModel>{
+            override fun onClick(adapter: BaseQuickAdapter<MChatRoomModel, *>, view: View, position: Int) {
                 if (FastClickTools.isFastClick(view)) return
-                goCreateRole(roomModel)
+                adapter.getItem(position)?.let {
+                    goCreateRole(it)
+                }
             }
-        }, MChatRoomViewHolder::class.java)
+        })
         binding.rvRoomList.apply {
             val padding: Int = DeviceTools.dp2px(8).toInt()
             val itemDecoration = object : ItemDecoration() {
@@ -134,7 +136,7 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
         mChatViewModel.roomListObservable().observe(viewLifecycleOwner) {
             binding.swipeRefreshLayout.isRefreshing = false
             LogTools.d("meta chat room list size:${it?.size}")
-            roomAdapter?.submitListAndPurge(it ?: mutableListOf())
+            roomAdapter?.submitList(it ?: mutableListOf())
         }
     }
 
@@ -151,28 +153,34 @@ class MChatRoomListFragment : BaseUiFragment<MchatFragmentRoomListBinding>(), Sw
         ThreadTools.get().runOnMainThreadDelay({ mChatViewModel.fetchRoomList() }, HIDE_REFRESH_DELAY)
     }
 
-    /**room list viewHolder*/
-    class MChatRoomViewHolder constructor(val binding: MchatItemRoomListBinding) :
-        BaseViewHolder<MchatItemRoomListBinding, MChatRoomModel>(binding) {
+    /**room list adapter*/
+    inner class MChatRoomAdapter() : BaseQuickAdapter<MChatRoomModel, MChatRoomAdapter.VH>() {
+        //自定义ViewHolder类
+        inner class VH constructor(
+            val parent: ViewGroup,
+            val binding: MchatItemRoomListBinding = MchatItemRoomListBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
+        ) : RecyclerView.ViewHolder(binding.root)
 
-        companion object {
-            private const val defaultCover = R.drawable.mchat_room_cover0
+        override fun onCreateViewHolder(context: Context, parent: ViewGroup, viewType: Int): VH {
+            return VH(parent)
         }
 
-        override fun binding(data: MChatRoomModel?, selectedIndex: Int) {
+        override fun onBindViewHolder(holder: VH, position: Int, data: MChatRoomModel?) {
             data ?: return
-            binding.ivRoomLock.isVisible = data.isPrivate
-            binding.ivRoomCover.setImageResource(getRoomCoverRes(data.roomCoverIndex))
-            binding.tvRoomName.text = data.roomName
-            binding.tvRoomId.text = context.getString(R.string.mchat_room_id, data.roomId)
-            binding.tvMembers.text = "${data.memberCount}"
+            holder.binding.ivRoomLock.isVisible = data.isPrivate
+            holder.binding.ivRoomCover.setImageResource(getRoomCoverRes(data.roomCoverIndex))
+            holder.binding.tvRoomName.text = data.roomName
+            holder.binding.tvRoomId.text = context.getString(R.string.mchat_room_id, data.roomId)
+            holder.binding.tvMembers.text = "${data.memberCount}"
         }
 
         @DrawableRes
         private fun getRoomCoverRes(index: Int): Int {
             val coverArray: TypedArray = context.resources.obtainTypedArray(R.array.mchat_room_cover)
             val localAvatarIndex = if (index >= 0 && index < coverArray.length()) index else 0
-            return coverArray.getResourceId(localAvatarIndex, defaultCover)
+            return coverArray.getResourceId(localAvatarIndex, R.drawable.mchat_room_cover0)
         }
     }
 }

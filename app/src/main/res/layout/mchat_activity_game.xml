@@ -48,11 +48,11 @@
             android:layout_width="48dp"
             android:layout_height="26dp"
             android:background="@drawable/mchat_bg_rect_radius14_stroke_white15"
+            android:focusableInTouchMode="false"
             android:gravity="center"
             android:text="@string/mchat_offline"
             android:textColor="@color/mchat_white"
             android:textSize="@dimen/mchat_sp_12"
-            android:focusableInTouchMode="false"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -62,10 +62,10 @@
             android:layout_width="88dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp"
+            android:layout_marginTop="2dp"
             android:ellipsize="end"
             android:textColor="@color/mchat_white"
             android:textSize="@dimen/mchat_sp_11"
-            android:layout_marginTop="2dp"
             app:layout_constraintEnd_toStartOf="@id/tv_mic_online"
             app:layout_constraintStart_toEndOf="@id/iv_user_portrait"
             app:layout_constraintTop_toTopOf="@id/iv_user_portrait"
@@ -76,13 +76,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp"
+            android:layout_marginBottom="2dp"
             android:drawablePadding="2dp"
             android:ellipsize="end"
+            android:focusableInTouchMode="false"
             android:text="@string/mchat_audio_chat_mode"
             android:textColor="@color/mchat_white"
             android:textSize="@dimen/mchat_sp_11"
-            android:focusableInTouchMode="false"
-            android:layout_marginBottom="2dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@id/iv_user_portrait" />
     </androidx.constraintlayout.widget.ConstraintLayout>
@@ -112,9 +112,9 @@
             android:layout_height="36dp"
             android:layout_marginStart="15dp"
             android:background="@drawable/mchat_bg_oval_black25"
+            android:focusableInTouchMode="false"
             android:padding="6dp"
             android:src="@drawable/mchat_ic_mic"
-            android:focusableInTouchMode="false"
             app:layout_constraintBottom_toBottomOf="@id/iv_msg"
             app:layout_constraintStart_toEndOf="@id/iv_msg"
             app:layout_constraintTop_toTopOf="@id/iv_msg" />
@@ -125,9 +125,9 @@
             android:layout_height="12dp"
             android:layout_marginEnd="6dp"
             android:layout_marginBottom="6dp"
+            android:focusableInTouchMode="false"
             android:src="@drawable/mchat_ic_mute"
             android:visibility="gone"
-            android:focusableInTouchMode="false"
             app:layout_constraintBottom_toBottomOf="@id/iv_mute_remote"
             app:layout_constraintEnd_toEndOf="@id/iv_mute_remote"
             tools:visibility="visible" />
@@ -199,11 +199,106 @@
             app:layout_constraintTop_toTopOf="@id/iv_settings" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_karaoke"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="35dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/vertical_l50"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <!-- start karaoke -->
+        <LinearLayout
+            android:id="@+id/linear_start_karaoke"
+            android:layout_width="132dp"
+            android:layout_height="40dp"
+            android:background="@drawable/mchat_bg_rect_radius20_gradient_pure_angle270"
+            android:gravity="center"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:src="@drawable/mchat_ic_sing" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="@string/mchat_start_karaoke"
+                android:textColor="@color/mchat_white"
+                android:textSize="@dimen/mchat_sp_14" />
+        </LinearLayout>
+
+        <!-- song list -->
+        <LinearLayout
+            android:id="@+id/linear_song_list"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="15dp"
+            android:background="@drawable/mchat_bg_rect_radius20_gradient_pure_angle270"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/vertical_l50"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:src="@drawable/mchat_ic_song" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="@string/mchat_song_list"
+                android:textColor="@color/mchat_white"
+                android:textSize="@dimen/mchat_sp_14" />
+        </LinearLayout>
+
+        <!-- end song -->
+        <LinearLayout
+            android:id="@+id/linear_end_song"
+            android:layout_width="120dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="15dp"
+            android:background="@drawable/mchat_bg_rect_radius20_gradient_pure_angle270"
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/vertical_l50">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:src="@drawable/mchat_ic_song" />
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="@string/mchat_end_song"
+                android:textColor="@color/mchat_white"
+                android:textSize="@dimen/mchat_sp_14" />
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <androidx.constraintlayout.widget.Group
         android:id="@+id/group_native_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="layout_user,layout_audio,layout_settings"
-        tools:visibility="visible"/>
+        app:constraint_referenced_ids="layout_user,layout_audio,layout_settings,layout_karaoke"
+        tools:visibility="visible" />
 </androidx.constraintlayout.widget.ConstraintLayout>

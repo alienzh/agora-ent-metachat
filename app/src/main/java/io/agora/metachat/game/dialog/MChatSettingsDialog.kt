@@ -6,6 +6,7 @@ import android.view.*
 import android.view.inputmethod.EditorInfo
 import androidx.core.view.isVisible
 import io.agora.metachat.R
+import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatDialogSettingsBinding
 import io.agora.metachat.home.dialog.MChatBadgeDialog
@@ -17,7 +18,7 @@ import io.agora.metachat.widget.OnIntervalClickListener
 /**
  * @author create by zhangwei03
  */
-class MChatSettingsDialog constructor() : MChatBlurDialog<MchatDialogSettingsBinding>() {
+class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettingsBinding>() {
 
     companion object {
         private const val GENERAL = 0

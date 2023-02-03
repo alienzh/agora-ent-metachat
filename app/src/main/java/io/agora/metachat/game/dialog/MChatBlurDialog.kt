@@ -55,11 +55,11 @@ abstract class MChatBlurDialog<B : ViewBinding> : BaseFragmentDialog<B>() {
         val blurConsumer: (Boolean) -> Unit = this::updateWindowForBlurs
         dialog?.window?.decorView?.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
 
-            override fun onViewAttachedToWindow(v: View?) {
+            override fun onViewAttachedToWindow(v: View) {
                 dialog?.window?.windowManager?.addCrossWindowBlurEnabledListener(blurConsumer)
             }
 
-            override fun onViewDetachedFromWindow(v: View?) {
+            override fun onViewDetachedFromWindow(v: View) {
                 dialog?.window?.windowManager?.removeCrossWindowBlurEnabledListener(blurConsumer)
             }
         });

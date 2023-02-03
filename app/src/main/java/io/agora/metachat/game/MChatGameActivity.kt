@@ -18,9 +18,9 @@ import androidx.lifecycle.ViewModelProvider
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiActivity
 import io.agora.metachat.databinding.MchatActivityGameBinding
-import io.agora.metachat.game.dialog.MChatBeginnerDialog
-import io.agora.metachat.game.dialog.MChatMessageDialog
-import io.agora.metachat.game.dialog.MChatSettingsDialog
+import io.agora.metachat.game.dialog.*
+import io.agora.metachat.game.karaoke.MChatKaraokeManager
+import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ToastTools
@@ -68,7 +68,9 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private var mReCreateScene = false
     private var mSurfaceSizeChange = false
 
+    private var karaokeManager: MChatKaraokeManager? = null
     private var messageDialog: MChatMessageDialog? = null
+    private var karaokeDialog: MChatKaraokeDialog? = null
 
     override fun getViewBinding(inflater: LayoutInflater): MchatActivityGameBinding {
         return MchatActivityGameBinding.inflate(inflater)
@@ -104,6 +106,9 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         binding.ivMsg.setOnClickListener(OnIntervalClickListener(this::onClickMsg))
         binding.tvVisitorMode.setOnClickListener(OnIntervalClickListener(this::onClickVisitor))
         binding.tvNoviceGuide.setOnClickListener(OnIntervalClickListener(this::onClickNovice))
+        binding.linearStartKaraoke.setOnClickListener(OnIntervalClickListener(this::onClickStartKaraoke))
+        binding.linearSongList.setOnClickListener(OnIntervalClickListener(this::onClickSongList))
+        binding.linearEndSong.setOnClickListener(OnIntervalClickListener(this::onClickEndKaraoke))
     }
 
     private fun resetViewVisibility() {
@@ -145,14 +150,30 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private fun onClickVisitor(view: View) {
         // 上麦就是语聊模式，不显示游客模式弹框
         if (gameViewModel.onlineMicObservable().value == true) return
-        ToastTools.showCommon("onClickVisitor")
         MChatBeginnerDialog(MChatBeginnerDialog.VISITOR_TYPE).show(supportFragmentManager, "visitor dialog")
     }
 
     // 新手引导说明
     private fun onClickNovice(view: View) {
-        ToastTools.showCommon("onClickNovice")
         MChatBeginnerDialog(MChatBeginnerDialog.NOVICE_TYPE).show(supportFragmentManager, "novice dialog")
+    }
+
+    // 点击开始k歌
+    private fun onClickStartKaraoke(view: View) {
+        ToastTools.showCommon("onClickStartKaraoke")
+        showKaraokeDialog()
+    }
+
+    // 点击歌单
+    private fun onClickSongList(view: View) {
+        ToastTools.showCommon("onClickSongList")
+        showKaraokeDialog()
+    }
+
+    // 点击离开k歌
+    private fun onClickEndKaraoke(view: View) {
+        ToastTools.showCommon("onClickEndKaraoke")
+        dismissKaraokeDialog()
     }
 
     // 申请麦克风权限
@@ -166,9 +187,29 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
     }
 
+    private fun showKaraokeDialog() {
+        if (karaokeDialog == null) {
+            karaokeDialog = MChatKaraokeDialog(karaokeManager, object : OnKaraokeDialogListener {
+                override fun onMusicInserted(insert: Boolean, detail: MusicDetail) {
+                }
+
+                override fun onConsoleOpened() {
+
+                }
+            })
+        }
+        karaokeDialog?.show(supportFragmentManager, "karaoke dialog")
+    }
+
+    private fun dismissKaraokeDialog() {
+        karaokeDialog?.dismissAllowingStateLoss()
+        karaokeDialog = null
+    }
+
     private fun gameObservable() {
         gameViewModel.isEnterSceneObservable().observe(this) {
             if (it) binding.groupNativeView.isVisible = true
+            karaokeManager = MChatKaraokeManager(MChatContext.instance())
         }
         gameViewModel.onlineMicObservable().observe(this) {
             if (it) {

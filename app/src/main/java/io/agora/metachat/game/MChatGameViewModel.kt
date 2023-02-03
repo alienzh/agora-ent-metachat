@@ -5,6 +5,7 @@ import android.view.TextureView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import io.agora.metachat.*
+import io.agora.metachat.game.karaoke.MChatKaraokeManager
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.SingleLiveData
 import io.agora.metachat.tools.ThreadTools

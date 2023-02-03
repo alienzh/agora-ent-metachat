@@ -59,6 +59,7 @@
     <string name="mchat_permission_for_microphone">Do you allow this app to use your microphone?</string>
     <string name="mchat_choose_a_song">Choose a song</string>
     <string name="mchat_selected">Selected</string>
+    <string name="mchat_all_songs">All</string>
     <string name="mchat_recommend_songs">Recommend Songs</string>
     <string name="mchat_tiktok_hot_songs">TikTok hot songs</string>
     <string name="mchat_chinese_archaic_style_popular_songs">Chinese Archaic Style Popular Songs</string>
@@ -101,6 +102,14 @@
     <string name="mchat_exit_room">Exit Room?</string>
     <string name="mchat_exit_room_tips">The room will close after you leave.</string>
     <string name="mchat_me">Me</string>
+    <string name="mchat_start_karaoke">Start Karaoke</string>
+    <string name="mchat_song_list">Song list</string>
+    <string name="mchat_end_song">End Karaoke</string>
+    <string name="mchat_music_original">Original</string>
+    <string name="mchat_music_score">Score</string>
+    <string name="mchat_music_accompany">Accompany</string>
+    <string name="mchat_music_singing">singing</string>
+    <string name="mchat_music_source">The song is from Migu Music</string>
 
     <string-array name="mchat_room_name">
         <item>Jenoah</item>

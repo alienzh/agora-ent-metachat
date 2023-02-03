@@ -1,5 +1,6 @@
 package io.agora.metachat.home.dialog
 
+import android.content.Context
 import android.content.res.TypedArray
 import android.graphics.Color
 import android.os.Bundle
@@ -8,12 +9,13 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.DrawableRes
 import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.chad.library.adapter.base.BaseQuickAdapter
 import com.google.android.material.divider.MaterialDividerItemDecoration
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
-import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter
-import io.agora.metachat.baseui.adapter.listener.OnItemClickListener
 import io.agora.metachat.databinding.MchatDialogSelectPortraitBinding
 import io.agora.metachat.databinding.MchatItemPortraitListBinding
 import io.agora.metachat.tools.DeviceTools
@@ -28,9 +30,6 @@ class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPo
     private lateinit var portraitArray: TypedArray
     private var defaultPortrait = R.drawable.mchat_portrait0
     private var selPortraitIndex: Int = 0
-
-    private var portraitAdapter: BaseRecyclerAdapter<MchatItemPortraitListBinding, Int, MChatPortraitViewHolder>? =
-        null
 
     private var confirmCallback: ((selPortraitIndex: Int) -> Unit)? = null
 
@@ -60,25 +59,21 @@ class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPo
                 add(getVirtualAvatarRes(i))
             }
         }
-        portraitAdapter = BaseRecyclerAdapter(portraits, object : OnItemClickListener<Int> {
-            override fun onItemClick(data: Int, view: View, position: Int, viewType: Long) {
-                if (selPortraitIndex == position) return
-                selPortraitIndex = position
-                portraitAdapter?.selectedIndex = selPortraitIndex
-                portraitAdapter?.notifyDataSetChanged()
-            }
-        }, MChatPortraitViewHolder::class.java)
-        portraitAdapter?.selectedIndex = selPortraitIndex
+        val portraitAdapter = MChatPortraitAdapter()
+        portraitAdapter.setOnItemClickListener { adapter, view, position ->
+            if (selPortraitIndex == position) return@setOnItemClickListener
+            selPortraitIndex = position
+            portraitAdapter.notifyDataSetChanged()
+        }
         binding?.apply {
-            rvPortrait.apply {
-                addItemDecoration(
-                    MaterialDividerItemDecoration(root.context, MaterialDividerItemDecoration.HORIZONTAL).apply {
-                        dividerThickness = DeviceTools.dp2px(26).toInt()
-                        dividerColor = Color.TRANSPARENT
-                    })
-                layoutManager = GridLayoutManager(root.context, 3)
-                adapter = portraitAdapter
-            }
+            rvPortrait.addItemDecoration(
+                MaterialDividerItemDecoration(root.context, MaterialDividerItemDecoration.HORIZONTAL).apply {
+                    dividerThickness = DeviceTools.dp2px(26).toInt()
+                    dividerColor = Color.TRANSPARENT
+                })
+            rvPortrait.layoutManager = GridLayoutManager(root.context, 3)
+            rvPortrait.adapter = portraitAdapter
+            portraitAdapter.submitList(portraits)
             mbLeft.setOnClickListener(OnIntervalClickListener(this@MChatPortraitDialog::onClickCancel))
             mbRight.setOnClickListener(OnIntervalClickListener(this@MChatPortraitDialog::onClickConfirm))
         }
@@ -89,6 +84,7 @@ class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPo
     }
 
     private fun onClickConfirm(view: View) {
+        dismiss()
         ToastTools.showCommon("portrait index:$selPortraitIndex")
     }
 
@@ -98,14 +94,24 @@ class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPo
         return portraitArray.getResourceId(localPortraitIndex, defaultPortrait)
     }
 
-    /**portrait viewHolder*/
-    class MChatPortraitViewHolder constructor(val binding: MchatItemPortraitListBinding) :
-        BaseRecyclerAdapter.BaseViewHolder<MchatItemPortraitListBinding, Int>(binding) {
-        override fun binding(data: Int?, selectedIndex: Int) {
-            data ?: return
-            binding.ivUserPortrait.setImageResource(data)
+    /**portrait adapter*/
+    inner class MChatPortraitAdapter() : BaseQuickAdapter<Int, MChatPortraitAdapter.VH>() {
+        //自定义ViewHolder类
+        inner class VH constructor(
+            val parent: ViewGroup,
+            val binding: MchatItemPortraitListBinding = MchatItemPortraitListBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
+        ) : RecyclerView.ViewHolder(binding.root)
 
-            binding.ivPortraitBg.isInvisible = selectedIndex != bindingAdapterPosition
+        override fun onCreateViewHolder(context: Context, parent: ViewGroup, viewType: Int): VH {
+            return VH(parent)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int, data: Int?) {
+            data ?: return
+            holder.binding.ivUserPortrait.setImageResource(data)
+            holder.binding.ivPortraitBg.isVisible = selPortraitIndex == position
         }
     }
 }

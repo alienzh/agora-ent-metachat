@@ -1,5 +1,6 @@
 package io.agora.metachat.game.dialog
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,9 +9,9 @@ import android.widget.FrameLayout
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.chad.library.adapter.base.BaseQuickAdapter
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
-import io.agora.metachat.baseui.adapter.BaseRecyclerAdapter
 import io.agora.metachat.databinding.MchatDialogBeginnerGuideBinding
 import io.agora.metachat.databinding.MchatItemBeginnerGuideBinding
 import io.agora.metachat.tools.DeviceTools
@@ -25,9 +26,6 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
     }
 
     private lateinit var guideArray: Array<String>
-
-    private var guideAdapter: BaseRecyclerAdapter<MchatItemBeginnerGuideBinding, String, MChatGuideViewHolder>? =
-        null
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogBeginnerGuideBinding {
         return MchatDialogBeginnerGuideBinding.inflate(inflater)
@@ -71,9 +69,10 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
                     add(guideArray[i])
                 }
             }
-            guideAdapter = BaseRecyclerAdapter(contents, null, MChatGuideViewHolder::class.java)
             rvContent.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
+            val guideAdapter = MChatGuideAdapter()
             rvContent.adapter = guideAdapter
+            guideAdapter.submitList(contents)
         }
     }
 
@@ -84,25 +83,36 @@ class MChatBeginnerDialog constructor(val type: Int) : BaseFragmentDialog<MchatD
         view.layoutParams = layoutParams
     }
 
-    /**guide viewHolder*/
-    class MChatGuideViewHolder constructor(val binding: MchatItemBeginnerGuideBinding) :
-        BaseRecyclerAdapter.BaseViewHolder<MchatItemBeginnerGuideBinding, String>(binding) {
-        override fun binding(data: String?, selectedIndex: Int) {
+    // guide adapter
+    inner class MChatGuideAdapter : BaseQuickAdapter<String,MChatGuideAdapter.VH>() {
+        //自定义ViewHolder类
+        inner class VH constructor(
+            val parent: ViewGroup,
+            val binding: MchatItemBeginnerGuideBinding = MchatItemBeginnerGuideBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
+        ) : RecyclerView.ViewHolder(binding.root)
+
+        override fun onCreateViewHolder(context: Context, parent: ViewGroup, viewType: Int): VH {
+            return VH(parent)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int, data: String?) {
             data ?: return
-            if (bindingAdapterPosition == 0) {
-                binding.tvGuideTitle.isVisible = true
-                binding.ivGuideNumber.isVisible = false
-                binding.tvGuideContent.isVisible = false
-                binding.tvGuideTitle.text = data
+            if (position == 0) {
+                holder.binding.tvGuideTitle.isVisible = true
+                holder.binding.ivGuideNumber.isVisible = false
+                holder.binding.tvGuideContent.isVisible = false
+                holder.binding.tvGuideTitle.text = data
             } else {
-                binding.tvGuideTitle.isVisible = false
-                binding.ivGuideNumber.isVisible = true
-                binding.tvGuideContent.isVisible = true
-                val numberResName = "mchat_guide_$bindingAdapterPosition"
+                holder.binding.tvGuideTitle.isVisible = false
+                holder.binding.ivGuideNumber.isVisible = true
+                holder.binding.tvGuideContent.isVisible = true
+                val numberResName = "mchat_guide_$position"
                 var numberDrawable = DeviceTools.getDrawableId(context, numberResName)
                 if (numberDrawable == 0) numberDrawable = R.drawable.mchat_guide_1
-                binding.ivGuideNumber.setImageResource(numberDrawable)
-                binding.tvGuideContent.text = data
+                holder.binding.ivGuideNumber.setImageResource(numberDrawable)
+                holder.binding.tvGuideContent.text = data
             }
         }
     }

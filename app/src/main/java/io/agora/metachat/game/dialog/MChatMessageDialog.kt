@@ -2,6 +2,7 @@ package io.agora.metachat.game.dialog
 
 import android.content.Context
 import android.content.res.TypedArray
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.view.ViewGroup.MarginLayoutParams
@@ -78,6 +79,9 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
                     height = DeviceTools.screenHeight(it)
                 }
                 gravity = Gravity.START
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                }
                 window.attributes = this
             }
         }

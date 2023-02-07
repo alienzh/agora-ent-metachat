@@ -47,7 +47,7 @@ class MChatSongConsoleLayout : ConstraintLayout {
     private fun initView(context: Context) {
         val root = View.inflate(context, R.layout.mchat_view_song_console_layout, this)
         binding = MchatViewSongConsoleLayoutBinding.bind(root)
-        binding.titleView.setLeftClick(OnIntervalClickListener(this::onClickBack))
+        binding.ivConsoleBack.setOnClickListener(OnIntervalClickListener(this::onClickBack))
         binding.checkboxOriginalSinging.setOnCheckedChangeListener { buttonView, isChecked ->
             LogTools.d("Original Singing isChecked:$isChecked")
             onConsoleListener?.onUseOriginal(isChecked)

@@ -84,7 +84,8 @@ class MChatBadgeDialog constructor() : BaseFragmentDialog<MchatDialogSelectBadge
     }
 
     private fun onClickConfirm(view: View) {
-        ToastTools.showCommon("badge index:$selBadgeIndex")
+        dismiss()
+        confirmCallback?.invoke(selBadgeIndex)
     }
 
     @DrawableRes

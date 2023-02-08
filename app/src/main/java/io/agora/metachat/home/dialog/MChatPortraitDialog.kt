@@ -85,7 +85,7 @@ class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPo
 
     private fun onClickConfirm(view: View) {
         dismiss()
-        ToastTools.showCommon("portrait index:$selPortraitIndex")
+        confirmCallback?.invoke(selPortraitIndex)
     }
 
     @DrawableRes

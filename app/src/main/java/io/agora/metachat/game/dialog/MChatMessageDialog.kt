@@ -16,6 +16,7 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogMessageBinding
 import io.agora.metachat.databinding.MchatItemMessageBinding
+import io.agora.metachat.game.MChatContext
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.imkit.MChatGroupIMManager
 import io.agora.metachat.imkit.MChatMessageModel
@@ -101,6 +102,7 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
         if (message.isNullOrEmpty()) return
         MChatGroupIMManager.instance().sendTxtMsg(message, MChatKeyCenter.nickname) {
             if (it) {
+                MChatContext.instance().getUnityCmd()?.sendMessage(message)
                 ThreadTools.get().runOnMainThread {
                     binding?.etMessage?.setText("")
                     refreshMessage()

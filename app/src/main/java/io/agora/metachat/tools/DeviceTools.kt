@@ -13,6 +13,7 @@ import androidx.annotation.ColorInt
 import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
 import androidx.core.content.res.ResourcesCompat
+import java.text.DecimalFormat
 import java.util.*
 
 /**
@@ -122,5 +123,28 @@ object DeviceTools {
         }
         return processName
     }
+
+    fun getNetFileSizeDescription(size: Long): String {
+        val bytes = StringBuffer()
+        val format = DecimalFormat("###.0")
+        if (size >= 1024 * 1024 * 1024) {
+            val i = size / (1024.0 * 1024.0 * 1024.0)
+            bytes.append(format.format(i)).append("GB")
+        } else if (size >= 1024 * 1024) {
+            val i = size / (1024.0 * 1024.0)
+            bytes.append(format.format(i)).append("MB")
+        } else if (size >= 1024) {
+            val i = size / 1024.0
+            bytes.append(format.format(i)).append("KB")
+        } else {
+            if (size <= 0) {
+                bytes.append("0B")
+            } else {
+                bytes.append(size.toInt()).append("B")
+            }
+        }
+        return bytes.toString()
+    }
+
 }
 

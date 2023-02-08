@@ -215,32 +215,6 @@
             android:orientation="vertical"
             app:layout_constraintGuide_percent="0.5" />
 
-        <!-- start karaoke -->
-        <LinearLayout
-            android:id="@+id/linear_start_karaoke"
-            android:layout_width="132dp"
-            android:layout_height="40dp"
-            android:background="@drawable/mchat_bg_rect_radius20_gradient_pure_angle270"
-            android:gravity="center"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:src="@drawable/mchat_ic_sing" />
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="3dp"
-                android:text="@string/mchat_start_karaoke"
-                android:textColor="@color/mchat_white"
-                android:textSize="@dimen/mchat_sp_14" />
-        </LinearLayout>
-
         <!-- song list -->
         <LinearLayout
             android:id="@+id/linear_song_list"
@@ -249,6 +223,7 @@
             android:layout_marginEnd="15dp"
             android:background="@drawable/mchat_bg_rect_radius20_gradient_pure_angle270"
             android:gravity="center"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/vertical_l50"
             app:layout_constraintStart_toStartOf="parent">
@@ -275,6 +250,7 @@
             android:layout_marginStart="15dp"
             android:background="@drawable/mchat_bg_rect_radius20_gradient_pure_angle270"
             android:gravity="center"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/vertical_l50">

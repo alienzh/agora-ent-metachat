@@ -1,15 +1,20 @@
 package io.agora.metachat.game.dialog
 
+import android.content.res.TypedArray
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.EditorInfo
+import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatDialogSettingsBinding
+import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.global.MChatKeyCenter
+import io.agora.metachat.home.MChatCreateRoleFragment
 import io.agora.metachat.home.dialog.MChatBadgeDialog
 import io.agora.metachat.home.dialog.MChatPortraitDialog
 import io.agora.metachat.imkit.MChatGroupIMManager
@@ -25,10 +30,23 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
     companion object {
         private const val GENERAL = 0
         private const val SOUND = 1
+        private const val defaultPortrait = R.drawable.mchat_portrait0
+        private const val defaultBadge = R.drawable.mchat_badge_level0
     }
 
     // 默认选中通用
     private var curSelected = GENERAL
+
+    /**portrait */
+    private lateinit var portraitArray: TypedArray
+
+    /**badge */
+    private lateinit var badgeArray: TypedArray
+
+    /**virtual avatar */
+    private lateinit var virtualAvatarArray: TypedArray
+
+    private var defaultVirtualAvatar = R.drawable.mchat_female0
 
     private var exitCallback: (() -> Unit)? = null
 
@@ -44,7 +62,29 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
         super.onViewCreated(view, savedInstanceState)
         dialog?.setCanceledOnTouchOutside(false)
         dialog?.setCancelable(false)
+        initData()
         initView()
+    }
+
+    private fun initData() {
+        portraitArray = resources.obtainTypedArray(R.array.mchat_portrait)
+        badgeArray = resources.obtainTypedArray(R.array.mchat_user_badge)
+        virtualAvatarArray = if (MChatKeyCenter.gender == MChatConstant.Gender.MALE) {
+            resources.obtainTypedArray(R.array.mchat_avatar_male)
+        } else {
+            resources.obtainTypedArray(R.array.mchat_avatar_female)
+        }
+        defaultVirtualAvatar = if (MChatKeyCenter.gender == MChatConstant.Gender.MALE) {
+            R.drawable.mchat_male0
+        } else {
+            R.drawable.mchat_female0
+        }
+    }
+
+    @DrawableRes
+    private fun getVirtualAvatarRes(avatarIndex: Int): Int {
+        val localAvatarIndex = if (avatarIndex >= 0 && avatarIndex < virtualAvatarArray.length()) avatarIndex else 0
+        return virtualAvatarArray.getResourceId(localAvatarIndex, defaultVirtualAvatar)
     }
 
     override fun onStart() {
@@ -90,6 +130,14 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
                 }
                 false
             }
+            it.ivUserPortrait.setImageResource(
+                portraitArray.getResourceId(MChatKeyCenter.portraitIndex, defaultPortrait)
+            )
+            it.ivUserBadge.setImageResource(
+                badgeArray.getResourceId(MChatKeyCenter.badgeIndex, defaultBadge)
+            )
+            it.ivVirtualAvatar.setImageResource(getVirtualAvatarRes(MChatKeyCenter.virtualAvatarIndex))
+            it.etNickname.setText(MChatKeyCenter.nickname)
         }
     }
 
@@ -98,6 +146,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             ToastTools.showError(R.string.mchat_nickname_error_tips)
             return
         }
+        MChatKeyCenter.nickname = name
         // TODO:
         ToastTools.showCommon(name)
     }
@@ -133,14 +182,18 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
     // 点击更换头像
     private fun onClickUserPortrait(view: View) {
         MChatPortraitDialog().setConfirmCallback {
-            ToastTools.showCommon("selected portrait index:$it")
+            if (MChatKeyCenter.portraitIndex == it) resources
+            MChatKeyCenter.portraitIndex = it
+            binding?.ivUserPortrait?.setImageResource(portraitArray.getResourceId(it, defaultPortrait))
         }.show(childFragmentManager, "portrait dialog")
     }
 
     // 点击更换徽章
     private fun onClickUserBadge(view: View) {
         MChatBadgeDialog().setConfirmCallback {
-            ToastTools.showCommon("selected badge index:$it")
+            if (MChatKeyCenter.badgeIndex == it) return@setConfirmCallback
+            MChatKeyCenter.badgeIndex = it
+            binding?.ivUserBadge?.setImageResource(badgeArray.getResourceId(it, defaultBadge))
         }.show(childFragmentManager, "badge dialog")
     }
 

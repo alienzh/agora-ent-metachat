@@ -8,7 +8,9 @@ import android.view.ViewGroup
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogDownloadBinding
+import io.agora.metachat.game.MChatContext
 import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
 /**
@@ -37,7 +39,10 @@ class MChatDownloadDialog constructor() : BaseFragmentDialog<MchatDialogDownload
         binding?.let {
             it.mbCancel.setOnClickListener(OnIntervalClickListener(this::onClickCancel))
             it.mtContent.text =
-                resources.getString(R.string.mchat_download_content, MChatConstant.KEY_UNITY_RESOURCES_SIZE)
+                resources.getString(
+                    R.string.mchat_download_content,
+                    DeviceTools.getNetFileSizeDescription(MChatContext.instance().getSceneInfo().mTotalSize)
+                )
         }
     }
 

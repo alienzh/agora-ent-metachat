@@ -5,7 +5,6 @@ import android.view.TextureView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import io.agora.metachat.*
-import io.agora.metachat.game.karaoke.MChatKaraokeManager
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.SingleLiveData
 import io.agora.metachat.tools.ThreadTools
@@ -81,7 +80,7 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
         }
     }
 
-    override fun onRecvMessageFromScene(message: ByteArray?) {}
+    override fun onRecvMessageFromScene(message: ByteArray) {}
 
     override fun onUserPositionChanged(uid: String?, posInfo: MetachatUserPositionInfo?) {}
 

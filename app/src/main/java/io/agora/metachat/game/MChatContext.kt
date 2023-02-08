@@ -8,8 +8,7 @@ import io.agora.metachat.game.model.EnterSceneExtraInfo
 import io.agora.metachat.game.model.RoleInfo
 import io.agora.metachat.game.model.UnityMessage
 import io.agora.metachat.game.model.UnityRoleInfo
-import io.agora.metachat.global.MChatConstant
-import io.agora.metachat.global.MChatKeyCenter
+import io.agora.metachat.global.*
 import io.agora.metachat.tools.GsonTools
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
@@ -56,9 +55,11 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     private var localUserAvatar: ILocalUserAvatar? = null
     private var isInScene = false
     private var currentScene = MChatConstant.Scene.SCENE_NONE
-    private var nextScene = MChatConstant.Scene.SCENE_NONE
     private var roleInfo: RoleInfo? = null
     private val roleInfoList = mutableListOf<RoleInfo>()
+    private var unityCmd: MChatUnityCmd? = null
+
+    fun getUnityCmd(): MChatUnityCmd? = unityCmd
 
     fun initialize(context: Context): Boolean {
         var ret = Constants.ERR_OK
@@ -87,6 +88,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
                     setAudioProfile(Constants.AUDIO_PROFILE_DEFAULT, Constants.AUDIO_SCENARIO_GAME_STREAMING)
                 }
                 metaChatService = IMetachatService.create()
+                metaChatService?.addEventHandler(MChatContext.instance())
                 val config: MetachatConfig = MetachatConfig().apply {
                     mRtcEngine = rtcEngine
                     mAppId = MChatKeyCenter.RTC_APP_ID
@@ -110,17 +112,18 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     }
 
     fun destroy() {
-        if (ThreadTools.get().isMainThread){
+        if (ThreadTools.get().isMainThread) {
             innerDestroy()
-        }else{
+        } else {
             ThreadTools.get().runOnMainThread {
                 innerDestroy()
             }
         }
     }
 
-    private fun innerDestroy(){
+    private fun innerDestroy() {
         IMetachatService.destroy()
+        metaChatService?.removeEventHandler(MChatContext.instance())
         metaChatService = null
         RtcEngine.destroy()
         rtcEngine = null
@@ -214,7 +217,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
             //使能位置信息回调功能
             it.enableUserPositionNotification(MChatConstant.Scene.SCENE_GAME == currentScene)
             //设置回调接口
-            it.addEventHandler(this@MChatContext)
+            it.addEventHandler(MChatContext.instance())
             val config = EnterSceneConfig()
             config.mSceneView = sceneTextureView  //sceneView必须为Texture类型，为渲染unity显示的view
             config.mRoomName = rtcRoomId  //rtc加入channel的ID
@@ -298,7 +301,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         return isInScene
     }
 
-    fun initRoleInfo(nickname: String, userGender: Int,badgeIndex:Int) {
+    fun initRoleInfo(nickname: String, userGender: Int, badgeIndex: Int) {
         currentScene = MChatConstant.Scene.SCENE_GAME
         roleInfo = RoleInfo().apply {
             name = nickname
@@ -322,30 +325,12 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         return currentScene
     }
 
-    fun getNextScene(): Int {
-        return nextScene
-    }
-
-    fun setCurrentScene(currentScene: Int) {
-        this.currentScene = currentScene
-    }
-
-    fun setNextScene(nextScene: Int) {
-        this.nextScene = nextScene
-    }
-
-    fun sendRoleDressInfo() {
-        //注意该协议格式需要和unity协商一致
-        val message = UnityMessage().apply {
-            key = MChatConstant.KEY_UNITY_MESSAGE_DRESS_SETTING
-            value = GsonTools.beanToString(getUnityRoleInfo())
-        }
-        sendSceneMessage(GsonTools.beanToString(message) ?: "")
-    }
-
     override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
         LogTools.d(TAG, "onCreateSceneResult errorCode:$errorCode")
         metaChatScene = scene
+        metaChatScene?.let {
+            unityCmd = MChatUnityCmd(it)
+        }
         localUserAvatar = metaChatScene?.localUserAvatar
         for (handler in mchatEventHandlerMap.keys) {
             handler.onCreateSceneResult(scene, errorCode)
@@ -410,8 +395,10 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         MChatAgoraMediaPlayer.instance().stop()
         if (errorCode == 0) {
             metaChatScene?.release()
+            metaChatScene?.removeEventHandler(MChatContext.instance())
             metaChatScene = null
         }
+        unityCmd = null
         for (handler in mchatSceneEventHandlerMap.keys) {
             handler.onLeaveSceneResult(errorCode)
         }
@@ -423,15 +410,16 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         for (handler in mchatSceneEventHandlerMap.keys) {
             handler.onRecvMessageFromScene(message)
         }
+        getUnityCmd()?.handleSceneMessage(msg)
     }
 
     override fun onUserPositionChanged(uid: String?, posInfo: MetachatUserPositionInfo) {
-        LogTools.d(
-            TAG,
-            "onUserPositionChanged uid:$uid,${Arrays.toString(posInfo.mPosition)},${Arrays.toString(posInfo.mForward)},${
-                Arrays.toString(posInfo.mRight)
-            },${Arrays.toString(posInfo.mUp)}"
-        )
+//        LogTools.d(
+//            TAG,
+//            "onUserPositionChanged uid:$uid,${Arrays.toString(posInfo.mPosition)},${Arrays.toString(posInfo.mForward)},${
+//                Arrays.toString(posInfo.mRight)
+//            },${Arrays.toString(posInfo.mUp)}"
+//        )
         spatialAudioEngine?.let {
             val userId = uid?.toIntOrNull() ?: -1
             if (MChatKeyCenter.curUid == userId) {

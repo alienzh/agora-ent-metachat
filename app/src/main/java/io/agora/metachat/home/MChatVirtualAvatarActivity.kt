@@ -22,8 +22,8 @@ import io.agora.metachat.baseui.BaseUiActivity
 import io.agora.metachat.databinding.MchatActivityVirtualAvatarBinding
 import io.agora.metachat.databinding.MchatItemVirtualAvatarListBinding
 import io.agora.metachat.game.MChatGameActivity
+import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.tools.DeviceTools
-import io.agora.metachat.tools.LogTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
 /**
@@ -43,10 +43,6 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
             roomId: String,
             roomCoverIndex: Int,
             roomPassword: String,
-            nickName: String,
-            portraitIndex: Int,
-            badgeIndex: Int,
-            gender: Int
         ) {
             val intent = Intent(context, MChatVirtualAvatarActivity::class.java).apply {
                 putExtra(MChatConstant.Params.KEY_IS_CREATE, isCreate)
@@ -54,10 +50,6 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
                 putExtra(MChatConstant.Params.KEY_ROOM_ID, roomId)
                 putExtra(MChatConstant.Params.KEY_ROOM_COVER_INDEX, roomCoverIndex)
                 putExtra(MChatConstant.Params.KEY_ROOM_PASSWORD, roomPassword)
-                putExtra(MChatConstant.Params.KEY_NICKNAME, nickName)
-                putExtra(MChatConstant.Params.KEY_PORTRAIT_INDEX, portraitIndex)
-                putExtra(MChatConstant.Params.KEY_BADGE_INDEX, badgeIndex)
-                putExtra(MChatConstant.Params.KEY_GENDER, gender)
             }
             launcher.launch(intent)
         }
@@ -69,15 +61,10 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     private val roomName by lazy { intent.getStringExtra(MChatConstant.Params.KEY_ROOM_NAME) ?: "" }
     private val roomCoverIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_ROOM_COVER_INDEX, 0) }
     private val roomPassword by lazy { intent.getStringExtra(MChatConstant.Params.KEY_ROOM_PASSWORD) ?: "" }
-    private val nickName by lazy { intent.getStringExtra(MChatConstant.Params.KEY_NICKNAME) ?: "" }
-    private val portraitIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_PORTRAIT_INDEX, 0) }
-    private val badgeIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_BADGE_INDEX, 0) }
-    private val userGender by lazy { intent.getIntExtra(MChatConstant.Params.KEY_GENDER, MChatConstant.Gender.FEMALE) }
     private val isFromCreate: Boolean by lazy { intent.getBooleanExtra(MChatConstant.Params.KEY_IS_CREATE, false) }
 
     /**virtual avatar */
     private lateinit var virtualAvatarArray: TypedArray
-    private var selVirtualAvatarIndex: Int = 0
 
     private var defaultVirtualAvatar = R.drawable.mchat_female0
 
@@ -88,7 +75,6 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     override fun onCreate(savedInstanceState: Bundle?) {
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         insetsController.hide(WindowInsetsCompat.Type.systemBars())
-        LogTools.d("$roomName $roomPassword $roomCoverIndex $nickName $portraitIndex $badgeIndex $userGender")
         super.onCreate(savedInstanceState)
         mChatViewModel = ViewModelProvider(this).get(MChatRoomCreateViewModel::class.java)
         initData()
@@ -97,12 +83,12 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     }
 
     private fun initData() {
-        virtualAvatarArray = if (userGender == MChatConstant.Gender.MALE) {
+        virtualAvatarArray = if (MChatKeyCenter.gender == MChatConstant.Gender.MALE) {
             resources.obtainTypedArray(R.array.mchat_avatar_male)
         } else {
             resources.obtainTypedArray(R.array.mchat_avatar_female)
         }
-        defaultVirtualAvatar = if (userGender == MChatConstant.Gender.MALE) {
+        defaultVirtualAvatar = if (MChatKeyCenter.gender == MChatConstant.Gender.MALE) {
             R.drawable.mchat_male0
         } else {
             R.drawable.mchat_female0
@@ -121,16 +107,16 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
                 add(getVirtualAvatarRes(i))
             }
         }
-        binding.tvChooseAvatarTips.text = resources.getString(R.string.mchat_choose_your_avatar, nickName)
+        binding.tvChooseAvatarTips.text = resources.getString(R.string.mchat_choose_your_avatar, MChatKeyCenter.nickname)
         binding.ivCurrentAvatar.setImageResource(
-            virtualAvatarArray.getResourceId(selVirtualAvatarIndex, defaultVirtualAvatar)
+            virtualAvatarArray.getResourceId(MChatKeyCenter.virtualAvatarIndex, defaultVirtualAvatar)
         )
         val avatarAdapter = MChatVirtualAvatarAdapter()
         avatarAdapter.setOnItemClickListener(object : BaseQuickAdapter.OnItemClickListener<Int> {
             override fun onClick(adapter: BaseQuickAdapter<Int, *>, view: View, position: Int) {
-                if (selVirtualAvatarIndex == position) return
-                selVirtualAvatarIndex = position
-                virtualAvatars[selVirtualAvatarIndex].let {
+                if (MChatKeyCenter.virtualAvatarIndex == position) return
+                MChatKeyCenter.virtualAvatarIndex = position
+                virtualAvatars[MChatKeyCenter.virtualAvatarIndex].let {
                     binding.ivCurrentAvatar.setImageResource(it)
                 }
                 avatarAdapter.notifyDataSetChanged()
@@ -157,15 +143,7 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
             if (joinOutput != null) {
                 setResult(RESULT_OK)
                 finish()
-                MChatGameActivity.startActivity(
-                    context = this,
-                    roomId = joinOutput.roomId,
-                    nickName = nickName,
-                    portraitIndex = portraitIndex,
-                    badgeIndex = badgeIndex,
-                    gender = userGender,
-                    virtualAvatarIndex = selVirtualAvatarIndex
-                )
+                MChatGameActivity.startActivity(context = this, roomId = joinOutput.roomId,)
             } else {
             }
         }
@@ -206,7 +184,7 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
         override fun onBindViewHolder(holder: VH, position: Int, data: Int?) {
             data ?: return
             holder.binding.ivUserAvatar.setImageResource(data)
-            holder.binding.ivAvatarBg.isVisible = selVirtualAvatarIndex == position
+            holder.binding.ivAvatarBg.isVisible = MChatKeyCenter.virtualAvatarIndex == position
         }
     }
 }

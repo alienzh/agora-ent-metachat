@@ -16,10 +16,6 @@ object MChatConstant {
         const val KEY_ROOM_COVER_INDEX: String = "key_room_cover_index"
         const val KEY_ROOM_PASSWORD: String = "key_room_password"
         const val KEY_NICKNAME: String = "key_nickname"
-        const val KEY_PORTRAIT_INDEX: String = "key_portrait_index"
-        const val KEY_BADGE_INDEX: String = "key_badge_index"
-        const val KEY_GENDER: String = "key_gender"
-        const val KEY_VIRTUAL_AVATAR: String = "key_virtual_avatar"
         const val KEY_IS_CREATE: String = "key_is_create"
     }
 
@@ -37,7 +33,6 @@ object MChatConstant {
     const val DEFAULT_PORTRAIT = "https://accpic.sd-rtn.com/pic/test/png/2.png"
     const val PLAY_ADVERTISING_VIDEO_REPEAT = -1
     const val KEY_UNITY_MESSAGE_DRESS_SETTING = "dressSetting"
-    const val KEY_UNITY_RESOURCES_SIZE = "350M"
 
     private const val badgeUrl0 =
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_0.png"

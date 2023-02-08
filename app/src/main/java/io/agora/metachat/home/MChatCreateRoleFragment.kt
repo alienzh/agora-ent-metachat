@@ -20,9 +20,11 @@ import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatFragmentCreateRoleBinding
 import io.agora.metachat.game.MChatContext
 import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.home.dialog.MChatBadgeDialog
 import io.agora.metachat.home.dialog.MChatDownloadDialog
 import io.agora.metachat.home.dialog.MChatPortraitDialog
+import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.widget.OnIntervalClickListener
 import java.util.*
@@ -41,10 +43,6 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
 
     private lateinit var mChatViewModel: MChatRoomCreateViewModel
     private var nicknameIllegal = false
-
-    private var portraitIndex = 0
-    private var badgeIndex = 0
-    private var gender = MChatConstant.Gender.FEMALE
 
     /**portrait */
     private lateinit var portraitArray: TypedArray
@@ -113,10 +111,11 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             binding.root.setPaddingRelative(0, systemInset.top, 0, systemInset.bottom)
             WindowInsetsCompat.CONSUMED
         }
-        binding.ivPortrait.setImageResource(portraitArray.getResourceId(portraitIndex, defaultPortrait))
-        binding.ivBadge.setImageResource(badgeArray.getResourceId(badgeIndex, defaultBadge))
+        binding.ivPortrait.setImageResource(portraitArray.getResourceId(MChatKeyCenter.portraitIndex, defaultPortrait))
+        binding.ivBadge.setImageResource(badgeArray.getResourceId(MChatKeyCenter.badgeIndex, defaultBadge))
         binding.etNickname.setText(nicknameArray[0])
-        if (gender == MChatConstant.Gender.MALE) {
+        MChatKeyCenter.nickname = nicknameArray[0]
+        if (MChatKeyCenter.gender == MChatConstant.Gender.MALE) {
             binding.linearMale.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_purple_stroke_red)
             binding.linearFemale.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_purple)
         } else {
@@ -138,24 +137,25 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
                 nicknameIllegal = true
                 binding.tvNicknameIllegal.isVisible = true
                 binding.etNickname.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_light_gray_stroke_red)
+                MChatKeyCenter.nickname = ""
             } else {
                 if (!nicknameIllegal) return@doAfterTextChanged
                 nicknameIllegal = false
                 binding.tvNicknameIllegal.isVisible = false
                 binding.etNickname.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_light_grey)
+                MChatKeyCenter.nickname = binding.etNickname.text.toString()
             }
         }
     }
 
     private fun roomObservable() {
-        mChatViewModel.sceneListObservable().observe(viewLifecycleOwner) {
-            if (it.isNullOrEmpty()) return@observe
-            for (i in it.indices) {
-                val mchatSceneInfo = it[i]
-                if (mchatSceneInfo.sceneId == 8L) { //todo 8为内容中心测试的ID号
-                    mChatViewModel.prepareScene(mchatSceneInfo)
-                    break
-                }
+        mChatViewModel.sceneListObservable().observe(viewLifecycleOwner) { sceneInfos ->
+            if (sceneInfos.isNullOrEmpty()) return@observe
+            sceneInfos.find { it.mSceneId == MChatKeyCenter.DEFAULT_SCENE_ID }?.let { sceneInfo ->
+                mChatViewModel.prepareScene(sceneInfo)
+            } ?: run {
+                LogTools.e("no available meta chat scene found")
+                dismissLoading()
             }
         }
         mChatViewModel.selectSceneObservable().observe(viewLifecycleOwner) {
@@ -165,12 +165,14 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             goVirtualAvatarPage()
         }
         mChatViewModel.requestDownloadingObservable().observe(viewLifecycleOwner) {
+            dismissLoading()
             if (it) {
                 CommonFragmentAlertDialog()
                     .titleText(resources.getString(R.string.mchat_download_title))
                     .contentText(
                         resources.getString(
-                            R.string.mchat_download_content, MChatConstant.KEY_UNITY_RESOURCES_SIZE
+                            R.string.mchat_download_content,
+                            DeviceTools.getNetFileSizeDescription(MChatContext.instance().getSceneInfo().mTotalSize)
                         )
                     )
                     .leftText(resources.getString(R.string.mchat_download_next_time))
@@ -183,6 +185,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             }
         }
         mChatViewModel.downloadingProgressObservable().observe(viewLifecycleOwner) {
+            dismissLoading()
             if (downloadDialog == null) {
                 downloadDialog = MChatDownloadDialog()
                     .setCancelCallback {
@@ -207,14 +210,18 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     /**show portrait dialog*/
     private fun onClickPortrait(view: View) {
         MChatPortraitDialog().setConfirmCallback {
-            this.portraitIndex = it
+            if (MChatKeyCenter.portraitIndex == it) return@setConfirmCallback
+            MChatKeyCenter.portraitIndex = it
+            binding.ivPortrait.setImageResource(portraitArray.getResourceId(it, defaultPortrait))
         }.show(childFragmentManager, "portrait")
     }
 
     /**show badge dialog*/
     private fun onClickBadge(view: View) {
         MChatBadgeDialog().setConfirmCallback {
-            this.badgeIndex = it
+            if (MChatKeyCenter.badgeIndex == it) return@setConfirmCallback
+            MChatKeyCenter.badgeIndex = it
+            binding.ivBadge.setImageResource(badgeArray.getResourceId(it, defaultBadge))
         }.show(childFragmentManager, "badge")
     }
 
@@ -225,13 +232,13 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     private fun onClickMale(view: View) {
         binding.linearMale.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_purple_stroke_red)
         binding.linearFemale.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_purple)
-        gender = MChatConstant.Gender.MALE
+        MChatKeyCenter.gender = MChatConstant.Gender.MALE
     }
 
     private fun onClickFemale(view: View) {
         binding.linearMale.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_purple)
         binding.linearFemale.setBackgroundResource(R.drawable.mchat_bg_rect_radius12_purple_stroke_red)
-        gender = MChatConstant.Gender.FEMALE
+        MChatKeyCenter.gender = MChatConstant.Gender.FEMALE
     }
 
     private fun onClickEnterRoom(view: View) {
@@ -243,12 +250,11 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             return
         }
         showLoading(false)
-        MChatContext.instance().initRoleInfo(nickname, gender, badgeIndex)
+        MChatContext.instance().initRoleInfo(nickname, MChatKeyCenter.gender, MChatKeyCenter.portraitIndex)
         mChatViewModel.getScenes()
     }
 
     private fun goVirtualAvatarPage() {
-        val nickname = binding.etNickname.text?.toString() ?: ""
         activity?.let {
             MChatVirtualAvatarActivity.startActivity(
                 actLaunch,
@@ -258,10 +264,6 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
                 roomId = roomId,
                 roomCoverIndex = roomCoverIndex,
                 roomPassword = roomPassword,
-                nickName = nickname,
-                portraitIndex = portraitIndex,
-                badgeIndex = badgeIndex,
-                gender = gender
             )
         }
     }
@@ -272,10 +274,5 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             insetsController.isAppearanceLightStatusBars = false
         }
         super.onResume()
-        if (MChatConstant.Scene.SCENE_NONE != MChatContext.instance().getNextScene()) {
-            MChatContext.instance().setCurrentScene(MChatContext.instance().getNextScene())
-            MChatContext.instance().setNextScene(MChatConstant.Scene.SCENE_NONE)
-            mChatViewModel.getScenes()
-        }
     }
 }

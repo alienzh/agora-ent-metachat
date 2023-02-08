@@ -22,8 +22,10 @@ import io.agora.metachat.game.dialog.*
 import io.agora.metachat.game.karaoke.MChatKaraokeManager
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.global.SceneCmdListener
+import io.agora.metachat.global.SceneMessageReceivedObjectPositions
 import io.agora.metachat.tools.LogTools
-import io.agora.metachat.tools.ToastTools
+import io.agora.metachat.tools.ThreadTools
 import io.agora.metachat.widget.OnIntervalClickListener
 import pub.devrel.easypermissions.EasyPermissions
 import pub.devrel.easypermissions.PermissionRequest
@@ -39,17 +41,9 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     companion object {
 
         const val RC_PERMISSIONS = 101
-        fun startActivity(
-            context: Context, roomId: String, nickName: String, portraitIndex: Int,
-            badgeIndex: Int, gender: Int, virtualAvatarIndex: Int
-        ) {
+        fun startActivity(context: Context, roomId: String) {
             val intent = Intent(context, MChatGameActivity::class.java).apply {
                 putExtra(MChatConstant.Params.KEY_ROOM_ID, roomId)
-                putExtra(MChatConstant.Params.KEY_NICKNAME, nickName)
-                putExtra(MChatConstant.Params.KEY_PORTRAIT_INDEX, portraitIndex)
-                putExtra(MChatConstant.Params.KEY_BADGE_INDEX, badgeIndex)
-                putExtra(MChatConstant.Params.KEY_GENDER, gender)
-                putExtra(MChatConstant.Params.KEY_VIRTUAL_AVATAR, virtualAvatarIndex)
             }
             context.startActivity(intent)
         }
@@ -59,11 +53,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private lateinit var gameViewModel: MChatGameViewModel
 
     private val roomId by lazy { intent.getStringExtra(MChatConstant.Params.KEY_ROOM_ID) ?: "" }
-    private val nickName by lazy { intent.getStringExtra(MChatConstant.Params.KEY_NICKNAME) ?: "" }
-    private val portraitIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_PORTRAIT_INDEX, 0) }
-    private val badgeIndex by lazy { intent.getIntExtra(MChatConstant.Params.KEY_BADGE_INDEX, 0) }
-    private val userGender by lazy { intent.getIntExtra(MChatConstant.Params.KEY_GENDER, MChatConstant.Gender.FEMALE) }
-    private val virtualAvatar by lazy { intent.getIntExtra(MChatConstant.Params.KEY_VIRTUAL_AVATAR, 0) }
 
     private var mReCreateScene = false
     private var mSurfaceSizeChange = false
@@ -106,9 +95,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         binding.ivMsg.setOnClickListener(OnIntervalClickListener(this::onClickMsg))
         binding.tvVisitorMode.setOnClickListener(OnIntervalClickListener(this::onClickVisitor))
         binding.tvNoviceGuide.setOnClickListener(OnIntervalClickListener(this::onClickNovice))
-        binding.linearStartKaraoke.setOnClickListener(OnIntervalClickListener(this::onClickStartKaraoke))
-        binding.linearSongList.setOnClickListener(OnIntervalClickListener(this::onClickSongList))
-        binding.linearEndSong.setOnClickListener(OnIntervalClickListener(this::onClickEndKaraoke))
     }
 
     private fun resetViewVisibility() {
@@ -158,24 +144,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         MChatBeginnerDialog(MChatBeginnerDialog.NOVICE_TYPE).show(supportFragmentManager, "novice dialog")
     }
 
-    // 点击开始k歌
-    private fun onClickStartKaraoke(view: View) {
-        ToastTools.showCommon("onClickStartKaraoke")
-        showKaraokeDialog()
-    }
-
-    // 点击歌单
-    private fun onClickSongList(view: View) {
-        ToastTools.showCommon("onClickSongList")
-        showKaraokeDialog()
-    }
-
-    // 点击离开k歌
-    private fun onClickEndKaraoke(view: View) {
-        ToastTools.showCommon("onClickEndKaraoke")
-        dismissKaraokeDialog()
-    }
-
     // 申请麦克风权限
     private fun requestPermission() {
         val perms = arrayOf(Manifest.permission.RECORD_AUDIO)
@@ -210,6 +178,12 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         gameViewModel.isEnterSceneObservable().observe(this) {
             if (it) binding.groupNativeView.isVisible = true
             karaokeManager = MChatKaraokeManager(MChatContext.instance())
+            // 进入场景注册unity 监听
+            if (it){
+                MChatContext.instance().getUnityCmd()?.registerListener(unityCmdListener)
+            }else{
+                MChatContext.instance().getUnityCmd()?.unregisterListener(unityCmdListener)
+            }
         }
         gameViewModel.onlineMicObservable().observe(this) {
             if (it) {
@@ -305,5 +279,28 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     override fun onDestroy() {
         super.onDestroy()
+    }
+
+    private var unityCmdListener = object : SceneCmdListener {
+        override fun onObjectPositionAcquired(position: SceneMessageReceivedObjectPositions) {
+
+        }
+
+        override fun onKaraokeStarted() {
+            ThreadTools.get().runOnMainThread {
+                binding.linearSongList.isVisible = true
+                binding.linearEndSong.isVisible = true
+                showKaraokeDialog()
+            }
+        }
+
+        override fun onKaraokeStopped() {
+            ThreadTools.get().runOnMainThread {
+                binding.linearSongList.isVisible = false
+                binding.linearEndSong.isVisible = false
+                dismissKaraokeDialog()
+                MChatContext.instance().getUnityCmd()?.stopKaraoke()
+            }
+        }
     }
 }

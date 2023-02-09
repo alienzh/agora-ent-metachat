@@ -24,8 +24,13 @@ object DeviceTools {
 
     private var isZh = false
 
+    private var languageCode:String = ""
+
     @JvmStatic
     fun getIsZh(): Boolean = isZh
+
+    @JvmStatic
+    fun getLanguageCode():String = languageCode
 
     @JvmStatic
     @ColorInt
@@ -46,6 +51,7 @@ object DeviceTools {
             context.resources.configuration.locale
         }
         isZh = locale.country == "CN"
+        languageCode = locale.country
         return isZh
     }
 

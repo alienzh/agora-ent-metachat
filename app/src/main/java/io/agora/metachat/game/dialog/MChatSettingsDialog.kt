@@ -6,19 +6,21 @@ import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.EditorInfo
+import android.widget.SeekBar
 import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatDialogSettingsBinding
+import io.agora.metachat.game.MChatContext
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
-import io.agora.metachat.home.MChatCreateRoleFragment
 import io.agora.metachat.home.dialog.MChatBadgeDialog
 import io.agora.metachat.home.dialog.MChatPortraitDialog
 import io.agora.metachat.imkit.MChatGroupIMManager
 import io.agora.metachat.tools.DeviceTools
+import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ToastTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
@@ -32,6 +34,10 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
         private const val SOUND = 1
         private const val defaultPortrait = R.drawable.mchat_portrait0
         private const val defaultBadge = R.drawable.mchat_badge_level0
+    }
+
+    private val mchatContext by lazy {
+        MChatContext.instance()
     }
 
     // 默认选中通用
@@ -90,7 +96,6 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
     override fun onStart() {
         super.onStart()
         dialog?.window?.let { window ->
-            // TODO: 沉浸式全屏
             window.attributes.windowAnimations = R.style.mchat_anim_bottom_to_top
             // Remove the system default rounded corner background
             window.setBackgroundDrawableResource(android.R.color.transparent)
@@ -120,6 +125,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             it.layoutUserBadge.setOnClickListener(OnIntervalClickListener(this::onClickUserBadge))
             it.layoutVirtualAvatar.setOnClickListener(OnIntervalClickListener(this::onClickVirtualAvatar))
             it.layoutQuitRoom.setOnClickListener(OnIntervalClickListener(this::onClickExitRoom))
+            it.etNickname.setText(MChatKeyCenter.nickname)
             it.etNickname.setOnEditorActionListener { textView, actionId, keyEvent ->
                 when (actionId and EditorInfo.IME_MASK_ACTION) {
                     EditorInfo.IME_ACTION_DONE -> {
@@ -137,7 +143,62 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
                 badgeArray.getResourceId(MChatKeyCenter.badgeIndex, defaultBadge)
             )
             it.ivVirtualAvatar.setImageResource(getVirtualAvatarRes(MChatKeyCenter.virtualAvatarIndex))
-            it.etNickname.setText(MChatKeyCenter.nickname)
+            it.pbTvVol.progress = mchatContext.tvVolume
+            it.tvVolumeTvVol.text = "${mchatContext.tvVolume}"
+            it.pbTvVol.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                    LogTools.d("onStopTrackingTouch tv volume:${seekBar.progress}")
+                    mchatContext.tvVolume = seekBar.progress
+                    it.tvVolumeTvVol.text = "${mchatContext.tvVolume}"
+                    mchatContext.chatMediaPlayer()?.setPlayerVolume(mchatContext.tvVolume)
+                }
+            })
+            it.pbNpcVol.progress = mchatContext.npcVolume
+            it.tvVolumeNpcVol.text = "${mchatContext.npcVolume}"
+            it.pbNpcVol.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                    LogTools.d("onStopTrackingTouch npc volume:${seekBar.progress}")
+                    mchatContext.npcVolume = seekBar.progress
+                    it.tvVolumeNpcVol.text = "${mchatContext.npcVolume}"
+                    mchatContext.chatNpcManager()?.roundTableNpc()?.setPlayerVolume(mchatContext.npcVolume)
+                }
+            })
+            it.pbRecvRange.progress = (mchatContext.recvRange * 10).toInt()
+            it.tvRecvRangeValue.text = "${mchatContext.recvRange}"
+            it.pbRecvRange.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                    LogTools.d("onStopTrackingTouch recv range volume:${seekBar.progress}")
+                    mchatContext.recvRange = seekBar.progress / 10.0F
+                    it.tvRecvRangeValue.text = "${mchatContext.recvRange}"
+                    mchatContext.chatSpatialAudio()?.setAudioRecvRange(mchatContext.recvRange)
+                }
+            })
+            it.pbDistanceUnit.progress = (mchatContext.distanceUnit * 10).toInt()
+            it.tvDistanceUnitValue.text = "${mchatContext.distanceUnit}"
+            it.pbDistanceUnit.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
+
+                override fun onStartTrackingTouch(seekBar: SeekBar) {}
+
+                override fun onStopTrackingTouch(seekBar: SeekBar) {
+                    LogTools.d("onStopTrackingTouch distance unit volume:${seekBar.progress}")
+                    mchatContext.distanceUnit = seekBar.progress / 10.0F
+                    it.tvDistanceUnit.text = "${mchatContext.distanceUnit}"
+                    mchatContext.chatSpatialAudio()?.setDistanceUnit(mchatContext.distanceUnit)
+                }
+            })
         }
     }
 
@@ -147,8 +208,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             return
         }
         MChatKeyCenter.nickname = name
-        // TODO:
-        ToastTools.showCommon(name)
+        mchatContext.getUnityCmd()?.updateUserInfo()
     }
 
     private fun onClickSettingBack(view: View) {
@@ -194,12 +254,12 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             if (MChatKeyCenter.badgeIndex == it) return@setConfirmCallback
             MChatKeyCenter.badgeIndex = it
             binding?.ivUserBadge?.setImageResource(badgeArray.getResourceId(it, defaultBadge))
+            mchatContext.getUnityCmd()?.updateUserInfo()
         }.show(childFragmentManager, "badge dialog")
     }
 
     // 点击更换虚拟形象
     private fun onClickVirtualAvatar(view: View) {
-        // TODO:
         ToastTools.showCommon("todo click avatar")
     }
 

@@ -5,15 +5,18 @@ import android.view.TextureView
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import io.agora.metachat.*
+import io.agora.metachat.game.internal.MChatBaseEventHandler
+import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.SingleLiveData
 import io.agora.metachat.tools.ThreadTools
+import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler.ErrorCode
 
 /**
  * @author create by zhangwei03
  */
-class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEventHandler {
+class MChatGameViewModel : ViewModel() {
 
     private val _isEnterScene = SingleLiveData<Boolean>()
     private val _onlineMic = SingleLiveData<Boolean>()
@@ -30,20 +33,62 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
     private var mReCreateScene = false
     private var mSurfaceSizeChange = false
 
+    private val mchatContext by lazy {
+        MChatContext.instance()
+    }
+
     override fun onCleared() {
-        MChatContext.instance().unregisterMetaChatEventHandler(this)
-        MChatContext.instance().unregisterMetaChatSceneEventHandler(this)
+        mchatContext.unregisterMetaChatEventHandler(mChatEventHandler)
+        mchatContext.unregisterMetaChatSceneEventHandler(mChatSceneEventHandler)
         super.onCleared()
     }
 
+    private val mChatEventHandler = object :MChatBaseEventHandler(){
+        override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
+            ThreadTools.get().runOnMainThread {
+                mchatContext.enterScene()
+            }
+        }
+    }
+
+    private val mChatSceneEventHandler = object : MChatBaseSceneEventHandler(){
+        override fun onEnterSceneResult(errorCode: Int) {
+            ThreadTools.get().runOnMainThread {
+                if (errorCode != ErrorCode.ERR_OK) {
+                    LogTools.e("enter scene failed:$errorCode")
+                    return@runOnMainThread
+                }
+                _isEnterScene.postValue(true)
+                _onlineMic.postValue(true)
+                _muteRemote.postValue(true)
+                _muteLocal.postValue(true)
+                resetSceneState()
+            }
+        }
+
+        override fun onLeaveSceneResult(errorCode: Int) {
+            ThreadTools.get().runOnMainThread {
+                _isEnterScene.postValue(false)
+                _exitGame.postValue(true)
+            }
+        }
+
+        override fun onReleasedScene(status: Int) {
+            if (status == ErrorCode.ERR_OK) {
+                mchatContext.destroy()
+            }
+        }
+
+    }
+
     fun initMChatScene() {
-        MChatContext.instance().registerMetaChatSceneEventHandler(this)
-        MChatContext.instance().registerMetaChatEventHandler(this)
+        mchatContext.registerMetaChatEventHandler(mChatEventHandler)
+        mchatContext.registerMetaChatSceneEventHandler(mChatSceneEventHandler)
     }
 
     fun createScene(activity: Activity, roomId: String, tv: TextureView) {
         resetSceneState()
-        MChatContext.instance().createScene(activity, roomId, tv)
+        mchatContext.createScene(activity, roomId, tv)
     }
 
     fun resetSceneState() {
@@ -51,7 +96,7 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
         mSurfaceSizeChange = false
     }
 
-    fun maybeCreateScene(activity: Activity, roomId: String, tv: TextureView) :Boolean{
+    fun maybeCreateScene(activity: Activity, roomId: String, tv: TextureView): Boolean {
         if (mReCreateScene && mSurfaceSizeChange) {
             createScene(activity, roomId, tv)
             return true
@@ -59,82 +104,60 @@ class MChatGameViewModel : ViewModel(), IMetachatSceneEventHandler, IMetachatEve
         return false
     }
 
-    override fun onEnterSceneResult(errorCode: Int) {
-        ThreadTools.get().runOnMainThread {
-            if (errorCode != ErrorCode.ERR_OK) {
-                LogTools.e("enter scene failed:$errorCode")
-                return@runOnMainThread
-            }
-            _isEnterScene.postValue(true)
-            _onlineMic.postValue(true)
-            _muteRemote.postValue(true)
-            _muteLocal.postValue(true)
-            resetSceneState()
-        }
-    }
-
-    override fun onLeaveSceneResult(errorCode: Int) {
-        ThreadTools.get().runOnMainThread {
-            _isEnterScene.postValue(false)
-            _exitGame.postValue(true)
-        }
-    }
-
-    override fun onRecvMessageFromScene(message: ByteArray) {}
-
-    override fun onUserPositionChanged(uid: String?, posInfo: MetachatUserPositionInfo?) {}
-
-    override fun onEnumerateVideoDisplaysResult(displayIds: Array<out String>?) {}
-
-    override fun onReleasedScene(status: Int) {
-        if (status == ErrorCode.ERR_OK) {
-            MChatContext.instance().destroy()
-        }
-    }
-
-    override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
-        ThreadTools.get().runOnMainThread {
-            MChatContext.instance().enterScene()
-        }
-    }
-
-    override fun onConnectionStateChanged(state: Int, reason: Int) {}
-
-    override fun onRequestToken() {}
-
-    override fun onGetSceneInfosResult(sceneInfos: Array<out MetachatSceneInfo>?, errorCode: Int) {}
-
-    override fun onDownloadSceneProgress(sceneId: Long, progress: Int, state: Int) {}
-
     // 发送上下麦
     fun sendOnlineEvent() {
         if (_onlineMic.value == true) {
-            _onlineMic.postValue(false)
+            val result = mchatContext.updateRole(Constants.CLIENT_ROLE_AUDIENCE)
+            if (result) {
+                _onlineMic.postValue(false)
+            } else {
+                LogTools.e("offline Mic error")
+            }
         } else {
-            _onlineMic.postValue(true)
+            val result = mchatContext.updateRole(Constants.CLIENT_ROLE_BROADCASTER)
+            if (result) {
+                _onlineMic.postValue(true)
+            } else {
+                LogTools.e("online Mic error")
+            }
         }
     }
 
     // 远端静音
     fun sendMuteRemoteEvent() {
         if (_muteRemote.value == true) {
-            _muteRemote.postValue(false)
+            val result = mchatContext.muteAllRemoteAudioStreams(false)
+            if (result) {
+                _muteRemote.postValue(false)
+            } else {
+                LogTools.e("unMute remote error")
+            }
         } else {
-            _muteRemote.postValue(true)
+            val result = mchatContext.muteAllRemoteAudioStreams(true)
+            if (result) {
+                _muteRemote.postValue(true)
+            } else {
+                LogTools.e("mute remote error")
+            }
         }
     }
 
     // 本地静音
     fun sendMuteLocalEvent() {
         if (_muteLocal.value == true) {
-            _muteLocal.postValue(false)
+            val result = mchatContext.enableLocalAudio(false)
+            if (result) {
+                _muteLocal.postValue(false)
+            } else {
+                LogTools.e("unMute local error")
+            }
         } else {
-            _muteLocal.postValue(true)
+            val result = mchatContext.enableLocalAudio(true)
+            if (result) {
+                _muteLocal.postValue(true)
+            } else {
+                LogTools.e("mute local error")
+            }
         }
-    }
-
-    // 退出房间
-    fun sendExitRoomEvent() {
-
     }
 }

@@ -80,7 +80,6 @@ object MChatKeyCenter {
     const val RTC_APP_ID: String = BuildConfig.RTC_APP_ID
     const val RTC_APP_CERT: String = BuildConfig.RTC_APP_CERT
     const val IM_APP_KEY: String = BuildConfig.IM_APP_KEY
-    const val DEFAULT_SCENE_ID: Long = 17
 
     lateinit var RTM_TOKEN: String
 

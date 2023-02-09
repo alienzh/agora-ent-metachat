@@ -2,7 +2,6 @@ package io.agora.metachat.game.karaoke
 
 import android.content.Context
 import io.agora.metachat.R
-import io.agora.metachat.game.MChatAgoraMediaPlayer
 import io.agora.metachat.game.MChatContext
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.rtc2.Constants
@@ -10,7 +9,7 @@ import io.agora.rtc2.Constants
 /**
  * @author create by zhangwei03
  */
-class MChatKaraokeManager constructor(private val chatContext: MChatContext) {
+class MChatKaraokeManager constructor() {
 
     companion object {
         // 歌曲类别
@@ -22,6 +21,10 @@ class MChatKaraokeManager constructor(private val chatContext: MChatContext) {
         val songListMap: Map<MChatSongType, List<MusicDetail>> by lazy {
             MChatKaraokeConstructor.buildAllSongMap()
         }
+    }
+
+    private val chatContext by lazy {
+        MChatContext.instance()
     }
 
     var useOriginal: Boolean = true
@@ -82,7 +85,7 @@ class MChatKaraokeManager constructor(private val chatContext: MChatContext) {
      */
     fun setAudioPitch(pitch: Int, forced: Boolean = false) {
         if (forced || this.pitch != pitch) {
-            if (Constants.ERR_OK == MChatAgoraMediaPlayer.instance().setPlayerAudioPitch(pitch)) {
+            if (Constants.ERR_OK == chatContext.chatMediaPlayer()?.setPlayerAudioPitch(pitch)) {
                 this.pitch = pitch
             }
         }
@@ -92,10 +95,10 @@ class MChatKaraokeManager constructor(private val chatContext: MChatContext) {
         if (songListPlaylist.isNotEmpty()) {
             val song = songListPlaylist[0]
             if (playSongCode != song.songCode) {
-                MChatAgoraMediaPlayer.instance().play(song.mvUrl)
+                chatContext.chatMediaPlayer()?.play(song.mvUrl)
             }
         } else {
-            MChatAgoraMediaPlayer.instance().stop()
+            chatContext.chatMediaPlayer()?.stop()
         }
     }
 
@@ -123,7 +126,7 @@ enum class MChatSongType {
     }
 }
 
-enum class MChatAudioEffect(val value: Int) {
+enum class MChatAudioEffect constructor(val value: Int) {
     None(Constants.AUDIO_EFFECT_OFF),
     Studio(Constants.ROOM_ACOUSTICS_STUDIO),
     Concert(Constants.ROOM_ACOUSTICS_VOCAL_CONCERT),

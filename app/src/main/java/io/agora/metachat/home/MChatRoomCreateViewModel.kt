@@ -1,11 +1,11 @@
 package io.agora.metachat.home
 
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.agora.metachat.*
 import io.agora.metachat.IMetachatEventHandler.SceneDownloadState
 import io.agora.metachat.game.MChatContext
+import io.agora.metachat.game.internal.MChatBaseEventHandler
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.service.*
@@ -16,7 +16,7 @@ import io.agora.metachat.tools.ToastTools
 /**
  * @author create by zhangwei03
  */
-class MChatRoomCreateViewModel : ViewModel(), IMetachatEventHandler {
+class MChatRoomCreateViewModel : ViewModel() {
 
     private val chatServiceProtocol: MChatServiceProtocol = MChatServiceProtocol.getImplInstance()
 
@@ -38,6 +38,30 @@ class MChatRoomCreateViewModel : ViewModel(), IMetachatEventHandler {
 
     private val mchatContext by lazy {
         MChatContext.instance()
+    }
+
+    override fun onCleared() {
+        mchatContext.unregisterMetaChatEventHandler(mChatEventHandler)
+        super.onCleared()
+    }
+
+    private val mChatEventHandler = object : MChatBaseEventHandler() {
+        override fun onGetSceneInfosResult(sceneInfos: Array<out MetachatSceneInfo>, errorCode: Int) {
+            LogTools.d("onGetSceneInfosResult sceneInfos size:${sceneInfos.size},errorCode:$errorCode")
+            _sceneList.postValue(listOf(*sceneInfos))
+        }
+
+        override fun onDownloadSceneProgress(sceneId: Long, progress: Int, state: Int) {
+            LogTools.d("onDownloadSceneProgress sceneId:Long,progress:$progress,state:$state")
+            if (state == SceneDownloadState.METACHAT_SCENE_DOWNLOAD_STATE_FAILED) {
+                _downloadingProgress.postValue(-1)
+                return
+            }
+            _downloadingProgress.postValue(progress)
+            if (state == SceneDownloadState.METACHAT_SCENE_DOWNLOAD_STATE_DOWNLOADED) {
+                _selectScene.postValue(sceneId)
+            }
+        }
     }
 
     /**房间列表*/
@@ -100,7 +124,7 @@ class MChatRoomCreateViewModel : ViewModel(), IMetachatEventHandler {
     }
 
     fun getScenes() {
-        mchatContext.registerMetaChatEventHandler(this)
+        mchatContext.registerMetaChatEventHandler(mChatEventHandler)
         if (mchatContext.initialize(MChatApp.instance())) {
             mchatContext.getSceneInfos()
         }
@@ -136,40 +160,19 @@ class MChatRoomCreateViewModel : ViewModel(), IMetachatEventHandler {
         }
     }
 
-    fun downloadScene(sceneInfo: MetachatSceneInfo) {
-        mchatContext.downloadScene(sceneInfo)
+    fun initRoleInfo(nickname: String, userGender: Int, badgeIndex: Int) {
+        mchatContext.initRoleInfo(nickname,userGender, badgeIndex)
     }
 
-    fun cancelDownloadScene(sceneInfo: MetachatSceneInfo) {
-        mchatContext.cancelDownloadScene(sceneInfo)
+    fun getSceneInfo(): MetachatSceneInfo {
+        return mchatContext.getSceneInfo()
     }
 
-    override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
-
+    fun downloadScene() {
+        mchatContext.downloadScene(getSceneInfo())
     }
 
-    override fun onConnectionStateChanged(state: Int, reason: Int) {
-
-    }
-
-    override fun onRequestToken() {
-
-    }
-
-    override fun onGetSceneInfosResult(sceneInfos: Array<out MetachatSceneInfo>, errorCode: Int) {
-        LogTools.d("onGetSceneInfosResult sceneInfos size:${sceneInfos.size},errorCode:$errorCode")
-        _sceneList.postValue(listOf(*sceneInfos))
-    }
-
-    override fun onDownloadSceneProgress(sceneId: Long, progress: Int, state: Int) {
-        LogTools.d("onDownloadSceneProgress sceneId:Long,progress:$progress,state:$state")
-        if (state == SceneDownloadState.METACHAT_SCENE_DOWNLOAD_STATE_FAILED) {
-            _downloadingProgress.postValue(-1)
-            return
-        }
-        _downloadingProgress.postValue(progress)
-        if (state == SceneDownloadState.METACHAT_SCENE_DOWNLOAD_STATE_DOWNLOADED) {
-            _selectScene.postValue(sceneId)
-        }
+    fun cancelDownloadScene() {
+        mchatContext.cancelDownloadScene(getSceneInfo())
     }
 }

@@ -91,6 +91,7 @@
         android:paddingHorizontal="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        tools:visibility="gone"
         app:layout_constraintStart_toEndOf="@id/layout_general_tab"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -306,6 +307,7 @@
         android:background="@drawable/mchat_bg_rect_radius16_black20"
         android:paddingHorizontal="30dp"
         android:visibility="gone"
+        tools:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/layout_general_tab"
@@ -390,13 +392,14 @@
         <androidx.appcompat.widget.AppCompatSeekBar
             android:id="@+id/pb_npc_vol"
             style="@style/mchat_progressbar_style"
+            android:max="100"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="60dp"
             app:layout_constraintBottom_toBottomOf="@id/tv_volume_npc"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/tv_volume_npc"
             app:layout_constraintTop_toTopOf="@+id/tv_volume_npc"
-            tools:progress="20" />
+            tools:progress="25" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tv_volume_npc_vol"
@@ -418,7 +421,7 @@
 
         <!--     recv range -->
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_volume_recv_range"
+            android:id="@+id/tv_recv_range"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:paddingVertical="18dp"
@@ -430,74 +433,76 @@
             app:layout_constraintTop_toBottomOf="@id/tv_volume_npc" />
 
         <androidx.appcompat.widget.AppCompatSeekBar
-            android:id="@+id/pb_recv_range_vol"
+            android:id="@+id/pb_recv_range"
             style="@style/mchat_progressbar_style"
+            android:max="150"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="60dp"
-            app:layout_constraintBottom_toBottomOf="@id/tv_volume_recv_range"
+            app:layout_constraintBottom_toBottomOf="@id/tv_recv_range"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/tv_volume_recv_range"
-            app:layout_constraintTop_toTopOf="@+id/tv_volume_recv_range"
-            tools:progress="30" />
+            app:layout_constraintStart_toEndOf="@id/tv_recv_range"
+            app:layout_constraintTop_toTopOf="@+id/tv_recv_range"
+            tools:progress="50" />
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_volume_recv_range_vol"
+            android:id="@+id/tv_recv_range_value"
             android:layout_width="30dp"
             android:layout_height="wrap_content"
             android:gravity="end"
             android:textColor="@color/mchat_white"
             android:textSize="@dimen/mchat_sp_12"
-            app:layout_constraintBottom_toBottomOf="@id/tv_volume_recv_range"
+            app:layout_constraintBottom_toBottomOf="@id/tv_recv_range"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_volume_recv_range"
+            app:layout_constraintTop_toTopOf="@+id/tv_recv_range"
             tools:text="30" />
 
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="1dp"
             app:dividerColor="@color/mchat_black_10"
-            app:layout_constraintTop_toBottomOf="@id/tv_volume_recv_range" />
+            app:layout_constraintTop_toBottomOf="@id/tv_recv_range" />
 
         <!--     distance unit  -->
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_volume_distance_unit"
+            android:id="@+id/tv_distance_unit"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:paddingVertical="18dp"
             android:text="@string/mchat_vol_distance_unit"
             android:textColor="@color/mchat_white"
             android:textSize="@dimen/mchat_sp_12"
-            app:layout_constraintEnd_toEndOf="@id/tv_volume_recv_range"
-            app:layout_constraintStart_toStartOf="@id/tv_volume_recv_range"
-            app:layout_constraintTop_toBottomOf="@id/tv_volume_recv_range" />
+            app:layout_constraintEnd_toEndOf="@id/tv_recv_range"
+            app:layout_constraintStart_toStartOf="@id/tv_recv_range"
+            app:layout_constraintTop_toBottomOf="@id/tv_recv_range" />
 
         <androidx.appcompat.widget.AppCompatSeekBar
-            android:id="@+id/pb_distance_unit_vol"
+            android:id="@+id/pb_distance_unit"
             style="@style/mchat_progressbar_style"
             android:layout_gravity="center_vertical"
             android:layout_marginEnd="60dp"
-            app:layout_constraintBottom_toBottomOf="@id/tv_volume_distance_unit"
+            android:max="100"
+            app:layout_constraintBottom_toBottomOf="@id/tv_distance_unit"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/tv_volume_distance_unit"
-            app:layout_constraintTop_toTopOf="@+id/tv_volume_distance_unit"
-            tools:progress="40" />
+            app:layout_constraintStart_toEndOf="@id/tv_distance_unit"
+            app:layout_constraintTop_toTopOf="@+id/tv_distance_unit"
+            tools:progress="86" />
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_volume_distance_unit_vol"
+            android:id="@+id/tv_distance_unit_value"
             android:layout_width="30dp"
             android:layout_height="wrap_content"
             android:gravity="end"
             android:textColor="@color/mchat_white"
             android:textSize="@dimen/mchat_sp_12"
-            app:layout_constraintBottom_toBottomOf="@id/tv_volume_distance_unit"
+            app:layout_constraintBottom_toBottomOf="@id/tv_distance_unit"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tv_volume_distance_unit"
+            app:layout_constraintTop_toTopOf="@+id/tv_distance_unit"
             tools:text="40" />
 
         <com.google.android.material.divider.MaterialDivider
             android:layout_width="match_parent"
             android:layout_height="1dp"
             app:dividerColor="@color/mchat_black_10"
-            app:layout_constraintTop_toBottomOf="@id/tv_volume_distance_unit" />
+            app:layout_constraintTop_toBottomOf="@id/tv_distance_unit" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

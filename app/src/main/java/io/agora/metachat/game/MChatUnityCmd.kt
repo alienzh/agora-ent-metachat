@@ -1,7 +1,10 @@
-package io.agora.metachat.global
+package io.agora.metachat.game
 
 import com.google.gson.Gson
 import io.agora.metachat.IMetachatScene
+import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.global.MChatKeyCenter
+import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.LogTools
 
 class MChatUnityCmd constructor(private val scene: IMetachatScene) {
@@ -29,6 +32,20 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
         val obj = SceneMessageRequestBody(SceneMessageType.SendMessage.value)
         obj.params["userId"] = MChatKeyCenter.imUid
         obj.params["content"] = message
+        sendSceneMessage(gson.toJson(obj))
+    }
+
+    fun updateUserInfo() {
+        val obj = SceneMessageRequestBody(SceneMessageType.ChangeUserInfo.value)
+        obj.params["userId"] = MChatKeyCenter.imUid
+        obj.params["badge"] = MChatConstant.getBadgeUrl(MChatKeyCenter.badgeIndex)
+        obj.params["name"] = MChatKeyCenter.nickname
+        sendSceneMessage(gson.toJson(obj))
+    }
+
+    fun changeLanguage(){
+        val obj = SceneMessageRequestBody(SceneMessageType.ChangeUserInfo.value)
+        obj.params["lang"] = DeviceTools.getLanguageCode()
         sendSceneMessage(gson.toJson(obj))
     }
 
@@ -60,6 +77,7 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
                     }
                     SceneMessageType.StopKaraoke.value -> {
                         messageListeners.forEach {
+                            stopKaraoke()
                             it.onKaraokeStopped()
                         }
                     }

@@ -18,7 +18,6 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiFragment
 import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatFragmentCreateRoleBinding
-import io.agora.metachat.game.MChatContext
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.home.dialog.MChatBadgeDialog
@@ -151,7 +150,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     private fun roomObservable() {
         mChatViewModel.sceneListObservable().observe(viewLifecycleOwner) { sceneInfos ->
             if (sceneInfos.isNullOrEmpty()) return@observe
-            sceneInfos.find { it.mSceneId == MChatKeyCenter.DEFAULT_SCENE_ID }?.let { sceneInfo ->
+            sceneInfos.find { it.mSceneId == MChatConstant.DefaultValue.DEFAULT_SCENE_ID }?.let { sceneInfo ->
                 mChatViewModel.prepareScene(sceneInfo)
             } ?: run {
                 LogTools.e("no available meta chat scene found")
@@ -172,14 +171,14 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
                     .contentText(
                         resources.getString(
                             R.string.mchat_download_content,
-                            DeviceTools.getNetFileSizeDescription(MChatContext.instance().getSceneInfo().mTotalSize)
+                            DeviceTools.getNetFileSizeDescription( mChatViewModel.getSceneInfo().mTotalSize)
                         )
                     )
                     .leftText(resources.getString(R.string.mchat_download_next_time))
                     .rightText(resources.getString(R.string.mchat_download_now))
                     .setOnClickListener(object : CommonFragmentAlertDialog.OnClickBottomListener {
                         override fun onConfirmClick() {
-                            mChatViewModel.downloadScene(MChatContext.instance().getSceneInfo())
+                            mChatViewModel.downloadScene()
                         }
                     }).show(childFragmentManager, "downloadTips")
             }
@@ -189,7 +188,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             if (downloadDialog == null) {
                 downloadDialog = MChatDownloadDialog()
                     .setCancelCallback {
-                        mChatViewModel.cancelDownloadScene(MChatContext.instance().getSceneInfo())
+                        mChatViewModel.cancelDownloadScene()
                     }
                 downloadDialog?.show(childFragmentManager, "downloadProgress")
             } else if (it < 0) {
@@ -250,7 +249,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             return
         }
         showLoading(false)
-        MChatContext.instance().initRoleInfo(nickname, MChatKeyCenter.gender, MChatKeyCenter.portraitIndex)
+        mChatViewModel.initRoleInfo(nickname, MChatKeyCenter.gender, MChatKeyCenter.portraitIndex)
         mChatViewModel.getScenes()
     }
 

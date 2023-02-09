@@ -32,6 +32,10 @@ import java.util.*
  */
 class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBinding>() {
 
+    private val chatContext by lazy {
+        MChatContext.instance()
+    }
+
     private var messageAdapter: BaseQuickAdapter<MChatMessageModel, MChatMessageAdapter.VH>? = null
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogMessageBinding {
@@ -51,6 +55,7 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
             setDialogSize(root)
             rvMessageContent.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
             rvMessageContent.adapter = messageAdapter
+            messageAdapter?.addAll(MChatGroupIMManager.instance().getAllData())
             ivSendMessage.setOnClickListener(OnIntervalClickListener(this@MChatMessageDialog::onClickSend))
             etMessage.setOnEditorActionListener { textView, actionId, keyEvent ->
                 when (actionId and EditorInfo.IME_MASK_ACTION) {
@@ -102,7 +107,7 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
         if (message.isNullOrEmpty()) return
         MChatGroupIMManager.instance().sendTxtMsg(message, MChatKeyCenter.nickname) {
             if (it) {
-                MChatContext.instance().getUnityCmd()?.sendMessage(message)
+                chatContext.getUnityCmd()?.sendMessage(message)
                 ThreadTools.get().runOnMainThread {
                     binding?.etMessage?.setText("")
                     refreshMessage()

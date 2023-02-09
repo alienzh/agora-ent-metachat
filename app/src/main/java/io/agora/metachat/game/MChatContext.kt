@@ -2,12 +2,15 @@ package io.agora.metachat.game
 
 import android.content.Context
 import android.view.TextureView
-import io.agora.base.VideoFrame
 import io.agora.metachat.*
+import io.agora.metachat.game.internal.MChatBaseEventHandler
+import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
 import io.agora.metachat.game.model.EnterSceneExtraInfo
 import io.agora.metachat.game.model.RoleInfo
-import io.agora.metachat.game.model.UnityMessage
 import io.agora.metachat.game.model.UnityRoleInfo
+import io.agora.metachat.game.npc.LocalSourceMediaPlayer
+import io.agora.metachat.game.npc.MChatNpcManager
+import io.agora.metachat.game.npc.NpcListener
 import io.agora.metachat.global.*
 import io.agora.metachat.tools.GsonTools
 import io.agora.metachat.tools.LogTools
@@ -18,19 +21,15 @@ import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngine
 import io.agora.spatialaudio.ILocalSpatialAudioEngine
 import io.agora.spatialaudio.LocalSpatialAudioConfig
-import io.agora.spatialaudio.RemoteVoicePositionInfo
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * @author create by zhangwei03
  */
-class MChatContext private constructor() : IMetachatEventHandler, IMetachatSceneEventHandler,
-    MChatAgoraMediaPlayer.OnMediaVideoFramePushListener {
+class MChatContext private constructor() {
 
     companion object {
         private const val TAG = "MChatContext"
-        private const val enableSpatialAudio: Boolean = true
 
         private val chatContext by lazy {
             MChatContext()
@@ -41,7 +40,6 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     }
 
     private var rtcEngine: RtcEngine? = null
-    private var spatialAudioEngine: ILocalSpatialAudioEngine? = null
     private var metaChatService: IMetachatService? = null
     private var metaChatScene: IMetachatScene? = null
     private var sceneInfo: MetachatSceneInfo? = null
@@ -59,7 +57,151 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     private val roleInfoList = mutableListOf<RoleInfo>()
     private var unityCmd: MChatUnityCmd? = null
 
+    private var chatMediaPlayer: MChatAgoraMediaPlayer? = null
+    private var chatSpatialAudio: MChatSpatialAudio? = null
+    private var npcManager: MChatNpcManager? = null
+
     fun getUnityCmd(): MChatUnityCmd? = unityCmd
+
+    fun chatMediaPlayer(): MChatAgoraMediaPlayer? = chatMediaPlayer
+
+    fun chatSpatialAudio(): MChatSpatialAudio? = chatSpatialAudio
+
+    fun chatNpcManager(): MChatNpcManager? = npcManager
+
+    fun rtcEngine(): RtcEngine? = rtcEngine
+
+    // 电视音量
+    var tvVolume: Int = MChatConstant.DefaultValue.DEFAULT_TV_VOLUME
+
+    // npc 音量
+    var npcVolume: Int = MChatConstant.DefaultValue.DEFAULT_NPC_VOLUME
+
+    // 音效距离
+    var recvRange: Float = MChatConstant.DefaultValue.DEFAULT_RECV_RANGE
+
+    // 衰减系数
+    var distanceUnit: Float = MChatConstant.DefaultValue.DEFAULT_DISTANCE_UNIT
+
+    private val mChatEventHandler = object : MChatBaseEventHandler() {
+        override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
+            LogTools.d(TAG, "onCreateSceneResult errorCode:$errorCode")
+            metaChatScene = scene
+            metaChatScene?.let {
+                unityCmd = MChatUnityCmd(it)
+                unityCmd?.changeLanguage()
+            }
+            localUserAvatar = metaChatScene?.localUserAvatar
+            for (handler in mchatEventHandlerMap.keys) {
+                handler.onCreateSceneResult(scene, errorCode)
+            }
+        }
+
+        override fun onConnectionStateChanged(state: Int, reason: Int) {
+            LogTools.d(TAG, "onConnectionStateChanged state:$state reason:$reason")
+            for (handler in mchatEventHandlerMap.keys) {
+                handler.onConnectionStateChanged(state, reason)
+            }
+        }
+
+        override fun onRequestToken() {
+            LogTools.d(TAG, "onRequestToken")
+            for (handler in mchatEventHandlerMap.keys) {
+                handler.onRequestToken()
+            }
+        }
+
+        override fun onGetSceneInfosResult(scenes: Array<out MetachatSceneInfo>, errorCode: Int) {
+            LogTools.d(TAG, "onGetSceneInfosResult errorCode:$errorCode")
+            for (handler in mchatEventHandlerMap.keys) {
+                handler.onGetSceneInfosResult(scenes, errorCode)
+            }
+        }
+
+        override fun onDownloadSceneProgress(sceneId: Long, progress: Int, state: Int) {
+            for (handler in mchatEventHandlerMap.keys) {
+                handler.onDownloadSceneProgress(sceneId, progress, state)
+            }
+        }
+
+    }
+
+    private val mChatSceneEventHandler = object : MChatBaseSceneEventHandler() {
+        override fun onEnterSceneResult(errorCode: Int) {
+            LogTools.d(TAG, "onEnterSceneResult errorCode:$errorCode")
+            if (errorCode == 0) {
+                isInScene = true
+                rtcEngine?.joinChannel(
+                    MChatKeyCenter.getRtcToken(rtcRoomId), rtcRoomId, MChatKeyCenter.curUid,
+                    ChannelMediaOptions().apply {
+                        autoSubscribeAudio = true
+                        clientRoleType = Constants.CLIENT_ROLE_BROADCASTER
+                    })
+                // audio的mute状态交给ILocalSpatialAudioEngine统一管理
+                chatSpatialAudio()?.muteAllRemoteAudioStreams(true)
+                if (MChatConstant.Scene.SCENE_GAME == currentScene) {
+                    metaChatScene?.enableVideoDisplay(MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, true)
+                    chatMediaPlayer()?.play(MChatConstant.VIDEO_URL, 0)
+                }
+            }
+            npcManager = MChatNpcManager()
+            npcManager?.initNpcMediaPlayer(MChatApp.instance(), this@MChatContext, object : NpcListener {
+                override fun onNpcReady(id: Int, sourceName: String) {
+                    npcManager?.play(id)
+                }
+
+                override fun onNpcFail() {
+                }
+
+            })
+            for (handler in mchatSceneEventHandlerMap.keys) {
+                handler.onEnterSceneResult(errorCode)
+            }
+        }
+
+        override fun onLeaveSceneResult(errorCode: Int) {
+            LogTools.d(TAG, "onLeaveSceneResult errorCode:$errorCode")
+            isInScene = false
+            chatMediaPlayer()?.stop()
+            if (errorCode == 0) {
+                metaChatScene?.release()
+                metaChatScene?.removeEventHandler(this)
+                metaChatScene = null
+            }
+            unityCmd = null
+            for (handler in mchatSceneEventHandlerMap.keys) {
+                handler.onLeaveSceneResult(errorCode)
+            }
+        }
+
+        override fun onRecvMessageFromScene(message: ByteArray?) {
+            val msg = if (message != null) String(message) else ""
+            LogTools.d(TAG, "onRecvMessageFromScene message:$msg")
+            for (handler in mchatSceneEventHandlerMap.keys) {
+                handler.onRecvMessageFromScene(message)
+            }
+            getUnityCmd()?.handleSceneMessage(msg)
+        }
+
+        override fun onUserPositionChanged(uid: String, posInfo: MetachatUserPositionInfo) {
+//        LogTools.d(
+//            TAG,
+//            "onUserPositionChanged uid:$uid,${Arrays.toString(posInfo.mPosition)},${Arrays.toString(posInfo.mForward)},${
+//                Arrays.toString(posInfo.mRight)
+//            },${Arrays.toString(posInfo.mUp)}"
+//        )
+            for (handler in mchatSceneEventHandlerMap.keys) {
+                handler.onUserPositionChanged(uid, posInfo)
+            }
+        }
+
+        override fun onReleasedScene(status: Int) {
+            LogTools.d(TAG, "onReleasedScene status:$status")
+            for (handler in mchatSceneEventHandlerMap.keys) {
+                handler.onReleasedScene(status)
+            }
+        }
+    }
 
     fun initialize(context: Context): Boolean {
         var ret = Constants.ERR_OK
@@ -73,7 +215,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
 
                     override fun onUserOffline(uid: Int, reason: Int) {
                         LogTools.d(TAG, "onUserOffline uid:$uid,reason:$reason")
-                        spatialAudioEngine?.removeRemotePosition(uid)
+                        chatSpatialAudio()?.removeRemotePosition(uid)
                     }
 
                     override fun onAudioRouteChanged(routing: Int) {
@@ -88,20 +230,33 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
                     setAudioProfile(Constants.AUDIO_PROFILE_DEFAULT, Constants.AUDIO_SCENARIO_GAME_STREAMING)
                 }
                 metaChatService = IMetachatService.create()
-                metaChatService?.addEventHandler(MChatContext.instance())
+                metaChatService?.addEventHandler(mChatEventHandler)
                 val config: MetachatConfig = MetachatConfig().apply {
                     mRtcEngine = rtcEngine
                     mAppId = MChatKeyCenter.RTC_APP_ID
                     mRtmToken = MChatKeyCenter.RTM_TOKEN
                     mLocalDownloadPath = context.filesDir?.path ?: ""
                     mUserId = MChatKeyCenter.curUid.toString()
-                    mEventHandler = this@MChatContext
+                    mEventHandler = mChatEventHandler
                 }
                 ret += metaChatService?.initialize(config) ?: -1
                 LogTools.d(TAG, "launcher version:${metaChatService?.getLauncherVersion(context)}")
-                rtcEngine?.let {
-                    MChatAgoraMediaPlayer.instance().initMediaPlayer(it)
-                    MChatAgoraMediaPlayer.instance().setOnMediaVideoFramePushListener(this)
+                rtcEngine?.let { rtc ->
+                    rtc.createMediaPlayer()?.let { mediaPLayer ->
+                        chatMediaPlayer = MChatAgoraMediaPlayer(mediaPLayer)
+                        chatMediaPlayer?.initMediaPlayer()
+                        chatMediaPlayer?.setOnMediaVideoFramePushListener { frame ->
+                            metaChatScene?.pushVideoFrameToDisplay(MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, frame)
+                        }
+                    }
+                    ILocalSpatialAudioEngine.create()?.let { localSpatialAudio ->
+                        val localSpatialAudioConfig = LocalSpatialAudioConfig().apply {
+                            mRtcEngine = rtc
+                        }
+                        localSpatialAudio.initialize(localSpatialAudioConfig)
+                        chatSpatialAudio = MChatSpatialAudio(MChatKeyCenter.curUid, localSpatialAudio)
+                        chatSpatialAudio?.initSpatialAudio()
+                    }
                 }
             } catch (e: Exception) {
                 LogTools.e(TAG, "rtcEngine initialize error:${e.message}")
@@ -109,6 +264,14 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
             }
         }
         return ret == Constants.ERR_OK
+    }
+
+    // npc media player
+    fun createLocalSourcePlayer(id: Int, sourcePath: String): LocalSourceMediaPlayer? {
+        return rtcEngine?.let { it ->
+            val player = it.createMediaPlayer()
+            return LocalSourceMediaPlayer(id, player, sourcePath)
+        }
     }
 
     fun destroy() {
@@ -123,10 +286,14 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
 
     private fun innerDestroy() {
         IMetachatService.destroy()
-        metaChatService?.removeEventHandler(MChatContext.instance())
+        metaChatService?.removeEventHandler(mChatEventHandler)
         metaChatService = null
+        chatMediaPlayer()?.destroy()
+        chatSpatialAudio()?.destroy()
         RtcEngine.destroy()
         rtcEngine = null
+        chatMediaPlayer = null
+        chatSpatialAudio = null
     }
 
     fun registerMetaChatEventHandler(eventHandler: IMetachatEventHandler) {
@@ -178,17 +345,6 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
         LogTools.d(TAG, "createScene $roomId")
         this.rtcRoomId = roomId
         sceneTextureView = tv
-        if (spatialAudioEngine == null && enableSpatialAudio) {
-            spatialAudioEngine = ILocalSpatialAudioEngine.create()
-            val config: LocalSpatialAudioConfig = LocalSpatialAudioConfig().apply {
-                mRtcEngine = rtcEngine
-            }
-            spatialAudioEngine?.let {
-                it.initialize(config)
-                it.muteLocalAudioStream(false)
-                it.muteAllRemoteAudioStreams(false)
-            }
-        }
         val sceneConfig = MetachatSceneConfig()
         sceneConfig.mActivityContext = activityContext
         val ret = metaChatService?.createScene(sceneConfig) ?: -1
@@ -217,7 +373,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
             //使能位置信息回调功能
             it.enableUserPositionNotification(MChatConstant.Scene.SCENE_GAME == currentScene)
             //设置回调接口
-            it.addEventHandler(MChatContext.instance())
+            it.addEventHandler(mChatSceneEventHandler)
             val config = EnterSceneConfig()
             config.mSceneView = sceneTextureView  //sceneView必须为Texture类型，为渲染unity显示的view
             config.mRoomName = rtcRoomId  //rtc加入channel的ID
@@ -258,7 +414,7 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
             modelInfo?.mSyncPosition = false
         }
         if (null != localUserAvatar && Constants.ERR_OK == localUserAvatar?.setModelInfo(modelInfo)) {
-            ret += localUserAvatar?.applyInfo() ?: -1
+            ret += localUserAvatar!!.applyInfo()
         }
         return ret == Constants.ERR_OK
     }
@@ -268,8 +424,8 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
     }
 
     fun muteAllRemoteAudioStreams(mute: Boolean): Boolean {
-        return if (spatialAudioEngine != null) {
-            spatialAudioEngine?.muteAllRemoteAudioStreams(mute) == Constants.ERR_OK
+        return if (chatSpatialAudio() != null) {
+            chatSpatialAudio()?.muteAllRemoteAudioStreams(mute) == Constants.ERR_OK
         } else {
             rtcEngine?.muteAllRemoteAudioStreams(mute) == Constants.ERR_OK
         }
@@ -281,20 +437,8 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
             ret += rtcEngine?.leaveChannel() ?: -1
             ret += it.leaveScene()
         }
-        if (spatialAudioEngine != null) {
-            ILocalSpatialAudioEngine.destroy()
-            spatialAudioEngine = null
-        }
         LogTools.d(TAG, "leaveScene success $rtcRoomId")
         return ret == Constants.ERR_OK
-    }
-
-    fun pauseMedia() {
-        MChatAgoraMediaPlayer.instance().pause()
-    }
-
-    fun resumeMedia() {
-        MChatAgoraMediaPlayer.instance().resume()
     }
 
     fun isInScene(): Boolean {
@@ -323,146 +467,6 @@ class MChatContext private constructor() : IMetachatEventHandler, IMetachatScene
 
     fun getCurrentScene(): Int {
         return currentScene
-    }
-
-    override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
-        LogTools.d(TAG, "onCreateSceneResult errorCode:$errorCode")
-        metaChatScene = scene
-        metaChatScene?.let {
-            unityCmd = MChatUnityCmd(it)
-        }
-        localUserAvatar = metaChatScene?.localUserAvatar
-        for (handler in mchatEventHandlerMap.keys) {
-            handler.onCreateSceneResult(scene, errorCode)
-        }
-    }
-
-    override fun onConnectionStateChanged(state: Int, reason: Int) {
-        LogTools.d(TAG, "onConnectionStateChanged state:$state reason:$reason")
-        for (handler in mchatEventHandlerMap.keys) {
-            handler.onConnectionStateChanged(state, reason)
-        }
-    }
-
-    override fun onRequestToken() {
-        LogTools.d(TAG, "onRequestToken")
-        for (handler in mchatEventHandlerMap.keys) {
-            handler.onRequestToken()
-        }
-    }
-
-    override fun onGetSceneInfosResult(scenes: Array<out MetachatSceneInfo>?, errorCode: Int) {
-        LogTools.d(TAG, "onGetSceneInfosResult errorCode:$errorCode")
-        for (handler in mchatEventHandlerMap.keys) {
-            handler.onGetSceneInfosResult(scenes, errorCode)
-        }
-    }
-
-    override fun onDownloadSceneProgress(sceneId: Long, progress: Int, state: Int) {
-        for (handler in mchatEventHandlerMap.keys) {
-            handler.onDownloadSceneProgress(sceneId, progress, state)
-        }
-    }
-
-    override fun onEnterSceneResult(errorCode: Int) {
-        LogTools.d(TAG, "onEnterSceneResult errorCode:$errorCode")
-        if (errorCode == 0) {
-            isInScene = true
-            rtcEngine?.joinChannel(
-                MChatKeyCenter.getRtcToken(rtcRoomId), rtcRoomId, MChatKeyCenter.curUid,
-                ChannelMediaOptions().apply {
-                    autoSubscribeAudio = true
-                    clientRoleType = Constants.CLIENT_ROLE_BROADCASTER
-                })
-            spatialAudioEngine?.let {
-                // audio的mute状态交给ILocalSpatialAudioEngine统一管理
-                rtcEngine?.muteAllRemoteAudioStreams(true)
-            }
-            if (MChatConstant.Scene.SCENE_GAME == currentScene) {
-                // todo Just for test
-                metaChatScene?.enableVideoDisplay("1", true)
-                MChatAgoraMediaPlayer.instance().play(MChatConstant.VIDEO_URL, 0)
-            }
-        }
-        for (handler in mchatSceneEventHandlerMap.keys) {
-            handler.onEnterSceneResult(errorCode)
-        }
-    }
-
-    override fun onLeaveSceneResult(errorCode: Int) {
-        LogTools.d(TAG, "onLeaveSceneResult errorCode:$errorCode")
-        isInScene = false
-        MChatAgoraMediaPlayer.instance().stop()
-        if (errorCode == 0) {
-            metaChatScene?.release()
-            metaChatScene?.removeEventHandler(MChatContext.instance())
-            metaChatScene = null
-        }
-        unityCmd = null
-        for (handler in mchatSceneEventHandlerMap.keys) {
-            handler.onLeaveSceneResult(errorCode)
-        }
-    }
-
-    override fun onRecvMessageFromScene(message: ByteArray?) {
-        val msg = if (message != null) String(message) else ""
-        LogTools.d(TAG, "onRecvMessageFromScene message:$msg")
-        for (handler in mchatSceneEventHandlerMap.keys) {
-            handler.onRecvMessageFromScene(message)
-        }
-        getUnityCmd()?.handleSceneMessage(msg)
-    }
-
-    override fun onUserPositionChanged(uid: String?, posInfo: MetachatUserPositionInfo) {
-//        LogTools.d(
-//            TAG,
-//            "onUserPositionChanged uid:$uid,${Arrays.toString(posInfo.mPosition)},${Arrays.toString(posInfo.mForward)},${
-//                Arrays.toString(posInfo.mRight)
-//            },${Arrays.toString(posInfo.mUp)}"
-//        )
-        spatialAudioEngine?.let {
-            val userId = uid?.toIntOrNull() ?: -1
-            if (MChatKeyCenter.curUid == userId) {
-                it.updateSelfPosition(posInfo.mPosition, posInfo.mForward, posInfo.mRight, posInfo.mUp)
-            } else if (mJoinedRtc) {
-                it.updateRemotePosition(userId, RemoteVoicePositionInfo().apply {
-                    position = posInfo.mPosition
-                    forward = posInfo.mForward
-                })
-            } else {
-            }
-        }
-
-        for (handler in mchatSceneEventHandlerMap.keys) {
-            handler.onUserPositionChanged(uid, posInfo)
-        }
-    }
-
-    override fun onEnumerateVideoDisplaysResult(displayIds: Array<out String>?) {
-    }
-
-    override fun onReleasedScene(status: Int) {
-        LogTools.d(TAG, "onReleasedScene status:$status")
-        for (handler in mchatSceneEventHandlerMap.keys) {
-            handler.onReleasedScene(status)
-        }
-    }
-
-    override fun onMediaVideoFramePushed(frame: VideoFrame?) {
-        metaChatScene?.pushVideoFrameToDisplay("1", frame)
-    }
-
-    fun sendSceneMessage(msg: String) {
-        if (metaChatScene == null) {
-            LogTools.e(TAG, "sendMessageToScene metaChatScene is null")
-            return
-        } else {
-            if (metaChatScene?.sendMessageToScene(msg.toByteArray()) == 0) {
-                LogTools.d(TAG, "sendMessageToScene $msg successful")
-            } else {
-                LogTools.e(TAG, "sendMessageToScene $msg failed")
-            }
-        }
     }
 
     fun getUnityRoleInfo(): UnityRoleInfo? {

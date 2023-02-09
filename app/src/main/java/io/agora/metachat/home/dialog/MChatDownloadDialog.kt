@@ -18,6 +18,10 @@ import io.agora.metachat.widget.OnIntervalClickListener
  */
 class MChatDownloadDialog constructor() : BaseFragmentDialog<MchatDialogDownloadBinding>() {
 
+    private val chatContext by lazy {
+        MChatContext.instance()
+    }
+
     private var cancelCallback: (() -> Unit)? = null
 
     fun setCancelCallback(cancelCallback: () -> Unit) = apply {
@@ -41,7 +45,7 @@ class MChatDownloadDialog constructor() : BaseFragmentDialog<MchatDialogDownload
             it.mtContent.text =
                 resources.getString(
                     R.string.mchat_download_content,
-                    DeviceTools.getNetFileSizeDescription(MChatContext.instance().getSceneInfo().mTotalSize)
+                    DeviceTools.getNetFileSizeDescription(chatContext.getSceneInfo().mTotalSize)
                 )
         }
     }

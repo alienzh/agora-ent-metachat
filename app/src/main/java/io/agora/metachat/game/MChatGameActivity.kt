@@ -22,8 +22,6 @@ import io.agora.metachat.game.dialog.*
 import io.agora.metachat.game.karaoke.MChatKaraokeManager
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.global.MChatConstant
-import io.agora.metachat.global.SceneCmdListener
-import io.agora.metachat.global.SceneMessageReceivedObjectPositions
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -49,6 +47,10 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
     }
 
+    private val chatContext by lazy {
+        MChatContext.instance()
+    }
+
     private var mTextureView: TextureView? = null
     private lateinit var gameViewModel: MChatGameViewModel
 
@@ -57,9 +59,12 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private var mReCreateScene = false
     private var mSurfaceSizeChange = false
 
+    // karaoke manager
     private var karaokeManager: MChatKaraokeManager? = null
+
     private var messageDialog: MChatMessageDialog? = null
     private var karaokeDialog: MChatKaraokeDialog? = null
+    private var settingDialog: MChatSettingsDialog? = null
 
     override fun getViewBinding(inflater: LayoutInflater): MchatActivityGameBinding {
         return MchatActivityGameBinding.inflate(inflater)
@@ -118,10 +123,13 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     // 设置
     private fun onClickSettings(view: View) {
-        MChatSettingsDialog()
-            .setExitCallback {
-                MChatContext.instance().leaveScene()
-            }.show(supportFragmentManager, "settings dialog")
+        if (settingDialog == null) {
+            settingDialog = MChatSettingsDialog()
+            settingDialog?.setExitCallback {
+                chatContext.leaveScene()
+            }
+        }
+        settingDialog?.show(supportFragmentManager, "settings dialog")
     }
 
     // 聊天
@@ -175,15 +183,19 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     }
 
     private fun gameObservable() {
-        gameViewModel.isEnterSceneObservable().observe(this) {
-            if (it) binding.groupNativeView.isVisible = true
-            karaokeManager = MChatKaraokeManager(MChatContext.instance())
+        gameViewModel.isEnterSceneObservable().observe(this) { enter ->
+            if (enter) binding.groupNativeView.isVisible = true
             // 进入场景注册unity 监听
-            if (it){
-                MChatContext.instance().getUnityCmd()?.registerListener(unityCmdListener)
-            }else{
-                MChatContext.instance().getUnityCmd()?.unregisterListener(unityCmdListener)
+            chatContext.getUnityCmd()?.let { unityCmd ->
+                if (enter) {
+                    unityCmd.registerListener(unityCmdListener)
+                    unityCmd.acquireObjectPosition(SceneObjectId.TV.value)
+                    unityCmd.acquireObjectPosition(SceneObjectId.NPC1.value)
+                } else {
+                    unityCmd.unregisterListener(unityCmdListener)
+                }
             }
+            karaokeManager = MChatKaraokeManager()
         }
         gameViewModel.onlineMicObservable().observe(this) {
             if (it) {
@@ -272,8 +284,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     override fun onResume() {
         super.onResume()
-        if (MChatContext.instance().isInScene()) {
-            MChatContext.instance().resumeMedia()
+        if (chatContext.isInScene()) {
+            chatContext.chatMediaPlayer()?.resume()
         }
     }
 
@@ -281,9 +293,22 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         super.onDestroy()
     }
 
+    // unity listener
     private var unityCmdListener = object : SceneCmdListener {
         override fun onObjectPositionAcquired(position: SceneMessageReceivedObjectPositions) {
+            val p = floatArrayOf(position.position.x, position.position.y, position.position.z)
 
+            val f = floatArrayOf(position.forward.x, position.forward.y, position.forward.z)
+
+            val id: Int? = when (position.id) {
+                SceneObjectId.TV.value -> chatContext.chatMediaPlayer()?.mediaPlayerId()
+                else -> {
+                    chatContext.chatNpcManager()?.getNpc(position.id)?.playerId() ?: -1
+                }
+            }
+            id?.let {
+                chatContext.chatSpatialAudio()?.updateLocalMediaPlayerPosition(it, p, f)
+            }
         }
 
         override fun onKaraokeStarted() {
@@ -299,7 +324,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                 binding.linearSongList.isVisible = false
                 binding.linearEndSong.isVisible = false
                 dismissKaraokeDialog()
-                MChatContext.instance().getUnityCmd()?.stopKaraoke()
             }
         }
     }

@@ -15,7 +15,6 @@ object MChatConstant {
         const val KEY_ROOM_NAME: String = "key_room_name"
         const val KEY_ROOM_COVER_INDEX: String = "key_room_cover_index"
         const val KEY_ROOM_PASSWORD: String = "key_room_password"
-        const val KEY_NICKNAME: String = "key_nickname"
         const val KEY_IS_CREATE: String = "key_is_create"
     }
 
@@ -32,7 +31,6 @@ object MChatConstant {
     const val VIDEO_URL = "http://agora.fronted.love/yyl.mov"
     const val DEFAULT_PORTRAIT = "https://accpic.sd-rtn.com/pic/test/png/2.png"
     const val PLAY_ADVERTISING_VIDEO_REPEAT = -1
-    const val KEY_UNITY_MESSAGE_DRESS_SETTING = "dressSetting"
 
     private const val badgeUrl0 =
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_0.png"
@@ -40,6 +38,7 @@ object MChatConstant {
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_1.png"
     private const val badgeUrl2 =
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_2.png"
+
     fun getBadgeUrl(badgeIndex: Int): String {
         return when (badgeIndex) {
             0 -> badgeUrl0
@@ -47,5 +46,28 @@ object MChatConstant {
             2 -> badgeUrl2
             else -> badgeUrl0
         }
+    }
+
+    /***
+     * 默认值
+     */
+    object DefaultValue {
+        // 默认场景
+        const val DEFAULT_SCENE_ID: Long = 17
+
+        // 电视默认音量25，最大100
+        const val DEFAULT_TV_VOLUME: Int = 25
+
+        // 圆桌默认音量25，最大100
+        const val DEFAULT_NPC_VOLUME: Int = 25
+
+        // 默认音效距离5.0,最大15
+        const val DEFAULT_RECV_RANGE: Float = 5.0F
+
+        // 默认衰减系数8.6,最大10
+        const val DEFAULT_DISTANCE_UNIT: Float = 8.6F
+
+        // video frame display id
+        const val VIDEO_DISPLAY_ID: String = "1"
     }
 }

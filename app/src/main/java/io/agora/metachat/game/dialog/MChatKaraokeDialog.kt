@@ -41,6 +41,17 @@ class MChatKaraokeDialog constructor(
         return MchatDialogKaraokeBinding.inflate(inflater)
     }
 
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        dialog?.setOnShowListener {
+            karaokeManager?.registerListener(karaokeListener)
+        }
+
+        dialog?.setOnDismissListener {
+            karaokeManager?.unregisterListener(karaokeListener)
+        }
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
     override fun onStart() {
         super.onStart()
         dialog?.window?.let { window ->

@@ -100,6 +100,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         binding.ivMsg.setOnClickListener(OnIntervalClickListener(this::onClickMsg))
         binding.tvVisitorMode.setOnClickListener(OnIntervalClickListener(this::onClickVisitor))
         binding.tvNoviceGuide.setOnClickListener(OnIntervalClickListener(this::onClickNovice))
+        binding.linearSongList.setOnClickListener(OnIntervalClickListener(this::onClickSongList))
+        binding.linearEndSong.setOnClickListener(OnIntervalClickListener(this::onClickEndSong))
     }
 
     private fun resetViewVisibility() {
@@ -150,6 +152,16 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     // 新手引导说明
     private fun onClickNovice(view: View) {
         MChatBeginnerDialog(MChatBeginnerDialog.NOVICE_TYPE).show(supportFragmentManager, "novice dialog")
+    }
+
+    // 点击歌单列表
+    private fun onClickSongList(view: View) {
+        showKaraokeDialog()
+    }
+
+    // 点击结束k歌
+    private fun onClickEndSong(view: View) {
+        dismissKaraokeDialog()
     }
 
     // 申请麦克风权限
@@ -312,6 +324,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
 
         override fun onKaraokeStarted() {
+            karaokeManager?.startKaraoke()
             ThreadTools.get().runOnMainThread {
                 binding.linearSongList.isVisible = true
                 binding.linearEndSong.isVisible = true
@@ -320,6 +333,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
 
         override fun onKaraokeStopped() {
+            karaokeManager?.stopKaraoke()
             ThreadTools.get().runOnMainThread {
                 binding.linearSongList.isVisible = false
                 binding.linearEndSong.isVisible = false

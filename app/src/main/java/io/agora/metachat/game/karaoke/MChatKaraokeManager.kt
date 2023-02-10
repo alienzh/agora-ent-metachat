@@ -27,6 +27,8 @@ class MChatKaraokeManager constructor() {
         MChatContext.instance()
     }
 
+    // 是否在k歌中
+    private var inChargeOfKaraoke = false
     var useOriginal: Boolean = true
     var earMonitor: Boolean = false
     var pitch: Int = 0
@@ -100,6 +102,18 @@ class MChatKaraokeManager constructor() {
         } else {
             chatContext.chatMediaPlayer()?.stop()
         }
+    }
+
+    @Synchronized
+    fun startKaraoke() {
+        inChargeOfKaraoke = true
+        chatContext.chatMediaPlayer()?.startInChargeOfKaraoke()
+    }
+
+    @Synchronized
+    fun stopKaraoke() {
+        inChargeOfKaraoke = false
+        chatContext.chatMediaPlayer()?.stopInChargeOfKaraoke()
     }
 
     fun idleMode() {

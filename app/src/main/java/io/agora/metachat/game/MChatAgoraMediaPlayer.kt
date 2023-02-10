@@ -1,5 +1,6 @@
 package io.agora.metachat.game
 
+import android.text.TextUtils
 import io.agora.base.VideoFrame
 import io.agora.mediaplayer.Constants
 import io.agora.mediaplayer.IMediaPlayer
@@ -7,22 +8,24 @@ import io.agora.mediaplayer.IMediaPlayerVideoFrameObserver
 import io.agora.metachat.game.internal.MChatBaseMediaPlayerObserver
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.tools.LogTools
+import io.agora.rtc2.ChannelMediaOptions
+import io.agora.rtc2.RtcEngine
 
 /**
  * @author create by zhangwei03
  */
-class MChatAgoraMediaPlayer constructor(val mediaPlayer: IMediaPlayer) {
-
-    private var onMediaVideoFramePushListener: IMediaPlayerVideoFrameObserver? = null
+class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlayer: IMediaPlayer) {
 
     companion object {
 
         private const val TAG = "MChatAgoraMediaPlayer"
     }
 
-    private var mediaIsPlaying: Boolean = false
-    private var playerAudioPitch: Int = 0
-    private var useOriginalTrack: Boolean = true
+    // 媒体播放器的视频数据观测器。
+    private var mediaVideoFramePushListener: IMediaPlayerVideoFrameObserver? = null
+
+    // 是否在k歌中
+    private var inChargeOfKaraoke = false
 
     private val mediaPlayerObserver = object : MChatBaseMediaPlayerObserver() {
         override fun onPlayerStateChanged(state: Constants.MediaPlayerState, error: Constants.MediaPlayerError) {
@@ -33,37 +36,43 @@ class MChatAgoraMediaPlayer constructor(val mediaPlayer: IMediaPlayer) {
                 }
             }
         }
-
-        override fun onPositionChanged(position_ms: Long) {
-        }
     }
 
+    // 媒体播放器的视频数据观测器
     private val mediaPlayerVideoFrameObserver = object : IMediaPlayerVideoFrameObserver {
         override fun onFrame(frame: VideoFrame?) {
-            onMediaVideoFramePushListener?.onFrame(frame)
+            mediaVideoFramePushListener?.onFrame(frame)
         }
-
     }
 
-    fun initMediaPlayer() {
+
+    fun initMediaPlayer(volume: Int) {
+        setPlayerVolume(volume)
         mediaPlayer.registerPlayerObserver(mediaPlayerObserver)
         mediaPlayer.registerVideoFrameObserver(mediaPlayerVideoFrameObserver)
     }
 
-    fun setOnMediaVideoFramePushListener(onMediaVideoFramePushListener: IMediaPlayerVideoFrameObserver) = apply {
-        this.onMediaVideoFramePushListener = onMediaVideoFramePushListener
+    fun setOnMediaVideoFramePushListener(mediaVideoFramePushListener: IMediaPlayerVideoFrameObserver) = apply {
+        this.mediaVideoFramePushListener = mediaVideoFramePushListener
     }
 
-    fun mediaPlayerId(): Int {
-        return mediaPlayer.mediaPlayerId
-    }
+    fun mediaPlayerId(): Int = mediaPlayer.mediaPlayerId
 
     fun play(url: String, startPos: Long = 0) {
         mediaPlayer.open(url, startPos).also {
             if (it == io.agora.rtc2.Constants.ERR_OK) {
                 mediaPlayer.setLoopCount(MChatConstant.PLAY_ADVERTISING_VIDEO_REPEAT)
                 mediaPlayer.play()
-                mediaIsPlaying = true
+                if (!TextUtils.equals(url, MChatConstant.VIDEO_URL)) { // k歌推送视频流
+                    val channelOptions = ChannelMediaOptions().apply {
+                        autoSubscribeAudio = true
+                        autoSubscribeVideo = true
+                        autoSubscribeVideo = true
+                        publishMediaPlayerId = mediaPlayer.mediaPlayerId
+                        publishMediaPlayerAudioTrack = true
+                    }
+                    rtcEngine.updateChannelMediaOptions(channelOptions)
+                }
             }
         }
     }
@@ -73,7 +82,6 @@ class MChatAgoraMediaPlayer constructor(val mediaPlayer: IMediaPlayer) {
         mediaPlayer.unRegisterPlayerObserver(mediaPlayerObserver)
         mediaPlayer.stop()
         mediaPlayer.destroy()
-        mediaIsPlaying = false
     }
 
     fun pause() {
@@ -97,19 +105,14 @@ class MChatAgoraMediaPlayer constructor(val mediaPlayer: IMediaPlayer) {
      */
     @Synchronized
     fun setPlayerAudioPitch(pitch: Int): Int {
-        playerAudioPitch = if (pitch < -12) {
+        val playerAudioPitch = if (pitch < -12) {
             -12
         } else if (pitch > 12) {
             12
         } else {
             pitch
         }
-
-        var result = io.agora.rtc2.Constants.ERR_OK
-        if (mediaIsPlaying) {
-            result = mediaPlayer.setAudioPitch(playerAudioPitch)
-        }
-        return result
+        return mediaPlayer.setAudioPitch(playerAudioPitch)
     }
 
     @Synchronized
@@ -117,4 +120,17 @@ class MChatAgoraMediaPlayer constructor(val mediaPlayer: IMediaPlayer) {
         mediaPlayer.unRegisterPlayerObserver(mediaPlayerObserver)
         return mediaPlayer.destroy()
     }
+
+    @Synchronized
+    fun startInChargeOfKaraoke() {
+        inChargeOfKaraoke = true
+    }
+
+    @Synchronized
+    fun stopInChargeOfKaraoke() {
+        inChargeOfKaraoke = false
+    }
+
+    @Synchronized
+    fun inChargeOfKaraoke():Boolean = false
 }

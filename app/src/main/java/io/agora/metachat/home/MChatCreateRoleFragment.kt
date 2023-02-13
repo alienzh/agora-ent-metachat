@@ -171,7 +171,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
                     .contentText(
                         resources.getString(
                             R.string.mchat_download_content,
-                            DeviceTools.getNetFileSizeDescription( mChatViewModel.getSceneInfo().mTotalSize)
+                            DeviceTools.getNetFileSizeDescription(mChatViewModel.getSceneInfo().mTotalSize)
                         )
                     )
                     .leftText(resources.getString(R.string.mchat_download_next_time))
@@ -225,7 +225,9 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     }
 
     private fun onClickNicknameRandom(view: View) {
-        binding.etNickname.setText(nicknameArray[random.nextInt(nicknameArray.size)])
+        val nickName = nicknameArray[random.nextInt(nicknameArray.size)]
+        binding.etNickname.setText(nickName)
+        MChatKeyCenter.nickname = nickName
     }
 
     private fun onClickMale(view: View) {

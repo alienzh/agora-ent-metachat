@@ -106,57 +106,68 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_mute_remote"
+        <FrameLayout
+            android:id="@+id/layout_mute_remote"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginStart="15dp"
-            android:background="@drawable/mchat_bg_oval_black25"
-            android:focusableInTouchMode="false"
-            android:padding="6dp"
-            android:src="@drawable/mchat_ic_mic"
             app:layout_constraintBottom_toBottomOf="@id/iv_msg"
             app:layout_constraintStart_toEndOf="@id/iv_msg"
-            app:layout_constraintTop_toTopOf="@id/iv_msg" />
+            app:layout_constraintTop_toTopOf="@id/iv_msg">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_mute_remote_flag"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_marginEnd="6dp"
-            android:layout_marginBottom="6dp"
-            android:focusableInTouchMode="false"
-            android:src="@drawable/mchat_ic_mute"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/iv_mute_remote"
-            app:layout_constraintEnd_toEndOf="@id/iv_mute_remote"
-            tools:visibility="visible" />
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_mute_remote"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/mchat_bg_oval_black25"
+                android:focusableInTouchMode="false"
+                android:padding="6dp"
+                android:src="@drawable/mchat_ic_mic" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_mute_local"
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_mute_remote_flag"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="end|bottom"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="6dp"
+                android:focusableInTouchMode="false"
+                android:src="@drawable/mchat_ic_mute"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </FrameLayout>
+
+
+        <FrameLayout
+            android:id="@+id/layout_mute_local"
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginStart="15dp"
-            android:background="@drawable/mchat_bg_oval_black25"
-            android:padding="6dp"
-            android:src="@drawable/mchat_ic_speak"
             android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/iv_mute_remote"
-            app:layout_constraintStart_toEndOf="@id/iv_mute_remote"
-            app:layout_constraintTop_toTopOf="@id/iv_mute_remote"
-            tools:visibility="visible" />
+            app:layout_constraintBottom_toBottomOf="@id/layout_mute_remote"
+            app:layout_constraintStart_toEndOf="@id/layout_mute_remote"
+            app:layout_constraintTop_toTopOf="@id/layout_mute_remote"
+            tools:visibility="visible">
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/iv_mute_local_flag"
-            android:layout_width="12dp"
-            android:layout_height="12dp"
-            android:layout_marginEnd="6dp"
-            android:layout_marginBottom="6dp"
-            android:src="@drawable/mchat_ic_mute"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@id/iv_mute_local"
-            app:layout_constraintEnd_toEndOf="@id/iv_mute_local"
-            tools:visibility="visible" />
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_mute_local"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/mchat_bg_oval_black25"
+                android:padding="6dp"
+                android:src="@drawable/mchat_ic_speak" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/iv_mute_local_flag"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="end|bottom"
+                android:layout_marginEnd="6dp"
+                android:layout_marginBottom="6dp"
+                android:src="@drawable/mchat_ic_mute"
+                android:visibility="gone"
+                tools:visibility="visible" />
+        </FrameLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 

@@ -22,6 +22,7 @@ import io.agora.metachat.game.dialog.*
 import io.agora.metachat.game.karaoke.MChatKaraokeManager
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -93,9 +94,10 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     }
 
     private fun initView() {
+        binding.tvNickname.text = MChatKeyCenter.nickname
         binding.tvMicOnline.setOnClickListener(OnIntervalClickListener(this::onClickMicOnline))
-        binding.ivMuteRemote.setOnClickListener(OnIntervalClickListener(this::onClickMuteRemote))
-        binding.ivMuteLocal.setOnClickListener(OnIntervalClickListener(this::onClickMuteLocal))
+        binding.layoutMuteRemote.setOnClickListener(OnIntervalClickListener(this::onClickMuteRemote))
+        binding.layoutMuteLocal.setOnClickListener(OnIntervalClickListener(this::onClickMuteLocal))
         binding.ivSettings.setOnClickListener(OnIntervalClickListener(this::onClickSettings))
         binding.ivMsg.setOnClickListener(OnIntervalClickListener(this::onClickMsg))
         binding.tvVisitorMode.setOnClickListener(OnIntervalClickListener(this::onClickVisitor))
@@ -128,7 +130,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         if (settingDialog == null) {
             settingDialog = MChatSettingsDialog()
             settingDialog?.setExitCallback {
-                chatContext.leaveScene()
+                showLoading(false)
+                gameViewModel.leaveRoom()
             }
         }
         settingDialog?.show(supportFragmentManager, "settings dialog")
@@ -161,7 +164,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     // 点击结束k歌
     private fun onClickEndSong(view: View) {
-        dismissKaraokeDialog()
+        unityCmdListener.onKaraokeStopped()
+        chatContext.getUnityCmd()?.stopKaraoke()
     }
 
     // 申请麦克风权限
@@ -201,8 +205,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
             chatContext.getUnityCmd()?.let { unityCmd ->
                 if (enter) {
                     unityCmd.registerListener(unityCmdListener)
-                    unityCmd.acquireObjectPosition(SceneObjectId.TV.value)
-                    unityCmd.acquireObjectPosition(SceneObjectId.NPC1.value)
+//                    unityCmd.acquireObjectPosition(SceneObjectId.TV.value)
+//                    unityCmd.acquireObjectPosition(SceneObjectId.NPC1.value)
                 } else {
                     unityCmd.unregisterListener(unityCmdListener)
                 }
@@ -214,12 +218,16 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                 binding.layoutUser.setBackgroundResource(R.drawable.mchat_bg_rect_radius18_gradient_pure)
                 binding.tvMicOnline.setBackgroundResource(R.drawable.mchat_bg_rect_radius14_stroke_white15)
                 binding.tvMicOnline.setText(R.string.mchat_online)
-                binding.ivMuteLocal.isVisible = true
+                binding.layoutMuteLocal.isVisible = true
+                binding.tvVisitorMode.setText(R.string.mchat_audio_chat_mode)
+                binding.tvVisitorMode.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
             } else {
                 binding.layoutUser.setBackgroundResource(R.drawable.mchat_bg_rect_radius18_black40)
                 binding.tvMicOnline.setBackgroundResource(R.drawable.mchat_bg_rect_radius14_purple)
                 binding.tvMicOnline.setText(R.string.mchat_offline)
-                binding.ivMuteLocal.isVisible = false
+                binding.layoutMuteLocal.isVisible = false
+                binding.tvVisitorMode.setText(R.string.mchat_visitor_mode)
+                binding.tvVisitorMode.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.mchat_ic_tips, 0)
             }
         }
         gameViewModel.muteRemoteObservable().observe(this) {
@@ -230,6 +238,11 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
         gameViewModel.exitGameObservable().observe(this) {
             finish()
+        }
+        gameViewModel.leaveRoomObservable().observe(this) {
+            if (it) {
+                chatContext.leaveScene()
+            }
         }
     }
 
@@ -312,10 +325,10 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
             val f = floatArrayOf(position.forward.x, position.forward.y, position.forward.z)
 
-            val id: Int? = when (position.id) {
+            val id: Int? = when (position.objectId) {
                 SceneObjectId.TV.value -> chatContext.chatMediaPlayer()?.mediaPlayerId()
                 else -> {
-                    chatContext.chatNpcManager()?.getNpc(position.id)?.playerId() ?: -1
+                    chatContext.chatNpcManager()?.getNpc(position.objectId)?.playerId() ?: -1
                 }
             }
             id?.let {
@@ -328,6 +341,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
             ThreadTools.get().runOnMainThread {
                 binding.linearSongList.isVisible = true
                 binding.linearEndSong.isVisible = true
+                binding.ivSettings.isVisible = false
                 showKaraokeDialog()
             }
         }
@@ -337,6 +351,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
             ThreadTools.get().runOnMainThread {
                 binding.linearSongList.isVisible = false
                 binding.linearEndSong.isVisible = false
+                binding.ivSettings.isVisible = true
                 dismissKaraokeDialog()
             }
         }

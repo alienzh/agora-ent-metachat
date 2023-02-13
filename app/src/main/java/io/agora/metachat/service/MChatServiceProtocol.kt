@@ -29,6 +29,8 @@ interface MChatServiceProtocol {
         const val ERR_CREATE_GROUP_SUCCESS = 8
         const val ERR_JOIN_GROUP_ERROR = 9
         const val ERR_JOIN_GROUP_SUCCESS = 10
+        const val ERR_LEAVE_GROUP_ERROR = 11
+        const val ERR_LEAVE_GROUP_SUCCESS = 12
 
         private val instance by lazy {
             MChatSyncManagerServiceImp(MChatApp.instance()) { error ->
@@ -47,9 +49,9 @@ interface MChatServiceProtocol {
     fun subscribeEvent(delegate: MChatSubscribeDelegate)
 
     /**取消订阅*/
-    fun unsubscribeEvent()
+    fun unsubscribeEvent(delegate: MChatSubscribeDelegate)
 
-    fun getSubscribeDelegates(): List<MChatSubscribeDelegate>
+    fun getSubscribeDelegates(): Set<MChatSubscribeDelegate>
 
     /**reset*/
     fun reset()

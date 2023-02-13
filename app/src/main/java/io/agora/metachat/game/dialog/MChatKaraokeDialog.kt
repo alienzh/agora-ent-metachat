@@ -45,8 +45,8 @@ class MChatKaraokeDialog constructor(
         dialog?.setOnShowListener {
             karaokeManager?.registerListener(karaokeListener)
         }
-
         dialog?.setOnDismissListener {
+            onDismiss(it)
             karaokeManager?.unregisterListener(karaokeListener)
         }
         return super.onCreateView(inflater, container, savedInstanceState)

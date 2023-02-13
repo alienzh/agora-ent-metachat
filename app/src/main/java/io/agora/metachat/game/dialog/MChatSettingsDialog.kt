@@ -208,7 +208,13 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             return
         }
         MChatKeyCenter.nickname = name
-        mchatContext.getUnityCmd()?.updateUserInfo()
+        mchatContext.getLocalUserAvatar()?.let { localUserAvatar ->
+            val userInfo = localUserAvatar.userInfo.apply {
+                mUserName = name
+            }
+            localUserAvatar.userInfo = userInfo
+            localUserAvatar.applyInfo()
+        }
     }
 
     private fun onClickSettingBack(view: View) {
@@ -254,7 +260,14 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             if (MChatKeyCenter.badgeIndex == it) return@setConfirmCallback
             MChatKeyCenter.badgeIndex = it
             binding?.ivUserBadge?.setImageResource(badgeArray.getResourceId(it, defaultBadge))
-            mchatContext.getUnityCmd()?.updateUserInfo()
+            mchatContext.getLocalUserAvatar()?.let { localUserAvatar ->
+                val userInfo = localUserAvatar.userInfo.apply {
+                    mUserIconUrl = MChatConstant.getBadgeUrl(MChatKeyCenter.badgeIndex)
+                }
+                localUserAvatar.userInfo = userInfo
+                localUserAvatar.applyInfo()
+            }
+
         }.show(childFragmentManager, "badge dialog")
     }
 

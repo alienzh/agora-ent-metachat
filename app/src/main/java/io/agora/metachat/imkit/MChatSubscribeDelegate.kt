@@ -12,31 +12,31 @@ interface MChatSubscribeDelegate {
      * @param groupId 环信IM 群组id
      * @param message 环信IM 消息
      */
-    fun onReceiveTextMsg(groupId: String, message: MChatMessageModel?)
+    fun onReceiveTextMsg(groupId: String, message: MChatMessageModel?){}
 
     /**
      * 用户离开群组
      * @param groupId 环信IM 群组id
      * @param chatUid 环信IM 用户uid
      */
-    fun onMemberExited(groupId: String, chatUid: String)
+    fun onMemberExited(groupId: String, chatUid: String){}
 
     /**
      * 用户加入群组
      * @param groupId 环信IM 群组id
      * @param chatUid 环信IM 用户uid
      */
-    fun onMemberJoined(groupId: String, chatUid: String)
+    fun onMemberJoined(groupId: String, chatUid: String){}
 
     /**
      * 群组解散
      * @param groupId 环信IM 群组id
      */
-    fun onGroupDestroyed(groupId: String)
+    fun onGroupDestroyed(groupId: String){}
 
     /**
      * 当前用户被踢出群组
      * @param groupId 环信IM 群组id
      */
-    fun onUserRemoved(groupId: String)
+    fun onUserRemoved(groupId: String){}
 }

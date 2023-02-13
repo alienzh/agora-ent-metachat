@@ -47,12 +47,12 @@ class CommonFragmentAlertDialog constructor() : BaseFragmentDialog<MchatDialogCe
                 mbRight.text = rightText
             }
             mbLeft.setOnClickListener {
-                clickListener?.onCancelClick()
                 dismiss()
+                clickListener?.onCancelClick()
             }
             mbRight.setOnClickListener {
-                clickListener?.onConfirmClick()
                 dismiss()
+                clickListener?.onConfirmClick()
             }
         }
     }

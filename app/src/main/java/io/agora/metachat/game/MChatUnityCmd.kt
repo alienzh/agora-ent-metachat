@@ -1,8 +1,6 @@
 package io.agora.metachat.game
 
 import io.agora.metachat.IMetachatScene
-import io.agora.metachat.global.MChatConstant
-import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.GsonTools
 import io.agora.metachat.tools.LogTools
@@ -11,41 +9,37 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
     private val tag = "MChatUnityCmd"
     private val messageListeners: MutableSet<SceneCmdListener> = mutableSetOf()
 
-    fun acquireObjectPosition(objectId: Int) {
-        val obj = SceneMessageRequestBody(SceneMessageType.Position.value)
-        obj.params["id"] = objectId
-        sendSceneMessage(GsonTools.beanToString(obj))
-    }
-
-    fun startKaraoke() {
-        val obj = SceneMessageRequestBody(SceneMessageType.StartKaraoke.value)
-        sendSceneMessage(GsonTools.beanToString(obj))
-    }
-
+    // 停止k歌
     fun stopKaraoke() {
-        val obj = SceneMessageRequestBody(SceneMessageType.StopKaraoke.value)
-        sendSceneMessage(GsonTools.beanToString(obj))
+        val value = mutableMapOf<String, Any>().apply {
+            put("actionId", KaraokeAction.Stop.value)
+        }
+        GsonTools.beanToString(value)?.let {
+            val obj = SceneMessageRequestBody(SceneMessageType.Karaoke.value, it)
+            sendSceneMessage(GsonTools.beanToString(obj))
+        }
     }
 
+    // 发送消息
     fun sendMessage(message: String) {
-        val obj = SceneMessageRequestBody(SceneMessageType.SendMessage.value)
-        obj.params["userId"] = MChatKeyCenter.imUid
-        obj.params["content"] = message
-        sendSceneMessage(GsonTools.beanToString(obj))
+        val value = mutableMapOf<String, Any>().apply {
+            put("content", message)
+        }
+        GsonTools.beanToString(value)?.let {
+            val obj = SceneMessageRequestBody(SceneMessageType.SendMessage.value, it)
+            sendSceneMessage(GsonTools.beanToString(obj))
+        }
     }
 
-    fun updateUserInfo() {
-        val obj = SceneMessageRequestBody(SceneMessageType.ChangeUserInfo.value)
-        obj.params["userId"] = MChatKeyCenter.imUid
-        obj.params["badge"] = MChatConstant.getBadgeUrl(MChatKeyCenter.badgeIndex)
-        obj.params["name"] = MChatKeyCenter.nickname
-        sendSceneMessage(GsonTools.beanToString(obj))
-    }
-
-    fun changeLanguage(){
-        val obj = SceneMessageRequestBody(SceneMessageType.ChangeUserInfo.value)
-        obj.params["lang"] = DeviceTools.getLanguageCode()
-        sendSceneMessage(GsonTools.beanToString(obj))
+    // 系统语言
+    fun changeLanguage() {
+        val value = mutableMapOf<String, Any>().apply {
+            put("lang", DeviceTools.getLanguageCode())
+        }
+        GsonTools.beanToString(value)?.let {
+            val obj = SceneMessageRequestBody(SceneMessageType.Language.value, it)
+            sendSceneMessage(GsonTools.beanToString(obj))
+        }
     }
 
     private fun sendSceneMessage(msg: String?) {
@@ -57,33 +51,28 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
     }
 
     fun handleSceneMessage(message: String) {
-        LogTools.d(tag,"ready to handle scene message, $message")
-        GsonTools.toBean(message, SceneMessageReceiveBaseBody::class.java)?.let { obj ->
-            GsonTools.toBean(obj.message, SceneMessageReceiveBody::class.java)?.let { body ->
-                when (body.type) {
-                    SceneMessageType.Position.value -> {
-                        val dataStr = GsonTools.beanToString(body.data)
-                        GsonTools.toBean(dataStr, SceneMessageReceivedObjectPositions::class.java)?.let { positions ->
-                            messageListeners.forEach {
-                                it.onObjectPositionAcquired(positions)
+        LogTools.d(tag, "ready to handle scene message, $message")
+        GsonTools.toBean(message, SceneMessageReceiveBody::class.java)?.let { body ->
+            when (body.key) {
+                SceneMessageType.Position.value -> {
+                    GsonTools.toBean(body.value.toString(), SceneMessageReceivedObjectPositions::class.java)?.let { positions ->
+                        messageListeners.forEach {
+                            it.onObjectPositionAcquired(positions)
+                        }
+                    }
+                }
+                SceneMessageType.Karaoke.value -> {
+                    GsonTools.toBean(body.value.toString(), SceneMessageReceiveKaraoke::class.java)?.let { karaoke ->
+                        messageListeners.forEach {
+                            if (karaoke.actionId == KaraokeAction.Start.value) {
+                                it.onKaraokeStarted()
+                            } else {
+                                it.onKaraokeStopped()
                             }
                         }
                     }
-                    SceneMessageType.StartKaraoke.value -> {
-                        messageListeners.forEach {
-                            it.onKaraokeStarted()
-                        }
-                    }
-                    SceneMessageType.StopKaraoke.value -> {
-                        messageListeners.forEach {
-                            stopKaraoke()
-                            it.onKaraokeStopped()
-                        }
-                    }
-                    else -> {
-
-                    }
                 }
+                else -> {}
             }
         }
     }
@@ -97,38 +86,40 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
     }
 }
 
-enum class SceneMessageType(val value: Int) {
-    Position(1),
-    StartKaraoke(2),
-    StopKaraoke(3),
-    ChangeUserInfo(4),
-    SendMessage(5),
-    Language(6)
+enum class SceneMessageType(val value: String) {
+    Position("objectLocation"),
+    Karaoke("songAction"),
+    SendMessage("chat"),
+    Language("systemLang")
 }
 
-data class SceneManagerBodyCoordinate(
+enum class KaraokeAction(val value: Int) {
+    Start(1),
+    Stop(2)
+}
+
+data class SceneManagerBodyCoordinate constructor(
     val x: Float = 0f,
     val y: Float = 0f,
     val z: Float = 0f
 )
 
-data class SceneMessageRequestBody(
-    val type: Int,
-    val params: MutableMap<String, Any> = mutableMapOf()
+data class SceneMessageRequestBody constructor(
+    val key: String,
+    val value: Any
 )
 
-data class SceneMessageReceiveBaseBody(
-    val messageType: Int = 0,
-    val message: String
+data class SceneMessageReceiveBody constructor(
+    val key: String,
+    val value: Any
 )
 
-data class SceneMessageReceiveBody(
-    val type: Int,
-    val data: Any
+data class SceneMessageReceiveKaraoke constructor(
+    val actionId: Int,
 )
 
 data class SceneMessageReceivedObjectPositions(
-    val id: Int,
+    val objectId: Int,
     val position: SceneManagerBodyCoordinate,
     val forward: SceneManagerBodyCoordinate,
     val right: SceneManagerBodyCoordinate,

@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import io.agora.metachat.*
 import io.agora.metachat.game.internal.MChatBaseEventHandler
 import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
+import io.agora.metachat.imkit.MChatGroupIMManager
+import io.agora.metachat.service.MChatServiceProtocol
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.SingleLiveData
 import io.agora.metachat.tools.ThreadTools
@@ -18,17 +20,21 @@ import io.agora.rtc2.IRtcEngineEventHandler.ErrorCode
  */
 class MChatGameViewModel : ViewModel() {
 
+    private val chatServiceProtocol: MChatServiceProtocol = MChatServiceProtocol.getImplInstance()
+
     private val _isEnterScene = SingleLiveData<Boolean>()
     private val _onlineMic = SingleLiveData<Boolean>()
     private val _muteRemote = SingleLiveData<Boolean>()
     private val _muteLocal = SingleLiveData<Boolean>()
     private val _exitGame = SingleLiveData<Boolean>()
+    private val _leaveRoom = SingleLiveData<Boolean>()
 
     fun isEnterSceneObservable(): LiveData<Boolean> = _isEnterScene
     fun onlineMicObservable(): LiveData<Boolean> = _onlineMic
     fun muteRemoteObservable(): LiveData<Boolean> = _muteRemote
     fun muteLocalObservable(): LiveData<Boolean> = _muteLocal
     fun exitGameObservable(): LiveData<Boolean> = _exitGame
+    fun leaveRoomObservable(): LiveData<Boolean> = _leaveRoom
 
     private var mReCreateScene = false
     private var mSurfaceSizeChange = false
@@ -43,7 +49,7 @@ class MChatGameViewModel : ViewModel() {
         super.onCleared()
     }
 
-    private val mChatEventHandler = object :MChatBaseEventHandler(){
+    private val mChatEventHandler = object : MChatBaseEventHandler() {
         override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
             ThreadTools.get().runOnMainThread {
                 mchatContext.enterScene()
@@ -51,7 +57,7 @@ class MChatGameViewModel : ViewModel() {
         }
     }
 
-    private val mChatSceneEventHandler = object : MChatBaseSceneEventHandler(){
+    private val mChatSceneEventHandler = object : MChatBaseSceneEventHandler() {
         override fun onEnterSceneResult(errorCode: Int) {
             ThreadTools.get().runOnMainThread {
                 if (errorCode != ErrorCode.ERR_OK) {
@@ -157,6 +163,16 @@ class MChatGameViewModel : ViewModel() {
                 _muteLocal.postValue(true)
             } else {
                 LogTools.e("mute local error")
+            }
+        }
+    }
+
+    // 离开房间
+    fun leaveRoom() {
+        // 退出环信im 房间，不管是否成功
+        MChatGroupIMManager.instance().leaveGroupTask {
+            chatServiceProtocol.leaveRoom {
+                _leaveRoom.postValue(true)
             }
         }
     }

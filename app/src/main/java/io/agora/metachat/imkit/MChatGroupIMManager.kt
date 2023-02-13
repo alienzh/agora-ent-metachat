@@ -21,7 +21,7 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
     private lateinit var chatServiceProtocol: MChatServiceProtocol
     private var groupId: String = ""
     private var ownerId: String = ""
-    private val allNormalList = mutableListOf<MChatMessageModel>()
+    private val notAddedDataList = mutableListOf<MChatMessageModel>() // 未添加到的数据
     private val allData = mutableListOf<MChatMessageModel>()
 
     companion object {
@@ -38,18 +38,17 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
         fun instance(): MChatGroupIMManager = groupIMManager
     }
 
-    fun getAllData(): List<MChatMessageModel>{
+    fun getAllData(): List<MChatMessageModel> {
+        if (allData.isEmpty()) {
+            getAllMsgList()
+        }
         return allData
     }
 
     fun getAllMsgList(): List<MChatMessageModel> {
         val data = mutableListOf<MChatMessageModel>()
-        for (chatMessageData in allNormalList) {
-            if (TextUtils.equals(groupId, chatMessageData.conversationId)) {
-                data.add(chatMessageData)
-            }
-        }
-        allNormalList.removeAll(data)
+        data.addAll(notAddedDataList)
+        notAddedDataList.clear()
         allData.addAll(data)
         return data
     }
@@ -161,18 +160,25 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
                     }
 
                     override fun onError(code: Int, errorMsg: String?) {
-                        if (code == EMAError.GROUP_ALREADY_JOINED) {
-                            this@MChatGroupIMManager.groupId = groupId
-                            this@MChatGroupIMManager.ownerId = ownerId
-                            // 注册消息监听
-                            EMClient.getInstance().chatManager().addMessageListener(this@MChatGroupIMManager)
-                            // 注册群组监听
-                            EMClient.getInstance().groupManager().addGroupChangeListener(this@MChatGroupIMManager)
-                            LogTools.e(TAG, "User already joined the group")
-                            joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_SUCCESS)
-                        } else {
-                            LogTools.e(TAG, "im join group failed code:$code,errorMsg:$errorMsg")
-                            joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_ERROR)
+                        when (code) {
+                            EMAError.GROUP_ALREADY_JOINED -> {
+                                this@MChatGroupIMManager.groupId = groupId
+                                this@MChatGroupIMManager.ownerId = ownerId
+                                // 注册消息监听
+                                EMClient.getInstance().chatManager().addMessageListener(this@MChatGroupIMManager)
+                                // 注册群组监听
+                                EMClient.getInstance().groupManager().addGroupChangeListener(this@MChatGroupIMManager)
+                                LogTools.e(TAG, "User already joined the group")
+                                joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_SUCCESS)
+                            }
+                            EMAError.GROUP_INVALID_ID -> {
+                                LogTools.e(TAG, "im join group failed code:$code,errorMsg:$errorMsg")
+                                joinGroupCallback.invoke(MChatServiceProtocol.ERR_GROUP_UNAVAILABLE)
+                            }
+                            else -> {
+                                LogTools.e(TAG, "im join group failed code:$code,errorMsg:$errorMsg")
+                                joinGroupCallback.invoke(MChatServiceProtocol.ERR_JOIN_GROUP_ERROR)
+                            }
                         }
                     }
                 })
@@ -187,17 +193,19 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
     /**
      * 离开群组，普通用户退出群组，房主离开则解散群组
      */
-    fun leaveGroupTask() {
+    fun leaveGroupTask(leaveCallback: (error: Int) -> Unit) {
         if (checkEmptyGroup()) return
         if (isRoomOwner()) { // 房主
             EMClient.getInstance().groupManager().asyncDestroyGroup(groupId, object : EMCallBack {
                 override fun onSuccess() {
                     LogTools.d(TAG, "im destroy group success:$groupId")
                     reset()
+                    leaveCallback.invoke(MChatServiceProtocol.ERR_LEAVE_GROUP_SUCCESS)
                 }
 
                 override fun onError(code: Int, error: String?) {
                     LogTools.d(TAG, "im destroy group failed code:$code,error:$error")
+                    leaveCallback.invoke(MChatServiceProtocol.ERR_LEAVE_GROUP_ERROR)
                 }
             })
         } else {
@@ -205,10 +213,12 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
                 override fun onSuccess() {
                     LogTools.d(TAG, "im leave group success:$groupId")
                     reset()
+                    leaveCallback.invoke(MChatServiceProtocol.ERR_LEAVE_GROUP_SUCCESS)
                 }
 
                 override fun onError(code: Int, error: String?) {
                     LogTools.d(TAG, "im leave group failed code:$code,error:$error")
+                    leaveCallback.invoke(MChatServiceProtocol.ERR_LEAVE_GROUP_ERROR)
                 }
             })
         }
@@ -227,7 +237,7 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
         EMClient.getInstance().chatManager().removeMessageListener(this)
         // 移除群组监听
         EMClient.getInstance().groupManager().removeGroupChangeListener(this)
-        allNormalList.clear()
+        notAddedDataList.clear()
         allData.clear()
         groupId = ""
         ownerId = ""
@@ -267,9 +277,12 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
             // 只判断文本消息
             if (emMessage.type != EMMessage.Type.TXT) continue
             val message = parseChatMessage(emMessage)
-            allNormalList.add(message)
-            for (listener in chatServiceProtocol.getSubscribeDelegates()) {
-                listener.onReceiveTextMsg(message.conversationId ?: "", message)
+            if (TextUtils.equals(groupId, message.conversationId)) {
+                // 同一个群组的才添加
+                notAddedDataList.add(message)
+                chatServiceProtocol.getSubscribeDelegates().forEach { chatDelegate ->
+                    chatDelegate.onReceiveTextMsg(message.conversationId ?: "", message)
+                }
             }
         }
     }
@@ -278,17 +291,19 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
      * 发送文本消息
      * @param content 文本内容
      * @param nickName 用户昵称
+     * @param portraitIndex 头像
      * @param sendMsgCallback 回调
      */
-    fun sendTxtMsg(content: String, nickName: String, sendMsgCallback: (result: Boolean) -> Unit) {
+    fun sendTxtMsg(content: String, nickName: String, portraitIndex: Int, sendMsgCallback: (result: Boolean) -> Unit) {
         if (checkEmptyGroup()) return
         val message: EMMessage = EMMessage.createTextSendMessage(content, groupId)
-        message.setAttribute("userName", nickName)
+        message.setAttribute(KEY_NICKNAME, nickName)
+        message.setAttribute(KEY_PORTRAIT_INDEX, portraitIndex)
         message.chatType = EMMessage.ChatType.GroupChat
         message.setMessageStatusCallback(object : EMCallBack {
             override fun onSuccess() {
                 LogTools.e(TAG, "sendTxtMsg success")
-                allNormalList.add(parseChatMessage(message))
+                notAddedDataList.add(parseChatMessage(message))
                 sendMsgCallback.invoke(true)
             }
 
@@ -344,16 +359,16 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
     // 有成员被移出群组。被踢出群组的成员会收到该回调。
     override fun onUserRemoved(groupId: String, groupName: String?) {
         LogTools.d(TAG, "onUserRemoved groupId:$groupId,groupName:$groupName")
-        for (listener in chatServiceProtocol.getSubscribeDelegates()) {
-            listener.onUserRemoved(groupId)
+        chatServiceProtocol.getSubscribeDelegates().forEach { chatDelegate ->
+            chatDelegate.onUserRemoved(groupId)
         }
     }
 
     // 群组解散。群主解散群组时，所有群成员均会收到该回调。
     override fun onGroupDestroyed(groupId: String, groupName: String?) {
         LogTools.d(TAG, "onGroupDestroyed groupId:$groupId,groupName:$groupName")
-        for (listener in chatServiceProtocol.getSubscribeDelegates()) {
-            listener.onGroupDestroyed(groupId)
+        chatServiceProtocol.getSubscribeDelegates().forEach { chatDelegate ->
+            chatDelegate.onGroupDestroyed(groupId)
         }
     }
 
@@ -387,16 +402,16 @@ class MChatGroupIMManager private constructor() : EMConnectionListener, EMMessag
     // 有新成员加入群组。除了新成员，其他群成员会收到该回调。
     override fun onMemberJoined(groupId: String, member: String) {
         LogTools.d(TAG, "onMemberJoined groupId:$groupId,member:$member")
-        for (listener in chatServiceProtocol.getSubscribeDelegates()) {
-            listener.onMemberJoined(groupId, member)
+        chatServiceProtocol.getSubscribeDelegates().forEach { chatDelegate ->
+            chatDelegate.onMemberJoined(groupId, member)
         }
     }
 
     // 有成员主动退出群。除了退群的成员，其他群成员会收到该回调。
     override fun onMemberExited(groupId: String, member: String) {
         LogTools.d(TAG, "onMemberExited groupId:$groupId,member:$member")
-        for (listener in chatServiceProtocol.getSubscribeDelegates()) {
-            listener.onMemberExited(groupId, member)
+        chatServiceProtocol.getSubscribeDelegates().forEach { chatDelegate ->
+            chatDelegate.onMemberExited(groupId, member)
         }
     }
 

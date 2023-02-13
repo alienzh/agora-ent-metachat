@@ -20,6 +20,8 @@ import io.agora.metachat.game.MChatContext
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.imkit.MChatGroupIMManager
 import io.agora.metachat.imkit.MChatMessageModel
+import io.agora.metachat.imkit.MChatSubscribeDelegate
+import io.agora.metachat.service.MChatServiceProtocol
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
@@ -36,7 +38,18 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
         MChatContext.instance()
     }
 
+    private val chatServiceProtocol: MChatServiceProtocol = MChatServiceProtocol.getImplInstance()
+
     private var messageAdapter: BaseQuickAdapter<MChatMessageModel, MChatMessageAdapter.VH>? = null
+
+    private val chatDelegate = object: MChatSubscribeDelegate {
+        override fun onReceiveTextMsg(groupId: String, message: MChatMessageModel?) {
+            // 收到消息后刷新消息列表
+            ThreadTools.get().runOnMainThread {
+                refreshMessage()
+            }
+        }
+    }
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogMessageBinding {
         return MchatDialogMessageBinding.inflate(inflater)
@@ -46,6 +59,13 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
         super.onViewCreated(view, savedInstanceState)
         dialog?.setCancelable(false)
         dialog?.setCanceledOnTouchOutside(true)
+        dialog?.setOnShowListener {
+            chatServiceProtocol.subscribeEvent(chatDelegate)
+        }
+        dialog?.setOnDismissListener {
+            onDismiss(it)
+            chatServiceProtocol.unsubscribeEvent(chatDelegate)
+        }
         initView()
     }
 
@@ -54,8 +74,8 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
         binding?.apply {
             setDialogSize(root)
             rvMessageContent.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-            rvMessageContent.adapter = messageAdapter
             messageAdapter?.addAll(MChatGroupIMManager.instance().getAllData())
+            rvMessageContent.adapter = messageAdapter
             ivSendMessage.setOnClickListener(OnIntervalClickListener(this@MChatMessageDialog::onClickSend))
             etMessage.setOnEditorActionListener { textView, actionId, keyEvent ->
                 when (actionId and EditorInfo.IME_MASK_ACTION) {
@@ -105,7 +125,7 @@ class MChatMessageDialog constructor() : BaseFragmentDialog<MchatDialogMessageBi
     // 点击消息输入框，弹出软键盘
     private fun sendMessage(message: String?) {
         if (message.isNullOrEmpty()) return
-        MChatGroupIMManager.instance().sendTxtMsg(message, MChatKeyCenter.nickname) {
+        MChatGroupIMManager.instance().sendTxtMsg(message, MChatKeyCenter.nickname,MChatKeyCenter.portraitIndex) {
             if (it) {
                 chatContext.getUnityCmd()?.sendMessage(message)
                 ThreadTools.get().runOnMainThread {

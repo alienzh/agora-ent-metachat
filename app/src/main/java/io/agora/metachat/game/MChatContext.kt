@@ -21,6 +21,7 @@ import io.agora.rtc2.ChannelMediaOptions
 import io.agora.rtc2.Constants
 import io.agora.rtc2.IRtcEngineEventHandler
 import io.agora.rtc2.RtcEngine
+import io.agora.rtc2.RtcEngineConfig
 import io.agora.spatialaudio.ILocalSpatialAudioEngine
 import io.agora.spatialaudio.LocalSpatialAudioConfig
 
@@ -60,6 +61,8 @@ class MChatContext private constructor() {
     private var chatMediaPlayer: MChatAgoraMediaPlayer? = null
     private var chatSpatialAudio: MChatSpatialAudio? = null
     private var npcManager: MChatNpcManager? = null
+
+    fun getLocalUserAvatar(): ILocalUserAvatar? = localUserAvatar
 
     fun getUnityCmd(): MChatUnityCmd? = unityCmd
 
@@ -376,13 +379,13 @@ class MChatContext private constructor() {
             it.userInfo = userInfo
             //该model的mBundleType为MetachatBundleInfo.BundleType.BUNDLE_TYPE_AVATAR类型
             it.modelInfo = modelInfo
-            // TODO:  
-            if (null != roleInfo) {
-                //设置服装信息
-                val dressInfo = DressInfo()
-                dressInfo.mExtraCustomInfo = GsonTools.beanToString(getUnityRoleInfo())?.toByteArray()
-                it.dressInfo = dressInfo
-            }
+            // TODO:
+//            if (null != roleInfo) {
+//                //设置服装信息
+//                val dressInfo = DressInfo()
+//                dressInfo.mExtraCustomInfo = GsonTools.beanToString(getUnityRoleInfo())?.toByteArray()
+//                it.dressInfo = dressInfo
+//            }
         }
         metaChatScene?.let {
             //使能位置信息回调功能
@@ -425,6 +428,7 @@ class MChatContext private constructor() {
             modelInfo?.mRemoteVisible = isBroadcaster
             modelInfo?.mSyncPosition = isBroadcaster
         } else if (MChatConstant.Scene.SCENE_DRESS == currentScene) {
+            // TODO:
             modelInfo?.mRemoteVisible = false
             modelInfo?.mSyncPosition = false
         }

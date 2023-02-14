@@ -48,11 +48,8 @@ data class MChatRoomModel constructor(
     var ownerId: Int = -1,
 ) : MChatBaseModel
 
-/**用户数据*/
-data class MChatUserModel constructor(
-    var userId: Int = -1,
-    var userPortraitIndex: Int = 0,
-    var userBadgeIndex: Int = 0,
-    var gender: Int = 0, //0 male,1 female
-    var virtualAvatarIndex: Int = 0
-) : MChatBaseModel
+/**data stream 数据流*/
+data class StreamDataBaseBody(
+    val action: Int,
+    val msg: Any
+)

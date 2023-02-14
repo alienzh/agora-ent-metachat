@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import io.agora.metachat.*
 import io.agora.metachat.game.internal.MChatBaseEventHandler
 import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
+import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.imkit.MChatGroupIMManager
 import io.agora.metachat.service.MChatServiceProtocol
 import io.agora.metachat.tools.LogTools
@@ -84,7 +85,6 @@ class MChatGameViewModel : ViewModel() {
                 mchatContext.destroy()
             }
         }
-
     }
 
     fun initMChatScene() {

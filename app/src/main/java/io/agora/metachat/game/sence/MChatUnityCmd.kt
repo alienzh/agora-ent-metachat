@@ -1,4 +1,4 @@
-package io.agora.metachat.game
+package io.agora.metachat.game.sence
 
 import io.agora.metachat.IMetachatScene
 import io.agora.metachat.tools.DeviceTools
@@ -42,6 +42,7 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
         }
     }
 
+    // 发送给unity 消息编码
     private fun sendSceneMessage(msg: String?) {
         if (scene.sendMessageToScene(msg?.toByteArray()) == 0) {
             LogTools.d(tag, "sendSceneMessage done, $msg")
@@ -50,18 +51,18 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
         }
     }
 
+    // 收到unity 消息解码
     fun handleSceneMessage(message: String) {
         LogTools.d(tag, "ready to handle scene message, $message")
         GsonTools.toBean(message, SceneMessageReceiveBody::class.java)?.let { body ->
             when (body.key) {
-                SceneMessageType.Position.value -> {
-                    GsonTools.toBean(body.value.toString(), SceneMessageReceivedObjectPositions::class.java)?.let { positions ->
+                SceneMessageType.Position.value ->
+                    GsonTools.toBean(body.value.toString(), SceneMessageReceivePositions::class.java)?.let { pos ->
                         messageListeners.forEach {
-                            it.onObjectPositionAcquired(positions)
+                            it.onObjectPositionAcquired(pos)
                         }
                     }
-                }
-                SceneMessageType.Karaoke.value -> {
+                SceneMessageType.Karaoke.value ->
                     GsonTools.toBean(body.value.toString(), SceneMessageReceiveKaraoke::class.java)?.let { karaoke ->
                         messageListeners.forEach {
                             if (karaoke.actionId == KaraokeAction.Start.value) {
@@ -71,7 +72,6 @@ class MChatUnityCmd constructor(private val scene: IMetachatScene) {
                             }
                         }
                     }
-                }
                 else -> {}
             }
         }
@@ -98,12 +98,6 @@ enum class KaraokeAction(val value: Int) {
     Stop(2)
 }
 
-data class SceneManagerBodyCoordinate constructor(
-    val x: Float = 0f,
-    val y: Float = 0f,
-    val z: Float = 0f
-)
-
 data class SceneMessageRequestBody constructor(
     val key: String,
     val value: Any
@@ -118,13 +112,37 @@ data class SceneMessageReceiveKaraoke constructor(
     val actionId: Int,
 )
 
-data class SceneMessageReceivedObjectPositions(
+data class SceneMessageReceivePositions(
     val objectId: Int,
-    val position: SceneManagerBodyCoordinate,
-    val forward: SceneManagerBodyCoordinate,
-    val right: SceneManagerBodyCoordinate,
-    val up: SceneManagerBodyCoordinate,
-)
+    val position: FloatArray?,
+    val forward: FloatArray?,
+    val right: FloatArray?,
+    val up: FloatArray?,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SceneMessageReceivePositions
+
+        if (objectId != other.objectId) return false
+        if (!position.contentEquals(other.position)) return false
+        if (!forward.contentEquals(other.forward)) return false
+        if (!right.contentEquals(other.right)) return false
+        if (!up.contentEquals(other.up)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = objectId
+        result = 31 * result + position.contentHashCode()
+        result = 31 * result + forward.contentHashCode()
+        result = 31 * result + right.contentHashCode()
+        result = 31 * result + up.contentHashCode()
+        return result
+    }
+}
 
 enum class SceneObjectId(val value: Int) {
     TV(1),
@@ -134,7 +152,7 @@ enum class SceneObjectId(val value: Int) {
 }
 
 interface SceneCmdListener {
-    fun onObjectPositionAcquired(position: SceneMessageReceivedObjectPositions)
+    fun onObjectPositionAcquired(position: SceneMessageReceivePositions)
 
     fun onKaraokeStarted()
 

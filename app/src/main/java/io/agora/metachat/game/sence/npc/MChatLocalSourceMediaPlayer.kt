@@ -1,4 +1,4 @@
-package io.agora.metachat.game.npc
+package io.agora.metachat.game.sence.npc
 
 import io.agora.mediaplayer.Constants
 import io.agora.mediaplayer.IMediaPlayer

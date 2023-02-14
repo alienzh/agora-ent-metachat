@@ -1,4 +1,4 @@
-package io.agora.metachat.game
+package io.agora.metachat.game.sence
 
 import android.content.Context
 import android.view.TextureView
@@ -7,21 +7,13 @@ import io.agora.metachat.*
 import io.agora.metachat.game.internal.MChatBaseEventHandler
 import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
 import io.agora.metachat.game.internal.MChatBaseVideoFrameObserver
-import io.agora.metachat.game.model.EnterSceneExtraInfo
-import io.agora.metachat.game.model.RoleInfo
-import io.agora.metachat.game.model.UnityRoleInfo
-import io.agora.metachat.game.npc.MChatLocalSourceMediaPlayer
-import io.agora.metachat.game.npc.MChatNpcManager
-import io.agora.metachat.game.npc.NpcListener
+import io.agora.metachat.game.sence.npc.MChatLocalSourceMediaPlayer
+import io.agora.metachat.game.sence.npc.MChatNpcManager
+import io.agora.metachat.game.sence.npc.NpcListener
 import io.agora.metachat.global.*
-import io.agora.metachat.tools.GsonTools
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
-import io.agora.rtc2.ChannelMediaOptions
-import io.agora.rtc2.Constants
-import io.agora.rtc2.IRtcEngineEventHandler
-import io.agora.rtc2.RtcEngine
-import io.agora.rtc2.RtcEngineConfig
+import io.agora.rtc2.*
 import io.agora.spatialaudio.ILocalSpatialAudioEngine
 import io.agora.spatialaudio.LocalSpatialAudioConfig
 
@@ -51,28 +43,33 @@ class MChatContext private constructor() {
     private var sceneTextureView: TextureView? = null
     private val mchatEventHandlerSet = mutableSetOf<IMetachatEventHandler>()
     private val mchatSceneEventHandlerSet = mutableSetOf<IMetachatSceneEventHandler>()
-    private var mJoinedRtc = false
     private var localUserAvatar: ILocalUserAvatar? = null
     private var isInScene = false
-    private var currentScene = MChatConstant.Scene.SCENE_NONE
-    private var roleInfo: RoleInfo? = null
+    private var myStreamId: Int = -1
+
+    // unity 交互协议
     private var unityCmd: MChatUnityCmd? = null
 
+    // 电视播放器
     private var chatMediaPlayer: MChatAgoraMediaPlayer? = null
+
+    // 空间音频
     private var chatSpatialAudio: MChatSpatialAudio? = null
+
+    // npc 管理器
     private var npcManager: MChatNpcManager? = null
 
     fun getLocalUserAvatar(): ILocalUserAvatar? = localUserAvatar
 
     fun getUnityCmd(): MChatUnityCmd? = unityCmd
 
+    fun rtcEngine(): RtcEngine? = rtcEngine
+
     fun chatMediaPlayer(): MChatAgoraMediaPlayer? = chatMediaPlayer
 
     fun chatSpatialAudio(): MChatSpatialAudio? = chatSpatialAudio
 
     fun chatNpcManager(): MChatNpcManager? = npcManager
-
-    fun rtcEngine(): RtcEngine? = rtcEngine
 
     // 电视音量
     var tvVolume: Int = MChatConstant.DefaultValue.DEFAULT_TV_VOLUME
@@ -142,10 +139,8 @@ class MChatContext private constructor() {
                     })
                 // audio的mute状态交给ILocalSpatialAudioEngine统一管理
                 chatSpatialAudio()?.muteAllRemoteAudioStreams(true)
-                if (MChatConstant.Scene.SCENE_GAME == currentScene) {
-                    metaChatScene?.enableVideoDisplay(MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, true)
-                    chatMediaPlayer()?.play(MChatConstant.VIDEO_URL, 0)
-                }
+                metaChatScene?.enableVideoDisplay(MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, true)
+                chatMediaPlayer()?.switchPlayAdvertise()
             }
             npcManager = MChatNpcManager()
             npcManager?.initNpcMediaPlayer(MChatApp.instance(), this@MChatContext, object : NpcListener {
@@ -213,7 +208,6 @@ class MChatContext private constructor() {
                 rtcEngine = RtcEngine.create(context, MChatKeyCenter.RTC_APP_ID, object : IRtcEngineEventHandler() {
                     override fun onJoinChannelSuccess(channel: String, uid: Int, elapsed: Int) {
                         LogTools.d(TAG, "onJoinChannelSuccess channel:$channel,uid:$uid")
-                        mJoinedRtc = true
                     }
 
                     override fun onUserOffline(uid: Int, reason: Int) {
@@ -221,8 +215,15 @@ class MChatContext private constructor() {
                         chatSpatialAudio()?.removeRemotePosition(uid)
                     }
 
-                    override fun onAudioRouteChanged(routing: Int) {
-                        LogTools.d(TAG, "onAudioRouteChanged routing:$routing")
+                    override fun onStreamMessage(uid: Int, streamId: Int, data: ByteArray?) {
+                        LogTools.d(TAG, "onStreamMessage uid:$uid,streamId:$streamId")
+                    }
+
+                    override fun onStreamMessageError(uid: Int, streamId: Int, error: Int, missed: Int, cached: Int) {
+                        LogTools.d(
+                            TAG,
+                            "onStreamMessageError uid:$uid,streamId:$streamId,error:$error,missed:$missed,cached:$cached"
+                        )
                     }
                 })
                 rtcEngine?.apply {
@@ -242,9 +243,12 @@ class MChatContext private constructor() {
                     mUserId = MChatKeyCenter.curUid.toString()
                     mEventHandler = mChatEventHandler
                 }
-                ret += metaChatService?.initialize(config) ?: -1
+                metaChatService?.let {
+                    ret += it.initialize(config)
+                }
                 LogTools.d(TAG, "launcher version:${metaChatService?.getLauncherVersion(context)}")
                 rtcEngine?.let { rtc ->
+                    // 创建电视播放器
                     rtc.createMediaPlayer()?.let { mediaPLayer ->
                         chatMediaPlayer = MChatAgoraMediaPlayer(rtc, mediaPLayer)
                         chatMediaPlayer?.initMediaPlayer(tvVolume)
@@ -252,9 +256,10 @@ class MChatContext private constructor() {
                             metaChatScene?.pushVideoFrameToDisplay(MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, frame)
                         }
                     }
+                    // 注册视频帧观测器
                     rtc.registerVideoFrameObserver(object : MChatBaseVideoFrameObserver() {
                         override fun onMediaPlayerVideoFrame(videoFrame: VideoFrame, mediaPlayerId: Int): Boolean {
-                            if (chatMediaPlayer()?.inChargeOfKaraoke() == false) {
+                            if (chatMediaPlayer()?.inKaraoke() == false) {
                                 // 在k歌中不需要往场景内推送原始视频帧
                                 metaChatScene?.pushVideoFrameToDisplay(
                                     MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, videoFrame
@@ -264,6 +269,7 @@ class MChatContext private constructor() {
                             return false
                         }
                     })
+                    // 创建空间音频引擎
                     ILocalSpatialAudioEngine.create()?.let { localSpatialAudio ->
                         val localSpatialAudioConfig = LocalSpatialAudioConfig().apply {
                             mRtcEngine = rtc
@@ -272,6 +278,11 @@ class MChatContext private constructor() {
                         chatSpatialAudio = MChatSpatialAudio(MChatKeyCenter.curUid, localSpatialAudio)
                         chatSpatialAudio?.initSpatialAudio()
                     }
+                    // 创建数据流
+                    val dataStreamConfig = DataStreamConfig().apply {
+                        ordered = true
+                    }
+                    myStreamId = rtc.createDataStream(dataStreamConfig)
                 }
             } catch (e: Exception) {
                 LogTools.e(TAG, "rtcEngine initialize error:${e.message}")
@@ -366,7 +377,6 @@ class MChatContext private constructor() {
         val sceneConfig = MetachatSceneConfig()
         sceneConfig.mActivityContext = activityContext
         val ret = metaChatService?.createScene(sceneConfig) ?: -1
-        mJoinedRtc = false
         return ret == Constants.ERR_OK
     }
 
@@ -389,28 +399,13 @@ class MChatContext private constructor() {
         }
         metaChatScene?.let {
             //使能位置信息回调功能
-            it.enableUserPositionNotification(MChatConstant.Scene.SCENE_GAME == currentScene)
+            it.enableUserPositionNotification(true)
             //设置回调接口
             it.addEventHandler(mChatSceneEventHandler)
             val config = EnterSceneConfig()
             config.mSceneView = sceneTextureView  //sceneView必须为Texture类型，为渲染unity显示的view
             config.mRoomName = rtcRoomId  //rtc加入channel的ID
             config.mSceneId = sceneInfo?.mSceneId ?: 0   //内容中心对应的ID
-            /*
-             *仅为示例格式，具体格式以项目实际为准
-             *   "extraCustomInfo":{
-             *     "sceneIndex":0  //0为默认场景，在这里指咖啡厅，1为换装设置场景
-             *   }
-             */
-            val extraInfo = EnterSceneExtraInfo().apply {
-                if (MChatConstant.Scene.SCENE_DRESS == currentScene) {
-                    sceneIndex = MChatConstant.Scene.SCENE_DRESS
-                } else if (MChatConstant.Scene.SCENE_GAME == currentScene) {
-                    sceneIndex = MChatConstant.Scene.SCENE_GAME
-                }
-            }
-            //加载的场景index
-            config.mExtraCustomInfo = GsonTools.beanToString(extraInfo)?.toByteArray()
             it.enterScene(config)
         }
     }
@@ -419,21 +414,21 @@ class MChatContext private constructor() {
         var ret = Constants.ERR_OK
         //是否为broadcaster
         val isBroadcaster = role == Constants.CLIENT_ROLE_BROADCASTER
-        ret += rtcEngine?.updateChannelMediaOptions(ChannelMediaOptions().apply {
-            publishMicrophoneTrack = isBroadcaster
-            clientRoleType = role
-        }) ?: -1
-        modelInfo?.mLocalVisible = true
-        if (MChatConstant.Scene.SCENE_GAME == currentScene) {
-            modelInfo?.mRemoteVisible = isBroadcaster
-            modelInfo?.mSyncPosition = isBroadcaster
-        } else if (MChatConstant.Scene.SCENE_DRESS == currentScene) {
-            // TODO:
-            modelInfo?.mRemoteVisible = false
-            modelInfo?.mSyncPosition = false
+        rtcEngine?.let {
+            val options = ChannelMediaOptions().apply {
+                publishMicrophoneTrack = isBroadcaster
+                clientRoleType = role
+            }
+            ret += it.updateChannelMediaOptions(options)
         }
-        if (null != localUserAvatar && Constants.ERR_OK == localUserAvatar?.setModelInfo(modelInfo)) {
-            ret += localUserAvatar!!.applyInfo()
+        modelInfo?.let {
+            it.mLocalVisible = true
+            it.mRemoteVisible = isBroadcaster
+            it.mSyncPosition = isBroadcaster
+        }
+        localUserAvatar?.let {
+            it.modelInfo = modelInfo
+            ret += it.applyInfo()
         }
         return ret == Constants.ERR_OK
     }
@@ -457,43 +452,13 @@ class MChatContext private constructor() {
             ret += it.leaveScene()
         }
         LogTools.d(TAG, "leaveScene success $rtcRoomId")
-        resetRoleInfo()
         return ret == Constants.ERR_OK
     }
 
     fun isInScene(): Boolean = isInScene
 
-    fun initRoleInfo(nickname: String, userGender: Int, badgeIndex: Int) {
-        currentScene = MChatConstant.Scene.SCENE_GAME
-        roleInfo = RoleInfo().apply {
-            name = nickname
-            gender = userGender
-            avatar = MChatConstant.getBadgeUrl(badgeIndex) // todo 头像需要url,这里传徽章
-            //dress default id is 1
-            hair = 1
-            tops = 1
-            shoes = 1
-            lower = 1
-        }
-    }
-
-    fun getRoleInfo(): RoleInfo? = roleInfo
-
-    fun getCurrentScene(): Int = currentScene
-
-    fun getUnityRoleInfo(): UnityRoleInfo? {
-        val unityRoleInfo = UnityRoleInfo()
-        roleInfo?.let {
-            unityRoleInfo.gender = it.gender
-            unityRoleInfo.hair = it.hair
-            unityRoleInfo.tops = it.tops
-            unityRoleInfo.lower = it.lower
-            unityRoleInfo.shoes = it.shoes
-        }
-        return unityRoleInfo
-    }
-
-    private fun resetRoleInfo() {
-        roleInfo = null
+    // 发送数据流
+    fun sendStreamMessage(data: String) {
+        rtcEngine?.sendStreamMessage(myStreamId, data.toByteArray())
     }
 }

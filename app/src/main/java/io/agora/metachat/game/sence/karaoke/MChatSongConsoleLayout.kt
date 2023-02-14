@@ -1,4 +1,4 @@
-package io.agora.metachat.game.karaoke
+package io.agora.metachat.game.sence.karaoke
 
 import android.content.Context
 import android.util.AttributeSet
@@ -41,7 +41,7 @@ class MChatSongConsoleLayout : ConstraintLayout {
     private var audioSelected = 0
     var chatKaraokeManager: MChatKaraokeManager? = null
     var onConsoleListener: OnConsoleListener? = null
-    private var effectAdapter: BaseQuickAdapter<ConsoleAudioEffect,MChatAudioEffectAdapter.VH>?=null
+    private var effectAdapter: BaseQuickAdapter<ConsoleAudioEffect, MChatAudioEffectAdapter.VH>?=null
     private lateinit var pitchManager: PitchLayout
 
     private fun initView(context: Context) {
@@ -50,14 +50,17 @@ class MChatSongConsoleLayout : ConstraintLayout {
         binding.ivConsoleBack.setOnClickListener(OnIntervalClickListener(this::onClickBack))
         binding.checkboxOriginalSinging.setOnCheckedChangeListener { buttonView, isChecked ->
             LogTools.d("Original Singing isChecked:$isChecked")
+            chatKaraokeManager?.setUseOriginal(isChecked)
             onConsoleListener?.onUseOriginal(isChecked)
         }
         binding.checkboxEarphoneMonitoring.setOnCheckedChangeListener { buttonView, isChecked ->
             LogTools.d("Earphone Monitoring isChecked:$isChecked")
+            chatKaraokeManager?.enableInEarMonitoring(isChecked)
             onConsoleListener?.onEarMonitoring(isChecked)
         }
         pitchManager = PitchLayout(binding.root.findViewById(R.id.include_console_pitch_select), completion = {
-            chatKaraokeManager?.setAudioPitch(it * 2, false)
+            chatKaraokeManager?.setAudioPitch(it)
+            onConsoleListener?.onPitchChanged(it * 2)
         })
         binding.seekbarVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
@@ -65,6 +68,7 @@ class MChatSongConsoleLayout : ConstraintLayout {
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
+                chatKaraokeManager?.adjustRecordingSignalVolume(seekBar.progress)
                 onConsoleListener?.onVolumeChanged(seekBar.progress)
                 LogTools.d("console volume:${seekBar.progress}")
             }
@@ -75,6 +79,7 @@ class MChatSongConsoleLayout : ConstraintLayout {
             override fun onStartTrackingTouch(seekBar: SeekBar) {}
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
+                chatKaraokeManager?.adjustAccompanyVolume(seekBar.progress)
                 onConsoleListener?.onAccompanyVolumeChange(seekBar.progress)
                 LogTools.d("console accompany volume:${seekBar.progress}")
             }
@@ -85,9 +90,9 @@ class MChatSongConsoleLayout : ConstraintLayout {
                 if (audioSelected==position) return
                 audioSelected = position
                 adapter.getItem(position)?.let {
+                    chatKaraokeManager?.setEffect(it.audioEffect)
                     onConsoleListener?.onAudioEffectChanged(it.audioEffect)
                 }
-
                 effectAdapter?.notifyDataSetChanged()
             }
 
@@ -180,7 +185,7 @@ internal class PitchLayout(
         }
     }
 
-    fun resetBars(level: Int) {
+    private fun resetBars(level: Int) {
         var l = if (level < -6) -6
         else if (level > 6) 6
         else level
@@ -193,16 +198,12 @@ internal class PitchLayout(
     }
 }
 
-internal interface OnAudioEffectSelectListener {
-    fun onAudioEffectSelected(effect: MChatAudioEffect)
-}
-
 interface OnConsoleListener {
     fun onUseOriginal(original: Boolean)
 
     fun onEarMonitoring(monitor: Boolean)
 
-    fun onPitchChanged(pitch: Float)
+    fun onPitchChanged(pitch: Int)
 
     fun onVolumeChanged(volume: Int)
 

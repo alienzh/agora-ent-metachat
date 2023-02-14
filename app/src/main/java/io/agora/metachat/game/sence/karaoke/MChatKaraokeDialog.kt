@@ -1,4 +1,4 @@
-package io.agora.metachat.game.dialog
+package io.agora.metachat.game.sence.karaoke
 
 import android.graphics.Typeface
 import android.os.Build
@@ -9,16 +9,16 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.annotation.MainThread
 import androidx.core.view.isVisible
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogKaraokeBinding
-import io.agora.metachat.game.karaoke.*
 import io.agora.metachat.game.model.MusicDetail
+import io.agora.metachat.game.sence.MChatMediaPlayerListener
 import io.agora.metachat.tools.DeviceTools
-import io.agora.metachat.tools.ToastTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
 /**
@@ -36,6 +36,8 @@ class MChatKaraokeDialog constructor(
 
     private val tabTitle = mutableListOf<String>()
     private var playlistTitleView: TextView? = null
+
+    private lateinit var karaokeViewModel: MChatKaraokeViewModel
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogKaraokeBinding {
         return MchatDialogKaraokeBinding.inflate(inflater)
@@ -75,9 +77,9 @@ class MChatKaraokeDialog constructor(
         }
     }
 
-    private val karaokeListener = object : MChatKaraokeManagerListener {
+    private val karaokeListener = object : MChatMediaPlayerListener {
 
-        override fun onSongPlayCompleted(name: String, url: String) {
+        override fun onPlayCompleted(url: String) {
             resetPlaylistTabTitle()
             playlistLayout?.refreshPlaylist()
         }
@@ -87,6 +89,7 @@ class MChatKaraokeDialog constructor(
         super.onViewCreated(view, savedInstanceState)
         dialog?.setCancelable(false)
         dialog?.setCanceledOnTouchOutside(true)
+        karaokeViewModel = ViewModelProvider(this).get(MChatKaraokeViewModel::class.java)
         initView()
     }
 
@@ -124,52 +127,48 @@ class MChatKaraokeDialog constructor(
                     override fun onMusicSwitch(musicDetail: MusicDetail?) {
                         musicDetail ?: return
                         resetPlaylistTabTitle()
-                        ToastTools.showCommon("onMusicSwitch")
                     }
 
                     override fun onMusicDelete(musicDetail: MusicDetail?) {
                         musicDetail ?: return
                         resetPlaylistTabTitle()
-                        ToastTools.showCommon("onMusicDelete")
                     }
 
                     override fun onMusicMovedTop(musicDetail: MusicDetail?) {
                         musicDetail ?: return
                         resetPlaylistTabTitle()
-                        ToastTools.showCommon("onMusicMovedTop")
                     }
                 }
             }
             consoleLayout = MChatSongConsoleLayout(root.context).also {
-                it.chatKaraokeManager = karaokeManager
                 layoutConsoleContainer.addView(it)
+                it.chatKaraokeManager = karaokeManager
                 it.onConsoleListener = object : OnConsoleListener {
                     override fun onUseOriginal(original: Boolean) {
-                        ToastTools.showCommon("onUseOriginal")
+                        karaokeViewModel.operationOriginalSinging(original)
                     }
 
                     override fun onEarMonitoring(monitor: Boolean) {
-                        ToastTools.showCommon("onEarMonitoring")
+                        karaokeViewModel.operationEarphoneMonitoring(monitor)
                     }
 
-                    override fun onPitchChanged(pitch: Float) {
-                        ToastTools.showCommon("onPitchChanged")
+                    override fun onPitchChanged(pitch: Int) {
+                        karaokeViewModel.changePitchSong(pitch)
                     }
 
                     override fun onVolumeChanged(volume: Int) {
-                        ToastTools.showCommon("onVolumeChanged")
+                        karaokeViewModel.changeVolume(volume)
                     }
 
                     override fun onAccompanyVolumeChange(volume: Int) {
-                        ToastTools.showCommon("onAccompanyVolumeChange")
+                        karaokeViewModel.changeAccompaniment(volume)
                     }
 
                     override fun onAudioEffectChanged(effect: MChatAudioEffect) {
-                        ToastTools.showCommon("onAudioEffectChanged")
+                        karaokeViewModel.changeAudioEffect(effect)
                     }
 
                     override fun onConsoleClosed() {
-                        ToastTools.showCommon("onConsoleClosed")
                         layoutConsoleContainer.isVisible = false
                         groupSongList.isVisible = true
                         isCancelable = true
@@ -182,7 +181,6 @@ class MChatKaraokeDialog constructor(
 
     // 点击控制台
     private fun onClickConsole(view: View) {
-        ToastTools.showCommon("onClickConsole")
         binding?.apply {
             layoutConsoleContainer.isVisible = true
             groupSongList.isVisible = false

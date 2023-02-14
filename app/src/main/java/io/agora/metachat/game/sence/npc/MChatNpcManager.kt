@@ -1,8 +1,8 @@
-package io.agora.metachat.game.npc
+package io.agora.metachat.game.sence.npc
 
 import android.content.Context
-import io.agora.metachat.game.MChatContext
-import io.agora.metachat.game.SceneObjectId
+import io.agora.metachat.game.sence.MChatContext
+import io.agora.metachat.game.sence.SceneObjectId
 
 /**
  * @author create by zhangwei03

@@ -1,4 +1,4 @@
-package io.agora.metachat.game.dialog
+package io.agora.metachat.imkit
 
 import android.content.Context
 import android.content.res.TypedArray
@@ -16,11 +16,9 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogMessageBinding
 import io.agora.metachat.databinding.MchatItemMessageBinding
-import io.agora.metachat.game.MChatContext
+import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.global.MChatKeyCenter
-import io.agora.metachat.imkit.MChatGroupIMManager
-import io.agora.metachat.imkit.MChatMessageModel
-import io.agora.metachat.imkit.MChatSubscribeDelegate
+import io.agora.metachat.service.MChatSubscribeDelegate
 import io.agora.metachat.service.MChatServiceProtocol
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.LogTools

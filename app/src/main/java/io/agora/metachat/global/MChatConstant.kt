@@ -1,5 +1,7 @@
 package io.agora.metachat.global
 
+import com.bumptech.glide.disklrucache.DiskLruCache.Value
+
 /**
  * @author create by zhangwei03
  */
@@ -30,7 +32,6 @@ object MChatConstant {
      */
     const val VIDEO_URL = "http://agora.fronted.love/yyl.mov"
     const val DEFAULT_PORTRAIT = "https://accpic.sd-rtn.com/pic/test/png/2.png"
-    const val PLAY_ADVERTISING_VIDEO_REPEAT = -1
 
     private const val badgeUrl0 =
         "http://accktvpic.oss-cn-beijing.aliyuncs.com/pic/meta/demo/metaChat/login_badge_0.png"
@@ -69,5 +70,31 @@ object MChatConstant {
 
         // video frame display id
         const val VIDEO_DISPLAY_ID: String = "1"
+    }
+
+    object StreamParam {
+        // k歌
+        const val ACTION_KARAOKE = 1
+
+        // 原唱
+        const val ACTION_ORIGINAL_SINGING = 2
+
+        // 耳返
+        const val ACTION_EARPHONE_MONITORING = 3
+
+        // 升降调
+        const val ACTION_SONG_KEY = 4
+
+        // 伴奏音量
+        const val ACTION_ACCOMPANIMENT = 5
+
+        // 音效
+        const val ACTION_AUDIO_EFFECT = 6
+
+        // 开
+        const val VALUE_OPEN = 1
+
+        // 关
+        const val VALUE_CLOSE = 0
     }
 }

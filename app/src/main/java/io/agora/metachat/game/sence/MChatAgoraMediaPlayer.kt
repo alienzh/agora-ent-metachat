@@ -1,6 +1,5 @@
-package io.agora.metachat.game
+package io.agora.metachat.game.sence
 
-import android.text.TextUtils
 import io.agora.base.VideoFrame
 import io.agora.mediaplayer.Constants
 import io.agora.mediaplayer.IMediaPlayer
@@ -21,18 +20,44 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
         private const val TAG = "MChatAgoraMediaPlayer"
     }
 
+    private var playingUrl: String = ""
+
+    private val mediaPlayerListeners = mutableSetOf<MChatMediaPlayerListener>()
+
+    fun registerListener(listener: MChatMediaPlayerListener) {
+        mediaPlayerListeners.add(listener)
+    }
+
+    fun unregisterListener(listener: MChatMediaPlayerListener) {
+        mediaPlayerListeners.remove(listener)
+    }
+
     // 媒体播放器的视频数据观测器。
     private var mediaVideoFramePushListener: IMediaPlayerVideoFrameObserver? = null
 
     // 是否在k歌中
-    private var inChargeOfKaraoke = false
+    private var curUserInKaraoke = false
+
+    // 当前媒体流数量
+    private var streamCount = 0
 
     private val mediaPlayerObserver = object : MChatBaseMediaPlayerObserver() {
         override fun onPlayerStateChanged(state: Constants.MediaPlayerState, error: Constants.MediaPlayerError) {
             LogTools.d(TAG, "onPlayerStateChanged state:$state,error:$error")
             if (Constants.MediaPlayerState.PLAYER_STATE_OPEN_COMPLETED == state) {
-                if (mediaPlayer.play() != io.agora.rtc2.Constants.ERR_OK) {
-                    LogTools.d(TAG, "onPlayerStateChanged play success")
+                streamCount = mediaPlayer.streamCount.also {
+                    if (it <= 0) return@also
+                    for (i in 0 until streamCount) {
+                        // 通过媒体流的索引值获取媒体流信息。 需要在 getStreamCount 后调用该方法。
+                        val info = mediaPlayer.getStreamInfo(0)
+                        LogTools.d(TAG, "streamIndex:${info.streamIndex},streamType:${info.mediaStreamType}")
+                    }
+                }
+                mediaPlayer.play()
+            }else if (Constants.MediaPlayerState.PLAYER_STATE_PLAYBACK_ALL_LOOPS_COMPLETED == state){
+                // 播放完成，切歌
+                mediaPlayerListeners.forEach {
+                    it.onPlayCompleted(playingUrl)
                 }
             }
         }
@@ -44,7 +69,6 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
             mediaVideoFramePushListener?.onFrame(frame)
         }
     }
-
 
     fun initMediaPlayer(volume: Int) {
         setPlayerVolume(volume)
@@ -58,35 +82,40 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
 
     fun mediaPlayerId(): Int = mediaPlayer.mediaPlayerId
 
-    fun play(url: String, startPos: Long = 0) {
-        mediaPlayer.open(url, startPos).also {
-            if (it == io.agora.rtc2.Constants.ERR_OK) {
-                mediaPlayer.setLoopCount(MChatConstant.PLAY_ADVERTISING_VIDEO_REPEAT)
-                mediaPlayer.play()
-                if (!TextUtils.equals(url, MChatConstant.VIDEO_URL)) { // k歌推送视频流
-                    val channelOptions = ChannelMediaOptions().apply {
-                        autoSubscribeAudio = true
-                        autoSubscribeVideo = true
-                        autoSubscribeVideo = true
-                        publishMediaPlayerId = mediaPlayer.mediaPlayerId
-                        publishMediaPlayerAudioTrack = true
-                    }
-                    rtcEngine.updateChannelMediaOptions(channelOptions)
-                }
-            }
+    // 切换播放宣传片
+    fun switchPlayAdvertise() {
+        play(MChatConstant.VIDEO_URL)
+    }
+
+    // 播放k歌
+    fun switchPlayKaraoke(url: String) {
+        play(url, repeatCount = 0)
+        // k歌推送视频流
+        val channelOptions = ChannelMediaOptions().apply {
+            autoSubscribeAudio = true
+            autoSubscribeVideo = true
+            publishMediaPlayerId = mediaPlayer.mediaPlayerId
+            publishMediaPlayerAudioTrack = true
+        }
+        rtcEngine.updateChannelMediaOptions(channelOptions)
+    }
+
+    fun play(url: String, startPos: Long = 0, repeatCount: Int = -1) {
+        val result = mediaPlayer.open(url, startPos)
+        if (result == io.agora.rtc2.Constants.ERR_OK) {
+            mediaPlayer.setLoopCount(repeatCount)
         }
     }
 
     fun stop() {
         mediaPlayer.registerVideoFrameObserver(null)
-        mediaPlayer.unRegisterPlayerObserver(mediaPlayerObserver)
         mediaPlayer.stop()
         mediaPlayer.destroy()
     }
 
     fun pause() {
         mediaPlayer.pause()
-        mediaPlayer.registerPlayerObserver(null)
+        mediaPlayer.registerVideoFrameObserver(null)
     }
 
     fun resume() {
@@ -94,14 +123,23 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
         mediaPlayer.registerVideoFrameObserver(mediaPlayerVideoFrameObserver)
     }
 
+    @Synchronized
     fun setPlayerVolume(volume: Int): Int {
         return mediaPlayer.adjustPlayoutVolume(volume)
     }
 
     /**
-     * @param pitch ranged from -12 to 12, values from
-     * outside of this range will be constrained to
-     * -12 or 12 respectively
+     * 打开原唱
+     */
+    @Synchronized
+    fun userOriginalTrack(original: Boolean): Int {
+        return if (original) mediaPlayer.selectAudioTrack(0) else mediaPlayer.selectAudioTrack(1)
+    }
+
+    /**
+     * 调整当前播放的媒体资源的音调
+     * 按半音音阶调整本地播放的音乐文件的音调，默认值为 0，即不调整音调。取值范围为 [-12,12]，每相邻两个值的音高距离相差半音。
+     * 取值的绝对值越大，音调升高或降低得越多。
      */
     @Synchronized
     fun setPlayerAudioPitch(pitch: Int): Int {
@@ -123,14 +161,19 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
 
     @Synchronized
     fun startInChargeOfKaraoke() {
-        inChargeOfKaraoke = true
+        curUserInKaraoke = true
     }
 
     @Synchronized
     fun stopInChargeOfKaraoke() {
-        inChargeOfKaraoke = false
+        curUserInKaraoke = false
     }
 
     @Synchronized
-    fun inChargeOfKaraoke():Boolean = false
+    fun inKaraoke(): Boolean = curUserInKaraoke
+}
+
+interface MChatMediaPlayerListener {
+
+    fun onPlayCompleted(url: String)
 }

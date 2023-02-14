@@ -13,7 +13,7 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatDialogSettingsBinding
-import io.agora.metachat.game.MChatContext
+import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.home.dialog.MChatBadgeDialog

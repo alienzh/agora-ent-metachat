@@ -1,4 +1,4 @@
-package io.agora.metachat.game.karaoke
+package io.agora.metachat.game.sence.karaoke
 
 import android.content.Context
 import io.agora.metachat.R

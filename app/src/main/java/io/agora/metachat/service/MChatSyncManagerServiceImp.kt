@@ -1,9 +1,10 @@
 package io.agora.metachat.service
 
 import android.content.Context
+import io.agora.metachat.game.sence.MChatContext
+import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.imkit.MChatGroupIMManager
-import io.agora.metachat.imkit.MChatSubscribeDelegate
 import io.agora.metachat.tools.GsonTools
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
@@ -341,15 +342,66 @@ class MChatSyncManagerServiceImp constructor(
         }
     }
 
-    override fun muteLocal(completion: (error: Int) -> Unit) {
+    override fun sendStartKaraoke() {
+        val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_KARAOKE, MChatConstant.StreamParam.VALUE_OPEN)
+        sendDataStream(GsonTools.beanToString(data))
     }
 
-    override fun unMuteLocal(completion: (error: Int) -> Unit) {
+    override fun sendStopKaraoke() {
+        val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_KARAOKE, MChatConstant.StreamParam.VALUE_CLOSE)
+        sendDataStream(GsonTools.beanToString(data))
     }
 
-    override fun startMic(completion: (error: Int) -> Unit) {
+    override fun enableOriginalSinging(completion: (result: Boolean) -> Unit) {
+        val data =
+            StreamDataBaseBody(MChatConstant.StreamParam.ACTION_ORIGINAL_SINGING, MChatConstant.StreamParam.VALUE_OPEN)
+        sendDataStream(GsonTools.beanToString(data))
     }
 
-    override fun leaveMic(completion: (error: Int) -> Unit) {
+    override fun disableOriginalSinging(completion: (result: Boolean) -> Unit) {
+        val data =
+            StreamDataBaseBody(MChatConstant.StreamParam.ACTION_ORIGINAL_SINGING, MChatConstant.StreamParam.VALUE_CLOSE)
+        sendDataStream(GsonTools.beanToString(data))
+    }
+
+    override fun enableEarphoneMonitoring(completion: (result: Boolean) -> Unit) {
+        val data = StreamDataBaseBody(
+            MChatConstant.StreamParam.ACTION_EARPHONE_MONITORING,
+            MChatConstant.StreamParam.VALUE_OPEN
+        )
+        sendDataStream(GsonTools.beanToString(data))
+    }
+
+    override fun disableEarphoneMonitoring(completion: (result: Boolean) -> Unit) {
+        val data = StreamDataBaseBody(
+            MChatConstant.StreamParam.ACTION_EARPHONE_MONITORING,
+            MChatConstant.StreamParam.VALUE_CLOSE
+        )
+        sendDataStream(GsonTools.beanToString(data))
+    }
+
+    override fun changePitchSong(value: Int, completion: (result: Boolean) -> Unit) {
+        val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_SONG_KEY, value)
+        sendDataStream(GsonTools.beanToString(data))
+    }
+
+    override fun changeAccompanimentVolume(value: Int, completion: (result: Boolean) -> Unit) {
+        val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_ACCOMPANIMENT, value)
+        sendDataStream(GsonTools.beanToString(data))
+    }
+
+    override fun changeAudioEffect(value: Int, completion: (result: Boolean) -> Unit) {
+        val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_AUDIO_EFFECT, value)
+        sendDataStream(GsonTools.beanToString(data))
+    }
+
+    private lateinit var chatContext: MChatContext
+
+    private fun sendDataStream(data: String?) {
+        data ?: return
+        if (!this::chatContext.isInitialized) {
+            chatContext = MChatContext.instance()
+        }
+        chatContext.sendStreamMessage(data)
     }
 }

@@ -1,7 +1,7 @@
 package io.agora.metachat.game.model
 
 import androidx.annotation.DrawableRes
-import io.agora.metachat.game.karaoke.MChatAudioEffect
+import io.agora.metachat.game.sence.karaoke.MChatAudioEffect
 
 data class MusicListResp(
     val code: Long,

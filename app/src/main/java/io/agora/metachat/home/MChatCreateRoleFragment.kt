@@ -251,7 +251,6 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             return
         }
         showLoading(false)
-        mChatViewModel.initRoleInfo(nickname, MChatKeyCenter.gender, MChatKeyCenter.portraitIndex)
         mChatViewModel.getScenes()
     }
 

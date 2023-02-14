@@ -8,8 +8,7 @@ import android.view.ViewGroup
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogDownloadBinding
-import io.agora.metachat.game.MChatContext
-import io.agora.metachat.global.MChatConstant
+import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.widget.OnIntervalClickListener
 

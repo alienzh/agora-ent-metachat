@@ -6,11 +6,8 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.SurfaceTexture
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.TextureView
+import android.view.*
 import android.view.TextureView.SurfaceTextureListener
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -19,10 +16,17 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiActivity
 import io.agora.metachat.databinding.MchatActivityGameBinding
 import io.agora.metachat.game.dialog.*
-import io.agora.metachat.game.karaoke.MChatKaraokeManager
+import io.agora.metachat.game.sence.karaoke.MChatKaraokeManager
 import io.agora.metachat.game.model.MusicDetail
+import io.agora.metachat.game.sence.MChatContext
+import io.agora.metachat.game.sence.SceneCmdListener
+import io.agora.metachat.game.sence.SceneMessageReceivePositions
+import io.agora.metachat.game.sence.SceneObjectId
+import io.agora.metachat.game.sence.karaoke.MChatKaraokeDialog
+import io.agora.metachat.game.sence.karaoke.OnKaraokeDialogListener
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
+import io.agora.metachat.imkit.MChatMessageDialog
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -74,6 +78,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     override fun onCreate(savedInstanceState: Bundle?) {
         val insetsController = WindowCompat.getInsetsController(window, window.decorView)
         insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        window.setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         super.onCreate(savedInstanceState)
         gameViewModel = ViewModelProvider(this).get(MChatGameViewModel::class.java)
         initView()
@@ -211,7 +216,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                     unityCmd.unregisterListener(unityCmdListener)
                 }
             }
-            karaokeManager = MChatKaraokeManager()
+            karaokeManager = MChatKaraokeManager(chatContext)
         }
         gameViewModel.onlineMicObservable().observe(this) {
             if (it) {
@@ -307,6 +312,13 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         LogTools.d("onRationaleDenied requestCode:$requestCode")
     }
 
+    override fun onPause() {
+        super.onPause()
+        if (chatContext.isInScene()) {
+            chatContext.chatMediaPlayer()?.pause()
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         if (chatContext.isInScene()) {
@@ -320,10 +332,10 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     // unity listener
     private var unityCmdListener = object : SceneCmdListener {
-        override fun onObjectPositionAcquired(position: SceneMessageReceivedObjectPositions) {
-            val p = floatArrayOf(position.position.x, position.position.y, position.position.z)
+        override fun onObjectPositionAcquired(position: SceneMessageReceivePositions) {
+            val p = position.position ?: floatArrayOf(0.0f, 0.0f, 0.0f)
 
-            val f = floatArrayOf(position.forward.x, position.forward.y, position.forward.z)
+            val f = position.forward ?: floatArrayOf(0.0f, 0.0f, 0.0f)
 
             val id: Int? = when (position.objectId) {
                 SceneObjectId.TV.value -> chatContext.chatMediaPlayer()?.mediaPlayerId()

@@ -1,7 +1,6 @@
 package io.agora.metachat.service
 
 import io.agora.metachat.MChatApp
-import io.agora.metachat.imkit.MChatSubscribeDelegate
 import io.agora.metachat.tools.LogTools
 
 /**
@@ -74,15 +73,30 @@ interface MChatServiceProtocol {
     /**离开房间*/
     fun leaveRoom(completion: (error: Int) -> Unit)
 
-    /**mute*/
-    fun muteLocal(completion: (error: Int) -> Unit)
+    /**开始k 歌，通知其他人*/
+    fun sendStartKaraoke()
 
-    /**unMute*/
-    fun unMuteLocal(completion: (error: Int) -> Unit)
+    /**结束k 歌，通知其他人*/
+    fun sendStopKaraoke()
 
-    /**上麦*/
-    fun startMic(completion: (error: Int) -> Unit)
+    /**开启原唱*/
+    fun enableOriginalSinging(completion: (result: Boolean) -> Unit)
 
-    /**下麦*/
-    fun leaveMic(completion: (error: Int) -> Unit)
+    /**关闭原唱*/
+    fun disableOriginalSinging(completion: (result: Boolean) -> Unit)
+
+    /**开启耳返*/
+    fun enableEarphoneMonitoring(completion: (result: Boolean) -> Unit)
+
+    /**关闭耳返*/
+    fun disableEarphoneMonitoring(completion: (result: Boolean) -> Unit)
+
+    /**升降调*/
+    fun changePitchSong(value: Int, completion: (result: Boolean) -> Unit)
+
+    /**伴奏音量*/
+    fun changeAccompanimentVolume(value: Int, completion: (result: Boolean) -> Unit)
+
+    /** 音效*/
+    fun changeAudioEffect(value: Int, completion: (result: Boolean) -> Unit)
 }

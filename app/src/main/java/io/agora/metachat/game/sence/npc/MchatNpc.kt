@@ -1,7 +1,7 @@
-package io.agora.metachat.game.npc
+package io.agora.metachat.game.sence.npc
 
 import android.content.Context
-import io.agora.metachat.game.MChatContext
+import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.tools.FileResultListener
 import io.agora.metachat.tools.FileUtil
 import io.agora.metachat.tools.LogTools

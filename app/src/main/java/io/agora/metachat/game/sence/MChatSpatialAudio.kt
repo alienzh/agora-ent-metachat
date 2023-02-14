@@ -1,8 +1,7 @@
-package io.agora.metachat.game
+package io.agora.metachat.game.sence
 
 import io.agora.metachat.MetachatUserPositionInfo
 import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
-import io.agora.metachat.global.MChatKeyCenter
 import io.agora.spatialaudio.ILocalSpatialAudioEngine
 import io.agora.spatialaudio.RemoteVoicePositionInfo
 
@@ -21,7 +20,7 @@ class MChatSpatialAudio constructor(
     private val mChatSceneEventHandler = object : MChatBaseSceneEventHandler() {
         override fun onUserPositionChanged(uid: String, posInfo: MetachatUserPositionInfo) {
             val userId = uid.toIntOrNull() ?: -1
-            if (MChatKeyCenter.curUid == userId) {
+            if (localUid == userId) {
                 spatialAudioEngine.updateSelfPosition(posInfo.mPosition, posInfo.mForward, posInfo.mRight, posInfo.mUp)
             } else {
                 spatialAudioEngine.updateRemotePosition(userId, RemoteVoicePositionInfo().apply {

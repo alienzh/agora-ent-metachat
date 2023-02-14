@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import io.agora.metachat.*
 import io.agora.metachat.IMetachatEventHandler.SceneDownloadState
-import io.agora.metachat.game.MChatContext
+import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.game.internal.MChatBaseEventHandler
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
@@ -132,7 +132,6 @@ class MChatRoomCreateViewModel : ViewModel() {
 
     fun prepareScene(sceneInfo: MetachatSceneInfo) {
         mchatContext.prepareScene(sceneInfo, AvatarModelInfo().apply {
-            // TODO choose one
             val bundles = sceneInfo.mBundles
             for (bundleInfo in bundles) {
                 if (bundleInfo.mBundleType == MetachatBundleInfo.BundleType.BUNDLE_TYPE_AVATAR) {
@@ -141,27 +140,18 @@ class MChatRoomCreateViewModel : ViewModel() {
                 }
             }
             mLocalVisible = true
-            if (MChatConstant.Scene.SCENE_GAME == mchatContext.getCurrentScene()) {
-                mRemoteVisible = true
-                mSyncPosition = true
-            } else if (MChatConstant.Scene.SCENE_DRESS == mchatContext.getCurrentScene()) {
-                mRemoteVisible = false
-                mSyncPosition = false
-            }
+            mRemoteVisible = true
+            mSyncPosition = true
         }, MetachatUserInfo().apply {
             mUserId = MChatKeyCenter.curUid.toString()
-            mUserName = mchatContext.getRoleInfo()?.name ?: mUserId
-            mUserIconUrl = mchatContext.getRoleInfo()?.avatar ?: ""
+            mUserName =MChatKeyCenter.nickname
+            mUserIconUrl = MChatConstant.getBadgeUrl(MChatKeyCenter.badgeIndex)
         })
         if (mchatContext.isSceneDownloaded(sceneInfo)) {
             _selectScene.postValue(sceneInfo.mSceneId)
         } else {
             _requestDownloading.postValue(true)
         }
-    }
-
-    fun initRoleInfo(nickname: String, userGender: Int, badgeIndex: Int) {
-        mchatContext.initRoleInfo(nickname,userGender, badgeIndex)
     }
 
     fun getSceneInfo(): MetachatSceneInfo {

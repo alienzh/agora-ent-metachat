@@ -37,6 +37,7 @@
     <string name="mchat_select_your_badge">Select your badge</string>
     <string name="mchat_choose_your_avatar">%1$s, please choose your avatar</string>
     <string name="mchat_confirm_and_enter">Confirm room and enter</string>
+    <string name="mchat_create_and_enter">Create room and enter</string>
     <string name="mchat_beginner_guide">Beginner Guide</string>
     <string name="mchat_novice_guide">Novice\nguide</string>
     <string name="mchat_beginner_guide_title">Beginner Guide</string>

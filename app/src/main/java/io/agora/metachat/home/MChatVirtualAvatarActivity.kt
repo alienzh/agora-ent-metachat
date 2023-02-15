@@ -102,6 +102,11 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     }
 
     private fun initView() {
+        if (isFromCreate){
+            binding.tvEnterRoom.setText(R.string.mchat_create_and_enter)
+        }else{
+            binding.tvEnterRoom.setText(R.string.mchat_confirm_and_enter)
+        }
         val virtualAvatars = mutableListOf<Int>().apply {
             for (i in 0 until virtualAvatarArray.length()) {
                 add(getVirtualAvatarRes(i))

@@ -36,7 +36,8 @@
     <string name="mchat_select_your_profile_picture">请选择头像</string>
     <string name="mchat_select_your_badge">请选择徽章</string>
     <string name="mchat_choose_your_avatar">%1$s，请选择您的虚拟形象</string>
-    <string name="mchat_confirm_and_enter">创建房间并进入</string>
+    <string name="mchat_confirm_and_enter">确认房间并进入</string>
+    <string name="mchat_create_and_enter">创建房间并进入</string>
     <string name="mchat_beginner_guide">新手指导</string>
     <string name="mchat_novice_guide">新手引导</string>
     <string name="mchat_beginner_guide_title">新手指导</string>

@@ -1,7 +1,5 @@
 package io.agora.metachat.global
 
-import com.bumptech.glide.disklrucache.DiskLruCache.Value
-
 /**
  * @author create by zhangwei03
  */
@@ -74,27 +72,27 @@ object MChatConstant {
 
     object StreamParam {
         // k歌
-        const val ACTION_KARAOKE = 1
+        const val ACTION_KARAOKE: Int = 1
 
         // 原唱
-        const val ACTION_ORIGINAL_SINGING = 2
+        const val ACTION_ORIGINAL_SINGING: Int = 2
 
         // 耳返
-        const val ACTION_EARPHONE_MONITORING = 3
+        const val ACTION_EARPHONE_MONITORING: Int = 3
 
         // 升降调
-        const val ACTION_SONG_KEY = 4
+        const val ACTION_SONG_KEY: Int = 4
 
         // 伴奏音量
-        const val ACTION_ACCOMPANIMENT = 5
+        const val ACTION_ACCOMPANIMENT: Int = 5
 
         // 音效
-        const val ACTION_AUDIO_EFFECT = 6
+        const val ACTION_AUDIO_EFFECT: Int = 6
 
         // 开
-        const val VALUE_OPEN = 1
+        const val VALUE_OPEN: Int = 1
 
         // 关
-        const val VALUE_CLOSE = 0
+        const val VALUE_CLOSE: Int = 0
     }
 }

@@ -8,6 +8,7 @@ import io.agora.metachat.imkit.MChatGroupIMManager
 import io.agora.metachat.tools.GsonTools
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
+import io.agora.rtc2.Constants
 import io.agora.syncmanager.rtm.*
 import io.agora.syncmanager.rtm.Sync.DataListCallback
 import io.agora.syncmanager.rtm.Sync.JoinSceneCallback
@@ -342,26 +343,30 @@ class MChatSyncManagerServiceImp constructor(
         }
     }
 
-    override fun sendStartKaraoke() {
+    override fun sendStartKaraoke(completion: (result: Boolean) -> Unit) {
         val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_KARAOKE, MChatConstant.StreamParam.VALUE_OPEN)
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
-    override fun sendStopKaraoke() {
+    override fun sendStopKaraoke(completion: (result: Boolean) -> Unit) {
         val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_KARAOKE, MChatConstant.StreamParam.VALUE_CLOSE)
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     override fun enableOriginalSinging(completion: (result: Boolean) -> Unit) {
         val data =
             StreamDataBaseBody(MChatConstant.StreamParam.ACTION_ORIGINAL_SINGING, MChatConstant.StreamParam.VALUE_OPEN)
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     override fun disableOriginalSinging(completion: (result: Boolean) -> Unit) {
         val data =
             StreamDataBaseBody(MChatConstant.StreamParam.ACTION_ORIGINAL_SINGING, MChatConstant.StreamParam.VALUE_CLOSE)
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     override fun enableEarphoneMonitoring(completion: (result: Boolean) -> Unit) {
@@ -369,7 +374,8 @@ class MChatSyncManagerServiceImp constructor(
             MChatConstant.StreamParam.ACTION_EARPHONE_MONITORING,
             MChatConstant.StreamParam.VALUE_OPEN
         )
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     override fun disableEarphoneMonitoring(completion: (result: Boolean) -> Unit) {
@@ -377,31 +383,36 @@ class MChatSyncManagerServiceImp constructor(
             MChatConstant.StreamParam.ACTION_EARPHONE_MONITORING,
             MChatConstant.StreamParam.VALUE_CLOSE
         )
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     override fun changePitchSong(value: Int, completion: (result: Boolean) -> Unit) {
         val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_SONG_KEY, value)
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     override fun changeAccompanimentVolume(value: Int, completion: (result: Boolean) -> Unit) {
         val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_ACCOMPANIMENT, value)
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     override fun changeAudioEffect(value: Int, completion: (result: Boolean) -> Unit) {
         val data = StreamDataBaseBody(MChatConstant.StreamParam.ACTION_AUDIO_EFFECT, value)
-        sendDataStream(GsonTools.beanToString(data))
+        val result= sendDataStream(GsonTools.beanToString(data))
+        completion.invoke(result)
     }
 
     private lateinit var chatContext: MChatContext
 
-    private fun sendDataStream(data: String?) {
-        data ?: return
+    private fun sendDataStream(data: String?): Boolean {
+        data ?: return false
+        LogTools.d(TAG,"sendDataStream $data")
         if (!this::chatContext.isInitialized) {
             chatContext = MChatContext.instance()
         }
-        chatContext.sendStreamMessage(data)
+        return chatContext.sendStreamMessage(data) == Constants.ERR_OK
     }
 }

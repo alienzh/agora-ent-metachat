@@ -79,6 +79,7 @@
         app:layout_constraintStart_toStartOf="@id/rv_avatar_list">
 
         <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tv_enter_room"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/mchat_confirm_and_enter"

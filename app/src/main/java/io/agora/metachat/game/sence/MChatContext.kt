@@ -135,6 +135,7 @@ class MChatContext private constructor() {
                     MChatKeyCenter.getRtcToken(rtcRoomId), rtcRoomId, MChatKeyCenter.curUid,
                     ChannelMediaOptions().apply {
                         autoSubscribeAudio = true
+                        autoSubscribeVideo = true
                         clientRoleType = Constants.CLIENT_ROLE_BROADCASTER
                     })
                 // audio的mute状态交给ILocalSpatialAudioEngine统一管理
@@ -215,8 +216,9 @@ class MChatContext private constructor() {
                         chatSpatialAudio()?.removeRemotePosition(uid)
                     }
 
-                    override fun onStreamMessage(uid: Int, streamId: Int, data: ByteArray?) {
+                    override fun onStreamMessage(uid: Int, streamId: Int, data: ByteArray) {
                         LogTools.d(TAG, "onStreamMessage uid:$uid,streamId:$streamId")
+                        MChatStreamParser.parse(uid, streamId, data)
                     }
 
                     override fun onStreamMessageError(uid: Int, streamId: Int, error: Int, missed: Int, cached: Int) {
@@ -229,7 +231,7 @@ class MChatContext private constructor() {
                 rtcEngine?.apply {
                     setParameters("{\"rtc.enable_debug_log\":true}")
                     enableAudio()
-                    disableVideo()
+                    enableVideo()
                     setChannelProfile(Constants.CHANNEL_PROFILE_LIVE_BROADCASTING)
                     setAudioProfile(Constants.AUDIO_PROFILE_DEFAULT, Constants.AUDIO_SCENARIO_GAME_STREAMING)
                 }
@@ -258,15 +260,16 @@ class MChatContext private constructor() {
                     }
                     // 注册视频帧观测器
                     rtc.registerVideoFrameObserver(object : MChatBaseVideoFrameObserver() {
-                        override fun onMediaPlayerVideoFrame(videoFrame: VideoFrame, mediaPlayerId: Int): Boolean {
-                            if (chatMediaPlayer()?.inKaraoke() == false) {
+
+                        override fun onRenderVideoFrame(channelId: String?, uid: Int, videoFrame: VideoFrame): Boolean {
+                            if (chatMediaPlayer()?.curUserInKaraoke() == false) {
                                 // 在k歌中不需要往场景内推送原始视频帧
                                 metaChatScene?.pushVideoFrameToDisplay(
                                     MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, videoFrame
                                 )
                                 return true
                             }
-                            return false
+                            return super.onRenderVideoFrame(channelId, uid, videoFrame)
                         }
                     })
                     // 创建空间音频引擎
@@ -389,13 +392,6 @@ class MChatContext private constructor() {
             it.userInfo = userInfo
             //该model的mBundleType为MetachatBundleInfo.BundleType.BUNDLE_TYPE_AVATAR类型
             it.modelInfo = modelInfo
-            // TODO:
-//            if (null != roleInfo) {
-//                //设置服装信息
-//                val dressInfo = DressInfo()
-//                dressInfo.mExtraCustomInfo = GsonTools.beanToString(getUnityRoleInfo())?.toByteArray()
-//                it.dressInfo = dressInfo
-//            }
         }
         metaChatScene?.let {
             //使能位置信息回调功能
@@ -458,7 +454,7 @@ class MChatContext private constructor() {
     fun isInScene(): Boolean = isInScene
 
     // 发送数据流
-    fun sendStreamMessage(data: String) {
-        rtcEngine?.sendStreamMessage(myStreamId, data.toByteArray())
+    fun sendStreamMessage(data: String): Int {
+        return rtcEngine?.sendStreamMessage(myStreamId, data.toByteArray()) ?: Constants.ERR_FAILED
     }
 }

@@ -74,10 +74,10 @@ interface MChatServiceProtocol {
     fun leaveRoom(completion: (error: Int) -> Unit)
 
     /**开始k 歌，通知其他人*/
-    fun sendStartKaraoke()
+    fun sendStartKaraoke(completion: (result: Boolean) -> Unit)
 
     /**结束k 歌，通知其他人*/
-    fun sendStopKaraoke()
+    fun sendStopKaraoke(completion: (result: Boolean) -> Unit)
 
     /**开启原唱*/
     fun enableOriginalSinging(completion: (result: Boolean) -> Unit)

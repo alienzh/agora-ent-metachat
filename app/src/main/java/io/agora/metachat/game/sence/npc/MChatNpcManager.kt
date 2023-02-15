@@ -59,6 +59,12 @@ class MChatNpcManager constructor() {
         }
     }
 
+    fun playAll(){
+        npc1.play()
+        npc2.play()
+        npc3.play()
+    }
+
     fun stopAll() {
         npc1.stop()
         npc2.stop()

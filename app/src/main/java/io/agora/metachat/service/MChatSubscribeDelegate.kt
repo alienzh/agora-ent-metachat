@@ -43,6 +43,11 @@ interface MChatSubscribeDelegate {
     fun onUserRemoved(groupId: String) {}
 
     /**
+     * k 歌
+     */
+    fun onKaraoke(start: Boolean) {}
+
+    /**
      * 原唱
      */
     fun onOriginalSinging(value: Boolean) {}

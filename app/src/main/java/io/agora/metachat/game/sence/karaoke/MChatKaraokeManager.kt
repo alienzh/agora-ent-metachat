@@ -5,6 +5,8 @@ import io.agora.metachat.R
 import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.game.sence.MChatMediaPlayerListener
+import io.agora.metachat.service.MChatServiceProtocol
+import io.agora.metachat.service.MChatSubscribeDelegate
 import io.agora.rtc2.Constants
 
 /**
@@ -24,6 +26,7 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
         }
     }
 
+    //---------------- k 歌控制台 start
     // 是否打开原唱
     var useOriginal: Boolean = true
 
@@ -40,7 +43,9 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
     var accompanimentVolume: Int = 100
 
     // 音效
-    var effect: Int = Constants.ROOM_ACOUSTICS_STUDIO
+    var audioEffect: MChatAudioEffect = MChatAudioEffect.Studio
+
+    //---------------- k 歌控制台 end
 
     // 当前选择的歌曲
     val songListPlaylist by lazy {
@@ -50,15 +55,66 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
     // 在播放中的歌曲
     private val playSongCode: Long = -1
 
-    private val chatMediaPlayerListener = object : MChatMediaPlayerListener{
+    // 刷新播放，以及数据
+    private val chatMediaPlayerListener = object : MChatMediaPlayerListener {
         override fun onPlayCompleted(url: String) {
             removeIfPlaying(url)
             findAndPlayFirstMusic()
         }
     }
 
+    // k歌控制台订阅协议，其他用户设置k歌的时候，修改
+    private val chatSubscribeDelegate = object : MChatSubscribeDelegate {
+        override fun onKaraoke(start: Boolean) {
+            super.onKaraoke(start)
+            chatContext.chatMediaPlayer()?.setOtherInKaraoke(start)
+        }
+
+        override fun onOriginalSinging(value: Boolean) {
+            super.onOriginalSinging(value)
+            enableInEarMonitoring(value)
+        }
+
+        override fun onEarphoneMonitoring(value: Boolean) {
+            super.onEarphoneMonitoring(value)
+            enableInEarMonitoring(value)
+        }
+
+        override fun onChangeSongKey(value: Int) {
+            super.onChangeSongKey(value)
+            setAudioPitch(value)
+        }
+
+        override fun onAccompanimentMusic(value: Int) {
+            super.onAccompanimentMusic(value)
+            adjustAccompanyVolume(value)
+        }
+
+        override fun onAudioEffect(value: Int) {
+            super.onAudioEffect(value)
+            setEffect(MChatAudioEffect.fromValue(value))
+        }
+    }
+
     init {
         chatContext.chatMediaPlayer()?.registerListener(chatMediaPlayerListener)
+        MChatServiceProtocol.getImplInstance().subscribeEvent(chatSubscribeDelegate)
+    }
+
+    fun clearSubscribe() {
+        chatContext.chatMediaPlayer()?.unregisterListener(chatMediaPlayerListener)
+        MChatServiceProtocol.getImplInstance().unsubscribeEvent(chatSubscribeDelegate)
+    }
+
+    @Synchronized
+    fun startKaraoke(){
+        chatContext.chatMediaPlayer()?.startKaraoke()
+    }
+
+    @Synchronized
+    fun stopKaraoke(){
+        chatContext.chatMediaPlayer()?.stopKaraoke()
+        songListPlaylist.clear()
     }
 
     // 加入播放列表
@@ -111,20 +167,10 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
         }
     }
 
-    @Synchronized
-    fun startKaraoke() {
-        chatContext.chatMediaPlayer()?.startInChargeOfKaraoke()
-    }
-
-    @Synchronized
-    fun stopKaraoke() {
-        chatContext.chatMediaPlayer()?.stopInChargeOfKaraoke()
-    }
-
     /**
      * 打开原唱
      */
-    fun setUseOriginal(original: Boolean, forced: Boolean = false): Boolean {
+    fun enableUseOriginal(original: Boolean, forced: Boolean = false): Boolean {
         var result = false
         if (forced || this.useOriginal != original) {
             chatContext.chatMediaPlayer()?.userOriginalTrack(original)?.also {
@@ -206,10 +252,10 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
      */
     fun setEffect(effect: MChatAudioEffect, forced: Boolean = false): Boolean {
         var result = false
-        if (forced || this.effect != effect.value) {
+        if (forced || this.audioEffect != effect) {
             chatContext.rtcEngine()?.setAudioEffectPreset(effect.value)?.also {
                 if (Constants.ERR_OK == it) {
-                    this.effect = effect.value
+                    this.audioEffect = effect
                     result = true
                 }
             }

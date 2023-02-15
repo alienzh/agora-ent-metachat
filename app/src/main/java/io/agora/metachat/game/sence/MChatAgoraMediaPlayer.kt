@@ -35,8 +35,11 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
     // 媒体播放器的视频数据观测器。
     private var mediaVideoFramePushListener: IMediaPlayerVideoFrameObserver? = null
 
-    // 是否在k歌中
+    // 当前用户是否在k歌中
     private var curUserInKaraoke = false
+
+    // 其他用户是否在k歌中
+    private var otherUserInKaraoke = false
 
     // 当前媒体流数量
     private var streamCount = 0
@@ -54,7 +57,7 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
                     }
                 }
                 mediaPlayer.play()
-            }else if (Constants.MediaPlayerState.PLAYER_STATE_PLAYBACK_ALL_LOOPS_COMPLETED == state){
+            } else if (Constants.MediaPlayerState.PLAYER_STATE_PLAYBACK_ALL_LOOPS_COMPLETED == state) {
                 // 播放完成，切歌
                 mediaPlayerListeners.forEach {
                     it.onPlayCompleted(playingUrl)
@@ -96,11 +99,13 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
             autoSubscribeVideo = true
             publishMediaPlayerId = mediaPlayer.mediaPlayerId
             publishMediaPlayerAudioTrack = true
+            publishMediaPlayerVideoTrack = true
         }
         rtcEngine.updateChannelMediaOptions(channelOptions)
     }
 
     fun play(url: String, startPos: Long = 0, repeatCount: Int = -1) {
+        mediaPlayer.stop()
         val result = mediaPlayer.open(url, startPos)
         if (result == io.agora.rtc2.Constants.ERR_OK) {
             mediaPlayer.setLoopCount(repeatCount)
@@ -160,17 +165,43 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
     }
 
     @Synchronized
-    fun startInChargeOfKaraoke() {
+    fun startKaraoke() {
         curUserInKaraoke = true
     }
 
     @Synchronized
-    fun stopInChargeOfKaraoke() {
+    fun stopKaraoke() {
         curUserInKaraoke = false
+        // k歌推送视频流
+        val channelOptions = ChannelMediaOptions().apply {
+            autoSubscribeAudio = true
+            autoSubscribeVideo = true
+            publishMediaPlayerId = 0
+            publishMediaPlayerAudioTrack = false
+            publishMediaPlayerVideoTrack = false
+        }
+        rtcEngine.updateChannelMediaOptions(channelOptions)
+        switchPlayAdvertise()
     }
 
     @Synchronized
-    fun inKaraoke(): Boolean = curUserInKaraoke
+    fun setOtherInKaraoke(otherUserInKaraoke: Boolean) {
+        this.otherUserInKaraoke = otherUserInKaraoke
+        if (!otherUserInKaraoke) {
+            mediaPlayer.registerVideoFrameObserver(mediaPlayerVideoFrameObserver)
+            // 其他用户停止k歌，继续播放宣传片
+            switchPlayAdvertise()
+        } else {
+            // 停止播放宣传片
+            pause()
+        }
+    }
+
+    @Synchronized
+    fun curUserInKaraoke(): Boolean = curUserInKaraoke
+
+    @Synchronized
+    fun otherUserInKaraoke(): Boolean = otherUserInKaraoke
 }
 
 interface MChatMediaPlayerListener {

@@ -38,11 +38,11 @@ class MChatSongConsoleLayout : ConstraintLayout {
         initView(context)
     }
 
-    private var audioSelected = 0
+    private var mAudioEffect: MChatAudioEffect = MChatAudioEffect.Studio
     var chatKaraokeManager: MChatKaraokeManager? = null
     var onConsoleListener: OnConsoleListener? = null
-    private var effectAdapter: BaseQuickAdapter<ConsoleAudioEffect, MChatAudioEffectAdapter.VH>?=null
-    private lateinit var pitchManager: PitchLayout
+    private var effectAdapter: BaseQuickAdapter<ConsoleAudioEffect, MChatAudioEffectAdapter.VH>? = null
+    private lateinit var pitchLayout: PitchLayout
 
     private fun initView(context: Context) {
         val root = View.inflate(context, R.layout.mchat_view_song_console_layout, this)
@@ -50,7 +50,7 @@ class MChatSongConsoleLayout : ConstraintLayout {
         binding.ivConsoleBack.setOnClickListener(OnIntervalClickListener(this::onClickBack))
         binding.checkboxOriginalSinging.setOnCheckedChangeListener { buttonView, isChecked ->
             LogTools.d("Original Singing isChecked:$isChecked")
-            chatKaraokeManager?.setUseOriginal(isChecked)
+            chatKaraokeManager?.enableUseOriginal(isChecked)
             onConsoleListener?.onUseOriginal(isChecked)
         }
         binding.checkboxEarphoneMonitoring.setOnCheckedChangeListener { buttonView, isChecked ->
@@ -58,9 +58,9 @@ class MChatSongConsoleLayout : ConstraintLayout {
             chatKaraokeManager?.enableInEarMonitoring(isChecked)
             onConsoleListener?.onEarMonitoring(isChecked)
         }
-        pitchManager = PitchLayout(binding.root.findViewById(R.id.include_console_pitch_select), completion = {
+        pitchLayout = PitchLayout(binding.root.findViewById(R.id.include_console_pitch_select), completion = {
             chatKaraokeManager?.setAudioPitch(it)
-            onConsoleListener?.onPitchChanged(it * 2)
+            onConsoleListener?.onPitchChanged(it)
         })
         binding.seekbarVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
@@ -87,8 +87,10 @@ class MChatSongConsoleLayout : ConstraintLayout {
         effectAdapter = MChatAudioEffectAdapter()
         effectAdapter?.setOnItemClickListener(object : BaseQuickAdapter.OnItemClickListener<ConsoleAudioEffect> {
             override fun onClick(adapter: BaseQuickAdapter<ConsoleAudioEffect, *>, view: View, position: Int) {
-                if (audioSelected==position) return
-                audioSelected = position
+                val audioEffect = adapter.getItem(position) ?: return
+
+                if (audioEffect.audioEffect == mAudioEffect) return
+                mAudioEffect = audioEffect.audioEffect
                 adapter.getItem(position)?.let {
                     chatKaraokeManager?.setEffect(it.audioEffect)
                     onConsoleListener?.onAudioEffectChanged(it.audioEffect)
@@ -100,6 +102,19 @@ class MChatSongConsoleLayout : ConstraintLayout {
         binding.rvSongScene.layoutManager = LinearLayoutManager(context, RecyclerView.HORIZONTAL, false)
         binding.rvSongScene.adapter = effectAdapter
         effectAdapter?.submitList(MChatKaraokeConstructor.buildAudioEffect(context))
+
+        postDelayed({
+            chatKaraokeManager?.let {
+                binding.checkboxOriginalSinging.isChecked = it.useOriginal
+                binding.checkboxEarphoneMonitoring.isChecked = it.enableEarMonitor
+                pitchLayout.resetBars(it.pitchValue)
+                binding.seekbarVolume.progress = it.recordingSignalVolume
+                binding.seekbarAccompanimentMusic.progress = it.accompanimentVolume
+                mAudioEffect = it.audioEffect
+                effectAdapter?.notifyDataSetChanged()
+            }
+        }, 100)
+
     }
 
     // 关闭设置页面
@@ -123,7 +138,7 @@ class MChatSongConsoleLayout : ConstraintLayout {
 
         override fun onBindViewHolder(holder: VH, position: Int, data: ConsoleAudioEffect?) {
             data ?: return
-            holder.binding.ivSongSceneBg.isVisible = position == audioSelected
+            holder.binding.ivSongSceneBg.isVisible = data.audioEffect == mAudioEffect
             holder.binding.ivSongScene.setImageResource(data.effectBg)
             holder.binding.tvSongSceneName.text = data.effectTxt
         }
@@ -185,7 +200,7 @@ internal class PitchLayout(
         }
     }
 
-    private fun resetBars(level: Int) {
+    fun resetBars(level: Int) {
         var l = if (level < -6) -6
         else if (level > 6) 6
         else level

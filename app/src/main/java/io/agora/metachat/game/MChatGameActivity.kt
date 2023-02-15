@@ -27,6 +27,8 @@ import io.agora.metachat.game.sence.karaoke.OnKaraokeDialogListener
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.imkit.MChatMessageDialog
+import io.agora.metachat.service.MChatServiceProtocol
+import io.agora.metachat.service.MChatSubscribeDelegate
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -350,6 +352,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
         override fun onKaraokeStarted() {
             karaokeManager?.startKaraoke()
+            chatContext.chatNpcManager()?.stopAll()
+            MChatServiceProtocol.getImplInstance().sendStartKaraoke { }
             ThreadTools.get().runOnMainThread {
                 binding.linearSongList.isVisible = true
                 binding.linearEndSong.isVisible = true
@@ -360,6 +364,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
         override fun onKaraokeStopped() {
             karaokeManager?.stopKaraoke()
+            chatContext.chatNpcManager()?.playAll()
+            MChatServiceProtocol.getImplInstance().sendStopKaraoke { }
             ThreadTools.get().runOnMainThread {
                 binding.linearSongList.isVisible = false
                 binding.linearEndSong.isVisible = false

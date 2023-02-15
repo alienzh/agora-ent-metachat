@@ -9,7 +9,6 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import androidx.annotation.MainThread
 import androidx.core.view.isVisible
-import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -18,6 +17,7 @@ import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogKaraokeBinding
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.game.sence.MChatMediaPlayerListener
+import io.agora.metachat.service.MChatServiceProtocol
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
@@ -37,21 +37,20 @@ class MChatKaraokeDialog constructor(
     private val tabTitle = mutableListOf<String>()
     private var playlistTitleView: TextView? = null
 
-    private lateinit var karaokeViewModel: MChatKaraokeViewModel
+    private val chatServiceProtocol: MChatServiceProtocol = MChatServiceProtocol.getImplInstance()
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogKaraokeBinding {
         return MchatDialogKaraokeBinding.inflate(inflater)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        dialog?.setOnShowListener {
-            karaokeManager?.registerListener(karaokeListener)
-        }
-        dialog?.setOnDismissListener {
-            onDismiss(it)
-            karaokeManager?.unregisterListener(karaokeListener)
-        }
+        karaokeManager?.registerListener(karaokeListener)
         return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onDestroyView() {
+        karaokeManager?.unregisterListener(karaokeListener)
+        super.onDestroyView()
     }
 
     override fun onStart() {
@@ -77,6 +76,7 @@ class MChatKaraokeDialog constructor(
         }
     }
 
+    // 更新ui
     private val karaokeListener = object : MChatMediaPlayerListener {
 
         override fun onPlayCompleted(url: String) {
@@ -89,7 +89,6 @@ class MChatKaraokeDialog constructor(
         super.onViewCreated(view, savedInstanceState)
         dialog?.setCancelable(false)
         dialog?.setCanceledOnTouchOutside(true)
-        karaokeViewModel = ViewModelProvider(this).get(MChatKaraokeViewModel::class.java)
         initView()
     }
 
@@ -111,7 +110,6 @@ class MChatKaraokeDialog constructor(
                         } else {
                             playlistLayout?.deleteSong(musicDetail)
                         }
-                        playlistLayout?.refreshPlaylist()
                         songOrderLayout?.refreshSongOrder()
                         listener?.onMusicInserted(select, musicDetail)
                         resetPlaylistTabTitle()
@@ -145,27 +143,46 @@ class MChatKaraokeDialog constructor(
                 it.chatKaraokeManager = karaokeManager
                 it.onConsoleListener = object : OnConsoleListener {
                     override fun onUseOriginal(original: Boolean) {
-                        karaokeViewModel.operationOriginalSinging(original)
+                        if (original) {
+                            chatServiceProtocol.enableOriginalSinging {
+
+                            }
+                        } else {
+                            chatServiceProtocol.disableOriginalSinging {
+
+                            }
+                        }
                     }
 
                     override fun onEarMonitoring(monitor: Boolean) {
-                        karaokeViewModel.operationEarphoneMonitoring(monitor)
+                        if (monitor) {
+                            chatServiceProtocol.enableEarphoneMonitoring {
+
+                            }
+                        } else {
+                            chatServiceProtocol.disableEarphoneMonitoring {
+
+                            }
+                        }
                     }
 
                     override fun onPitchChanged(pitch: Int) {
-                        karaokeViewModel.changePitchSong(pitch)
+                        chatServiceProtocol.changePitchSong(pitch){
+
+                        }
                     }
 
                     override fun onVolumeChanged(volume: Int) {
-                        karaokeViewModel.changeVolume(volume)
                     }
 
                     override fun onAccompanyVolumeChange(volume: Int) {
-                        karaokeViewModel.changeAccompaniment(volume)
+                        chatServiceProtocol.changeAccompanimentVolume(volume){
+
+                        }
                     }
 
                     override fun onAudioEffectChanged(effect: MChatAudioEffect) {
-                        karaokeViewModel.changeAudioEffect(effect)
+                        chatServiceProtocol.changeAudioEffect(effect.value){}
                     }
 
                     override fun onConsoleClosed() {

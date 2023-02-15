@@ -49,7 +49,7 @@ data class MChatRoomModel constructor(
 ) : MChatBaseModel
 
 /**data stream 数据流*/
-data class StreamDataBaseBody(
+data class StreamDataBaseBody constructor(
     val action: Int,
     val msg: Any
 )

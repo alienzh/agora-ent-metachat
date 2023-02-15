@@ -27,7 +27,7 @@ open class MChatBaseVideoFrameObserver : IVideoFrameObserver {
         return false
     }
 
-    override fun onRenderVideoFrame(channelId: String?, uid: Int, videoFrame: VideoFrame?): Boolean {
+    override fun onRenderVideoFrame(channelId: String?, uid: Int, videoFrame: VideoFrame): Boolean {
         return false
     }
 

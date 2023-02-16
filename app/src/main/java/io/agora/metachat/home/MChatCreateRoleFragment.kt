@@ -80,7 +80,7 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         if (actResult.resultCode == Activity.RESULT_OK) {
             // 进入游戏成功,回到列表页面
             LogTools.d("go game success navigate to roomListFragment")
-            findNavController().navigate(R.id.action_crateRoomFragment_to_roomListFragment)
+            findNavController().navigate(R.id.action_crateRoleFragment_to_roomListFragment)
         }
     }
 

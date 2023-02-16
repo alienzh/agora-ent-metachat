@@ -195,7 +195,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     LogTools.d("onStopTrackingTouch distance unit volume:${seekBar.progress}")
                     mchatContext.distanceUnit = seekBar.progress / 10.0F
-                    it.tvDistanceUnit.text = "${mchatContext.distanceUnit}"
+                    it.tvDistanceUnitValue.text = "${mchatContext.distanceUnit}"
                     mchatContext.chatSpatialAudio()?.setDistanceUnit(mchatContext.distanceUnit)
                 }
             })

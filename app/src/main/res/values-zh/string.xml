@@ -47,6 +47,7 @@
     <string name="mchat_visitor_mode_title">游客指导</string>
     <string name="mchat_visitor_mode_precautions">游客模式注意事项：</string>
     <string name="mchat_room_quit">退出房间</string>
+    <string name="mchat_notice">提示</string>
     <string name="mchat_room_disbanded">该房间已解散</string>
     <string name="mchat_delete_room_alert_msg">确定解散该房间吗？</string>
     <string name="mchat_delete_room_notify_alert_title">房主已解散房间，请确认离开房间</string>
@@ -112,6 +113,8 @@
     <string name="mchat_music_accompany">Accompany</string>
     <string name="mchat_music_singing">演唱中</string>
     <string name="mchat_music_source">歌曲来源咪咕音乐</string>
+    <string name="mchat_scene_error">Error state:%1$s,reason:%2$s </string>
+    <string name="mchat_exit">退出</string>
 
     <string-array name="mchat_room_name">
         <item>和你一起看月亮</item>

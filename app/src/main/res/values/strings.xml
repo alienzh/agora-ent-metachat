@@ -48,6 +48,7 @@
     <string name="mchat_visitor_mode_precautions">Precautions for visitor mode:</string>
     <string name="mchat_room_quit">Leave room</string>
     <string name="mchat_room_disbanded">The room has been closed</string>
+    <string name="mchat_notice">Notice</string>
     <string name="mchat_room_maximum_limit">The number of people has exceeded the maximum limit</string>
     <string name="mchat_delete_room_alert_msg">Are you sure to delete the room?</string>
     <string name="mchat_delete_room_notify_alert_title">The owner has delete the room, please confirm to leave the room</string>
@@ -112,6 +113,8 @@
     <string name="mchat_music_accompany">Accompany</string>
     <string name="mchat_music_singing">singing</string>
     <string name="mchat_music_source">The song is from Migu Music</string>
+    <string name="mchat_scene_error">Error state:%1$s,reason:%2$s </string>
+    <string name="mchat_exit">Exit</string>
 
     <string-array name="mchat_room_name">
         <item>Jenoah</item>

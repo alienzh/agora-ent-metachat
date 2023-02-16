@@ -4,10 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.TypedArray
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.DrawableRes
 import androidx.core.view.*
@@ -68,7 +70,13 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
 
     private var defaultVirtualAvatar = R.drawable.mchat_female0
 
-    override fun getViewBinding(inflater: LayoutInflater): MchatActivityVirtualAvatarBinding? {
+    override fun getViewBinding(inflater: LayoutInflater): MchatActivityVirtualAvatarBinding {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+                window.attributes = this
+            }
+        }
         return MchatActivityVirtualAvatarBinding.inflate(inflater)
     }
 
@@ -102,9 +110,9 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
     }
 
     private fun initView() {
-        if (isFromCreate){
+        if (isFromCreate) {
             binding.tvEnterRoom.setText(R.string.mchat_create_and_enter)
-        }else{
+        } else {
             binding.tvEnterRoom.setText(R.string.mchat_confirm_and_enter)
         }
         val virtualAvatars = mutableListOf<Int>().apply {
@@ -112,7 +120,8 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
                 add(getVirtualAvatarRes(i))
             }
         }
-        binding.tvChooseAvatarTips.text = resources.getString(R.string.mchat_choose_your_avatar, MChatKeyCenter.nickname)
+        binding.tvChooseAvatarTips.text =
+            resources.getString(R.string.mchat_choose_your_avatar, MChatKeyCenter.nickname)
         binding.ivCurrentAvatar.setImageResource(
             virtualAvatarArray.getResourceId(MChatKeyCenter.virtualAvatarIndex, defaultVirtualAvatar)
         )
@@ -148,7 +157,7 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
             if (joinOutput != null) {
                 setResult(RESULT_OK)
                 finish()
-                MChatGameActivity.startActivity(context = this, roomId = joinOutput.roomId,)
+                MChatGameActivity.startActivity(context = this, roomId = joinOutput.roomId)
             } else {
             }
         }

@@ -14,15 +14,17 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiActivity
+import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatActivityGameBinding
-import io.agora.metachat.game.dialog.*
-import io.agora.metachat.game.sence.karaoke.MChatKaraokeManager
+import io.agora.metachat.game.dialog.MChatBeginnerDialog
+import io.agora.metachat.game.dialog.MChatSettingsDialog
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.game.sence.SceneCmdListener
 import io.agora.metachat.game.sence.SceneMessageReceivePositions
 import io.agora.metachat.game.sence.SceneObjectId
 import io.agora.metachat.game.sence.karaoke.MChatKaraokeDialog
+import io.agora.metachat.game.sence.karaoke.MChatKaraokeManager
 import io.agora.metachat.game.sence.karaoke.OnKaraokeDialogListener
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
@@ -86,7 +88,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         initView()
         requestPermission()
         gameObservable()
-        initUnityView()
+
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -212,8 +214,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
             chatContext.getUnityCmd()?.let { unityCmd ->
                 if (enter) {
                     unityCmd.registerListener(unityCmdListener)
-//                    unityCmd.acquireObjectPosition(SceneObjectId.TV.value)
-//                    unityCmd.acquireObjectPosition(SceneObjectId.NPC1.value)
                 } else {
                     unityCmd.unregisterListener(unityCmdListener)
                 }
@@ -244,11 +244,42 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
             binding.ivMuteLocalFlag.isVisible = !it
         }
         gameViewModel.exitGameObservable().observe(this) {
-            finish()
+            karaokeManager?.clearSubscribe()
+            this@MChatGameActivity.finish()
         }
         gameViewModel.leaveRoomObservable().observe(this) {
             if (it) {
                 chatContext.leaveScene()
+            }
+        }
+        gameViewModel.sceneConnectErrorObservable().observe(this) {
+            if (it.first==4) {
+                CommonFragmentAlertDialog()
+                    .titleText(resources.getString(R.string.mchat_notice))
+                    .contentText(
+                        resources.getString(R.string.mchat_scene_error, "${it.first}","${it.second}")
+                    )
+                    .rightText(resources.getString(R.string.mchat_exit))
+                    .showSingleBtn(true)
+                    .setOnClickListener(object : CommonFragmentAlertDialog.OnClickBottomListener {
+                        override fun onConfirmClick() {
+                            chatContext.leaveScene()
+                        }
+                    }).show(supportFragmentManager, "error")
+            }
+        }
+        gameViewModel.groupDestroyRoomObservable().observe(this) {
+            if (it) {
+                CommonFragmentAlertDialog()
+                    .titleText(resources.getString(R.string.mchat_notice))
+                    .contentText(resources.getString(R.string.mchat_delete_room_notify_alert_title))
+                    .rightText(resources.getString(R.string.mchat_exit))
+                    .showSingleBtn(true)
+                    .setOnClickListener(object : CommonFragmentAlertDialog.OnClickBottomListener {
+                        override fun onConfirmClick() {
+                            chatContext.leaveScene()
+                        }
+                    }).show(supportFragmentManager, "roomDestroy")
             }
         }
     }
@@ -290,6 +321,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     private fun onPermissionGrant() {
         gameViewModel.initMChatScene()
+        initUnityView()
     }
 
     override fun onPermissionsGranted(requestCode: Int, perms: MutableList<String>) {
@@ -328,8 +360,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onBackPressed() {
+//        super.onBackPressed()
     }
 
     // unity listener
@@ -371,6 +403,15 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                 binding.linearEndSong.isVisible = false
                 binding.ivSettings.isVisible = true
                 dismissKaraokeDialog()
+            }
+        }
+    }
+
+    private val chatDelegate = object: MChatSubscribeDelegate {
+        override fun onGroupDestroyed(groupId: String) {
+            super.onGroupDestroyed(groupId)
+            ThreadTools.get().runOnMainThread {
+
             }
         }
     }

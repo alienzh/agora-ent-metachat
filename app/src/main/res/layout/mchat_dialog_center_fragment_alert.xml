@@ -2,11 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_gravity="center"
-    android:paddingVertical="30dp"
-    android:background="@drawable/mchat_bg_rect_radius16_white">
+    android:background="@drawable/mchat_bg_rect_radius16_white"
+    android:paddingVertical="30dp">
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/mt_title"
@@ -25,17 +26,17 @@
         android:id="@+id/mt_content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="27dp"
         android:layout_marginTop="20dp"
+        android:layout_marginEnd="27dp"
+        android:gravity="center"
+        android:lineSpacingExtra="2dp"
         android:textColor="@color/mchat_6c7192"
         android:textSize="@dimen/mchat_sp_14"
-        android:gravity="center"
-        app:layout_goneMarginTop="0dp"
-        android:layout_marginStart="27dp"
-        android:layout_marginEnd="27dp"
-        android:lineSpacingExtra="2dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/mt_title"
+        app:layout_goneMarginTop="0dp"
         tools:text="Content content content content content" />
 
     <com.google.android.material.button.MaterialButton
@@ -70,6 +71,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
+        android:layout_marginTop="35dp"
         android:layout_marginEnd="25dp"
         android:paddingHorizontal="22dp"
         android:paddingVertical="12dp"
@@ -82,6 +84,5 @@
         app:cornerRadius="24dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/gl50"
-        app:layout_constraintTop_toTopOf="@id/mb_left"
-        app:layout_constraintBottom_toBottomOf="@id/mb_left"/>
+        app:layout_constraintTop_toBottomOf="@id/mt_content" />
 </androidx.constraintlayout.widget.ConstraintLayout>

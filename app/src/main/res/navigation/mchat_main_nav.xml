@@ -48,7 +48,7 @@
         tools:layout="@layout/mchat_fragment_create_role" >
 
         <action
-            android:id="@+id/action_crateRoomFragment_to_roomListFragment"
+            android:id="@+id/action_crateRoleFragment_to_roomListFragment"
             app:destination="@id/roomListFragment"
             app:enterAnim="@anim/mchat_slide_in_right"
             app:exitAnim="@anim/mchat_slide_out_left"

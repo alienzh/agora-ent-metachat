@@ -10,6 +10,7 @@ import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
 import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.imkit.MChatGroupIMManager
 import io.agora.metachat.service.MChatServiceProtocol
+import io.agora.metachat.service.MChatSubscribeDelegate
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.SingleLiveData
 import io.agora.metachat.tools.ThreadTools
@@ -29,6 +30,8 @@ class MChatGameViewModel : ViewModel() {
     private val _muteLocal = SingleLiveData<Boolean>()
     private val _exitGame = SingleLiveData<Boolean>()
     private val _leaveRoom = SingleLiveData<Boolean>()
+    private val _groupDestroyRoom = SingleLiveData<Boolean>()
+    private val _onConnectError = SingleLiveData<Pair<Int, Int>>()
 
     fun isEnterSceneObservable(): LiveData<Boolean> = _isEnterScene
     fun onlineMicObservable(): LiveData<Boolean> = _onlineMic
@@ -36,6 +39,8 @@ class MChatGameViewModel : ViewModel() {
     fun muteLocalObservable(): LiveData<Boolean> = _muteLocal
     fun exitGameObservable(): LiveData<Boolean> = _exitGame
     fun leaveRoomObservable(): LiveData<Boolean> = _leaveRoom
+    fun groupDestroyRoomObservable(): LiveData<Boolean> = _groupDestroyRoom
+    fun sceneConnectErrorObservable(): LiveData<Pair<Int, Int>> = _onConnectError
 
     private var mReCreateScene = false
     private var mSurfaceSizeChange = false
@@ -47,6 +52,7 @@ class MChatGameViewModel : ViewModel() {
     override fun onCleared() {
         mchatContext.unregisterMetaChatEventHandler(mChatEventHandler)
         mchatContext.unregisterMetaChatSceneEventHandler(mChatSceneEventHandler)
+        chatServiceProtocol.unsubscribeEvent(chatDelegate)
         super.onCleared()
     }
 
@@ -56,40 +62,51 @@ class MChatGameViewModel : ViewModel() {
                 mchatContext.enterScene()
             }
         }
+
+        override fun onConnectionStateChanged(state: Int, reason: Int) {
+            super.onConnectionStateChanged(state, reason)
+            if (state == 4) {
+                _onConnectError.postValue(Pair(state, reason))
+            }
+        }
     }
 
     private val mChatSceneEventHandler = object : MChatBaseSceneEventHandler() {
         override fun onEnterSceneResult(errorCode: Int) {
-            ThreadTools.get().runOnMainThread {
-                if (errorCode != ErrorCode.ERR_OK) {
-                    LogTools.e("enter scene failed:$errorCode")
-                    return@runOnMainThread
-                }
-                _isEnterScene.postValue(true)
-                _onlineMic.postValue(true)
-                _muteRemote.postValue(true)
-                _muteLocal.postValue(true)
-                resetSceneState()
+            if (errorCode != ErrorCode.ERR_OK) {
+                LogTools.e("enter scene failed:$errorCode")
+                return
             }
+            _isEnterScene.postValue(true)
+            _onlineMic.postValue(true)
+            _muteRemote.postValue(true)
+            _muteLocal.postValue(true)
+            resetSceneState()
         }
 
         override fun onLeaveSceneResult(errorCode: Int) {
-            ThreadTools.get().runOnMainThread {
-                _isEnterScene.postValue(false)
-                _exitGame.postValue(true)
-            }
+            _isEnterScene.postValue(false)
         }
 
         override fun onReleasedScene(status: Int) {
             if (status == ErrorCode.ERR_OK) {
                 mchatContext.destroy()
+                _exitGame.postValue(true)
             }
+        }
+    }
+
+    private val chatDelegate = object: MChatSubscribeDelegate {
+        override fun onGroupDestroyed(groupId: String) {
+            super.onGroupDestroyed(groupId)
+            _groupDestroyRoom.postValue(true)
         }
     }
 
     fun initMChatScene() {
         mchatContext.registerMetaChatEventHandler(mChatEventHandler)
         mchatContext.registerMetaChatSceneEventHandler(mChatSceneEventHandler)
+        chatServiceProtocol.subscribeEvent(chatDelegate)
     }
 
     fun createScene(activity: Activity, roomId: String, tv: TextureView) {

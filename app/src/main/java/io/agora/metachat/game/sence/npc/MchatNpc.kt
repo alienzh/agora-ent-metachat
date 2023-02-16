@@ -16,6 +16,7 @@ class MchatNpc constructor(
     private val metaChatContext: MChatContext,
     private val id: Int,
     private val sourceName: String,
+    private val defaultVolume:Int,
     private val npcListener: NpcListener
 ) {
 
@@ -27,6 +28,7 @@ class MchatNpc constructor(
                 object : FileResultListener {
                     override fun onSuccess() {
                         player = metaChatContext.createLocalSourcePlayer(id, getSourceFilePath(sourceName))
+                        player?.setPlayerVolume(defaultVolume)
                         npcListener.onNpcReady(id, getSourceFilePath(sourceName))
                         LogTools.d(MChatNpcManager.TAG, "npc source $sourceName copy success")
                     }
@@ -59,7 +61,7 @@ class MchatNpc constructor(
         player?.destroy()
     }
 
-    fun setPlayerVolume(volume: Int) {
-        player?.setPlayerVolume(volume)
+    fun setPlayerVolume(volume: Int): Int? {
+        return player?.setPlayerVolume(volume)
     }
 }

@@ -35,6 +35,9 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
     // 媒体播放器的视频数据观测器。
     private var mediaVideoFramePushListener: IMediaPlayerVideoFrameObserver? = null
 
+    // 电视音量
+    var tvVolume: Int = MChatConstant.DefaultValue.DEFAULT_TV_VOLUME
+
     // 当前用户是否在k歌中
     private var curUserInKaraoke = false
 
@@ -73,10 +76,10 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
         }
     }
 
-    fun initMediaPlayer(volume: Int) {
-        setPlayerVolume(volume)
+    fun initMediaPlayer() {
         mediaPlayer.registerPlayerObserver(mediaPlayerObserver)
         mediaPlayer.registerVideoFrameObserver(mediaPlayerVideoFrameObserver)
+        setPlayerVolume(tvVolume, true)
     }
 
     fun setOnMediaVideoFramePushListener(mediaVideoFramePushListener: IMediaPlayerVideoFrameObserver) = apply {
@@ -129,8 +132,17 @@ class MChatAgoraMediaPlayer constructor(val rtcEngine: RtcEngine, val mediaPlaye
     }
 
     @Synchronized
-    fun setPlayerVolume(volume: Int): Int {
-        return mediaPlayer.adjustPlayoutVolume(volume)
+    fun setPlayerVolume(volume: Int, forced: Boolean = false): Boolean {
+        var result = false
+        if (forced || this.tvVolume != volume) {
+            mediaPlayer.adjustPlayoutVolume(volume).also {
+                if (io.agora.rtc2.Constants.ERR_OK == it) {
+                    this.tvVolume = volume
+                    result = true
+                }
+            }
+        }
+        return result
     }
 
     /**

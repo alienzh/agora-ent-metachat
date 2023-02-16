@@ -3,6 +3,8 @@ package io.agora.metachat.game.sence.npc
 import android.content.Context
 import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.game.sence.SceneObjectId
+import io.agora.metachat.global.MChatConstant
+import io.agora.rtc2.Constants
 
 /**
  * @author create by zhangwei03
@@ -17,10 +19,13 @@ class MChatNpcManager constructor() {
     private lateinit var npc2: MchatNpc
     private lateinit var npc3: MchatNpc
 
+    // npc 音量
+    var npcVolume: Int = MChatConstant.DefaultValue.DEFAULT_NPC_VOLUME
+
     fun initNpcMediaPlayer(context: Context, chatContext: MChatContext, npcListener: NpcListener) {
-        npc1 = MchatNpc(context, chatContext, SceneObjectId.NPC1.value, "npc_id_1.m4a", npcListener)
-        npc2 = MchatNpc(context, chatContext, SceneObjectId.NPC2.value, "npc_id_2.m4a", npcListener)
-        npc3 = MchatNpc(context, chatContext, SceneObjectId.NPC3.value, "npc_id_3.m4a", npcListener)
+        npc1 = MchatNpc(context, chatContext, SceneObjectId.NPC1.value, "npc_id_1.m4a", npcVolume, npcListener)
+        npc2 = MchatNpc(context, chatContext, SceneObjectId.NPC2.value, "npc_id_2.m4a", npcVolume, npcListener)
+        npc3 = MchatNpc(context, chatContext, SceneObjectId.NPC3.value, "npc_id_3.m4a", npcVolume, npcListener)
     }
 
     fun getNpc(id: Int): MchatNpc? {
@@ -33,8 +38,17 @@ class MChatNpcManager constructor() {
     }
 
     //圆桌npc
-    fun roundTableNpc(): MchatNpc {
-        return npc2
+    fun setNpcVolume(volume: Int, forced: Boolean = false): Boolean {
+        var result = false
+        if (forced || this.npcVolume != volume) {
+            npc2.setPlayerVolume(volume)?.also {
+                if (Constants.ERR_OK == it) {
+                    this.npcVolume = volume
+                    result = true
+                }
+            }
+        }
+        return result
     }
 
     fun play(id: Int) {
@@ -59,7 +73,7 @@ class MChatNpcManager constructor() {
         }
     }
 
-    fun playAll(){
+    fun playAll() {
         npc1.play()
         npc2.play()
         npc3.play()

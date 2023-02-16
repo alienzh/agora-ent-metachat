@@ -2,6 +2,8 @@ package io.agora.metachat.game.sence
 
 import io.agora.metachat.MetachatUserPositionInfo
 import io.agora.metachat.game.internal.MChatBaseSceneEventHandler
+import io.agora.metachat.global.MChatConstant
+import io.agora.rtc2.Constants
 import io.agora.spatialaudio.ILocalSpatialAudioEngine
 import io.agora.spatialaudio.RemoteVoicePositionInfo
 
@@ -16,6 +18,12 @@ class MChatSpatialAudio constructor(
     private val chatContext by lazy {
         MChatContext.instance()
     }
+
+    // 音效距离
+    var recvRange: Float = MChatConstant.DefaultValue.DEFAULT_RECV_RANGE
+
+    // 衰减系数
+    var distanceUnit: Float = MChatConstant.DefaultValue.DEFAULT_DISTANCE_UNIT
 
     private val mChatSceneEventHandler = object : MChatBaseSceneEventHandler() {
         override fun onUserPositionChanged(uid: String, posInfo: MetachatUserPositionInfo) {
@@ -35,6 +43,8 @@ class MChatSpatialAudio constructor(
         chatContext.registerMetaChatSceneEventHandler(mChatSceneEventHandler)
         spatialAudioEngine.muteLocalAudioStream(false)
         spatialAudioEngine.muteAllRemoteAudioStreams(false)
+        setAudioRecvRange(recvRange,true)
+        setDistanceUnit(distanceUnit,true)
     }
 
     fun destroy() {
@@ -58,12 +68,31 @@ class MChatSpatialAudio constructor(
     }
 
     // 音效距离
-    fun setAudioRecvRange(range:Float){
-        spatialAudioEngine.setAudioRecvRange(range)
+    fun setAudioRecvRange(value:Float,forced: Boolean = false):Boolean{
+        var result = false
+        if (forced || this.recvRange != value) {
+            spatialAudioEngine.setAudioRecvRange(value).also {
+                if (Constants.ERR_OK == it) {
+                    this.recvRange = value
+                    result = true
+                }
+            }
+        }
+        return result
+
     }
 
     // 衰减系数
-    fun setDistanceUnit(unit:Float){
-        spatialAudioEngine.setDistanceUnit(unit)
+    fun setDistanceUnit(value:Float,forced: Boolean = false):Boolean{
+        var result = false
+        if (forced || this.distanceUnit != value) {
+            spatialAudioEngine.setDistanceUnit(value).also {
+                if (Constants.ERR_OK == it) {
+                    this.distanceUnit = value
+                    result = true
+                }
+            }
+        }
+        return result
     }
 }

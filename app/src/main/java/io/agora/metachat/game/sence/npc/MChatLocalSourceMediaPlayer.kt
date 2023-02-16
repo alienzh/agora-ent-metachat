@@ -3,6 +3,7 @@ package io.agora.metachat.game.sence.npc
 import io.agora.mediaplayer.Constants
 import io.agora.mediaplayer.IMediaPlayer
 import io.agora.metachat.game.internal.MChatBaseMediaPlayerObserver
+import io.agora.metachat.global.MChatConstant
 
 /**
  * @author create by zhangwei03

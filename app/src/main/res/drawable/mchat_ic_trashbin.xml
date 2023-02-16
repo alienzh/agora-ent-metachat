@@ -16,7 +16,7 @@
       android:strokeAlpha="0.6"
       android:strokeWidth="1.5"
       android:fillColor="#00000000"
-      android:strokeColor="#000000"
+      android:strokeColor="#FFFFFF"
       android:fillType="evenOdd"
       android:fillAlpha="0.6"
       android:strokeLineCap="round"/>
@@ -26,7 +26,7 @@
       android:strokeLineJoin="round"
       android:strokeWidth="1.5"
       android:fillColor="#00000000"
-      android:strokeColor="#000000"
+      android:strokeColor="#FFFFFF"
       android:fillType="evenOdd"
       android:fillAlpha="0.6"
       android:strokeLineCap="round"/>
@@ -35,7 +35,7 @@
       android:strokeAlpha="0.6"
       android:strokeWidth="1.5"
       android:fillColor="#00000000"
-      android:strokeColor="#000000"
+      android:strokeColor="#FFFFFF"
       android:fillType="evenOdd"
       android:fillAlpha="0.6"
       android:strokeLineCap="round"/>
@@ -44,7 +44,7 @@
       android:strokeAlpha="0.6"
       android:strokeWidth="1.5"
       android:fillColor="#00000000"
-      android:strokeColor="#000000"
+      android:strokeColor="#FFFFFF"
       android:fillType="evenOdd"
       android:fillAlpha="0.6"
       android:strokeLineCap="round"/>
@@ -53,7 +53,7 @@
       android:strokeAlpha="0.6"
       android:strokeWidth="1.5"
       android:fillColor="#00000000"
-      android:strokeColor="#000000"
+      android:strokeColor="#FFFFFF"
       android:fillType="evenOdd"
       android:fillAlpha="0.6"
       android:strokeLineCap="round"/>

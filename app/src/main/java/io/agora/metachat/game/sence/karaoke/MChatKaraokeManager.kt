@@ -53,7 +53,7 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
     }
 
     // 在播放中的歌曲
-    private val playSongCode: Long = -1
+    private var playSongCode: Long = -1
 
     // 刷新播放，以及数据
     private val chatMediaPlayerListener = object : MChatMediaPlayerListener {
@@ -99,11 +99,19 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
     init {
         chatContext.chatMediaPlayer()?.registerListener(chatMediaPlayerListener)
         MChatServiceProtocol.getImplInstance().subscribeEvent(chatSubscribeDelegate)
+
     }
 
     fun clearSubscribe() {
         chatContext.chatMediaPlayer()?.unregisterListener(chatMediaPlayerListener)
         MChatServiceProtocol.getImplInstance().unsubscribeEvent(chatSubscribeDelegate)
+
+        enableUseOriginal(useOriginal,true)
+        enableInEarMonitoring(enableEarMonitor,true)
+        setAudioPitch(pitchValue,true)
+        adjustRecordingSignalVolume(recordingSignalVolume,true)
+        adjustAccompanyVolume(accompanimentVolume,true)
+        setEffect(audioEffect,true)
     }
 
     @Synchronized
@@ -161,6 +169,7 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
             val song = songListPlaylist[0]
             if (playSongCode != song.songCode) {
                 chatContext.chatMediaPlayer()?.switchPlayKaraoke(song.mvUrl)
+                playSongCode = song.songCode
             }
         } else {
             chatContext.chatMediaPlayer()?.switchPlayAdvertise()
@@ -238,7 +247,7 @@ class MChatKaraokeManager constructor(val chatContext: MChatContext) {
         var result = false
         if (forced || this.accompanimentVolume != value) {
             chatContext.chatMediaPlayer()?.setPlayerVolume(value)?.also {
-                if (Constants.ERR_OK == it) {
+                if (it) {
                     this.accompanimentVolume = value
                     result = true
                 }

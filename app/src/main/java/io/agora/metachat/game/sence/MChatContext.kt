@@ -71,18 +71,6 @@ class MChatContext private constructor() {
 
     fun chatNpcManager(): MChatNpcManager? = npcManager
 
-    // 电视音量
-    var tvVolume: Int = MChatConstant.DefaultValue.DEFAULT_TV_VOLUME
-
-    // npc 音量
-    var npcVolume: Int = MChatConstant.DefaultValue.DEFAULT_NPC_VOLUME
-
-    // 音效距离
-    var recvRange: Float = MChatConstant.DefaultValue.DEFAULT_RECV_RANGE
-
-    // 衰减系数
-    var distanceUnit: Float = MChatConstant.DefaultValue.DEFAULT_DISTANCE_UNIT
-
     private val mChatEventHandler = object : MChatBaseEventHandler() {
         override fun onCreateSceneResult(scene: IMetachatScene?, errorCode: Int) {
             LogTools.d(TAG, "onCreateSceneResult errorCode:$errorCode")
@@ -253,7 +241,7 @@ class MChatContext private constructor() {
                     // 创建电视播放器
                     rtc.createMediaPlayer()?.let { mediaPLayer ->
                         chatMediaPlayer = MChatAgoraMediaPlayer(rtc, mediaPLayer)
-                        chatMediaPlayer?.initMediaPlayer(tvVolume)
+                        chatMediaPlayer?.initMediaPlayer()
                         chatMediaPlayer?.setOnMediaVideoFramePushListener { frame ->
                             metaChatScene?.pushVideoFrameToDisplay(MChatConstant.DefaultValue.VIDEO_DISPLAY_ID, frame)
                         }

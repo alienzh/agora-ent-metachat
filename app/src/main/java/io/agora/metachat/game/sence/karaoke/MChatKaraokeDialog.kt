@@ -193,6 +193,7 @@ class MChatKaraokeDialog constructor(
                 }
             }
             initViewPage()
+            resetPlaylistTabTitle()
         }
     }
 

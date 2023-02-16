@@ -143,8 +143,22 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
                 badgeArray.getResourceId(MChatKeyCenter.badgeIndex, defaultBadge)
             )
             it.ivVirtualAvatar.setImageResource(getVirtualAvatarRes(MChatKeyCenter.virtualAvatarIndex))
-            it.pbTvVol.progress = mchatContext.tvVolume
-            it.tvVolumeTvVol.text = "${mchatContext.tvVolume}"
+
+            mchatContext.chatMediaPlayer()?.apply {
+                it.pbTvVol.progress = tvVolume
+                it.tvVolumeTvVol.text = "$tvVolume"
+            }
+            mchatContext.chatNpcManager()?.apply {
+                it.pbNpcVol.progress = npcVolume
+                it.tvVolumeNpcVol.text = "$npcVolume"
+            }
+            mchatContext.chatSpatialAudio()?.apply {
+                it.pbRecvRange.progress = (recvRange * 10).toInt()
+                it.tvRecvRangeValue.text = "$recvRange"
+                it.pbDistanceUnit.progress = (distanceUnit * 10).toInt()
+                it.tvDistanceUnitValue.text = "$distanceUnit"
+            }
+
             it.pbTvVol.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
 
@@ -152,13 +166,12 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
 
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     LogTools.d("onStopTrackingTouch tv volume:${seekBar.progress}")
-                    mchatContext.tvVolume = seekBar.progress
-                    it.tvVolumeTvVol.text = "${mchatContext.tvVolume}"
-                    mchatContext.chatMediaPlayer()?.setPlayerVolume(mchatContext.tvVolume)
+                    val tvVolume = seekBar.progress
+                    it.tvVolumeTvVol.text = "$tvVolume"
+                    mchatContext.chatMediaPlayer()?.setPlayerVolume(tvVolume)
                 }
             })
-            it.pbNpcVol.progress = mchatContext.npcVolume
-            it.tvVolumeNpcVol.text = "${mchatContext.npcVolume}"
+
             it.pbNpcVol.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
 
@@ -166,13 +179,11 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
 
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     LogTools.d("onStopTrackingTouch npc volume:${seekBar.progress}")
-                    mchatContext.npcVolume = seekBar.progress
-                    it.tvVolumeNpcVol.text = "${mchatContext.npcVolume}"
-                    mchatContext.chatNpcManager()?.roundTableNpc()?.setPlayerVolume(mchatContext.npcVolume)
+                    val npcVolume = seekBar.progress
+                    it.tvVolumeNpcVol.text = "$npcVolume"
+                    mchatContext.chatNpcManager()?.setNpcVolume(npcVolume)
                 }
             })
-            it.pbRecvRange.progress = (mchatContext.recvRange * 10).toInt()
-            it.tvRecvRangeValue.text = "${mchatContext.recvRange}"
             it.pbRecvRange.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
 
@@ -180,13 +191,12 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
 
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     LogTools.d("onStopTrackingTouch recv range volume:${seekBar.progress}")
-                    mchatContext.recvRange = seekBar.progress / 10.0F
-                    it.tvRecvRangeValue.text = "${mchatContext.recvRange}"
-                    mchatContext.chatSpatialAudio()?.setAudioRecvRange(mchatContext.recvRange)
+                   val recvRange = seekBar.progress / 10.0F
+                    it.tvRecvRangeValue.text = "${recvRange}"
+                    mchatContext.chatSpatialAudio()?.setAudioRecvRange(recvRange)
                 }
             })
-            it.pbDistanceUnit.progress = (mchatContext.distanceUnit * 10).toInt()
-            it.tvDistanceUnitValue.text = "${mchatContext.distanceUnit}"
+
             it.pbDistanceUnit.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {}
 
@@ -194,9 +204,9 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
 
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     LogTools.d("onStopTrackingTouch distance unit volume:${seekBar.progress}")
-                    mchatContext.distanceUnit = seekBar.progress / 10.0F
-                    it.tvDistanceUnitValue.text = "${mchatContext.distanceUnit}"
-                    mchatContext.chatSpatialAudio()?.setDistanceUnit(mchatContext.distanceUnit)
+                    val distanceUnit = seekBar.progress / 10.0F
+                    it.tvDistanceUnitValue.text = "$distanceUnit"
+                    mchatContext.chatSpatialAudio()?.setDistanceUnit(distanceUnit)
                 }
             })
         }

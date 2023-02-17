@@ -159,15 +159,14 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
 
     private fun roomObservable() {
         mChatViewModel.createRoomObservable().observe(this) {
-            mChatViewModel.joinRoom(it.roomId, it.password)
+            if (it.roomId.isNotEmpty()) mChatViewModel.joinRoom(it.roomId, it.password)
         }
         mChatViewModel.joinRoomObservable().observe(this) { joinOutput ->
             dismissLoading()
-            if (joinOutput != null) {
+            if (joinOutput.roomId.isNotEmpty()) {
                 setResult(RESULT_OK)
                 finish()
                 MChatGameActivity.startActivity(actLaunch, this, joinOutput.roomId)
-            } else {
             }
         }
     }

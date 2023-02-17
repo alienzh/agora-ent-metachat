@@ -89,7 +89,7 @@ class MChatRoomCreateViewModel : ViewModel() {
                 else -> {
                     ToastTools.showError(R.string.mchat_room_create_error)
                     LogTools.e(R.string.mchat_room_create_error)
-                    _createRoom.postValue(null)
+                    _createRoom.postValue(MChatCreateRoomOutputModel())
                 }
             }
         }
@@ -107,17 +107,17 @@ class MChatRoomCreateViewModel : ViewModel() {
                 MChatServiceProtocol.ERR_GROUP_UNAVAILABLE -> {
                     ToastTools.showError(R.string.mchat_room_unavailable_tip)
                     LogTools.e(R.string.mchat_room_unavailable_tip)
-                    _joinRoom.postValue(null)
+                    _joinRoom.postValue(MChatJoinRoomOutputModel())
                 }
                 MChatServiceProtocol.ERR_PASSWORD_ERROR -> {
                     ToastTools.showError(R.string.mchat_room_incorrect_password)
                     LogTools.e(R.string.mchat_room_incorrect_password)
-                    _joinRoom.postValue(null)
+                    _joinRoom.postValue(MChatJoinRoomOutputModel())
                 }
                 else -> {
                     ToastTools.showError(R.string.mchat_join_room_failed)
                     LogTools.e(R.string.mchat_join_room_failed)
-                    _joinRoom.postValue(null)
+                    _joinRoom.postValue(MChatJoinRoomOutputModel())
                 }
             }
         }

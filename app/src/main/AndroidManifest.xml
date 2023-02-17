@@ -20,7 +20,7 @@
         android:icon="@mipmap/mchat_ic_launcher"
         android:label="@string/mchat_app_name"
         android:networkSecurityConfig="@xml/app_net_config"
-        android:roundIcon="@mipmap/mchat_ic_launcher_round"
+        android:roundIcon="@mipmap/mchat_ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.AgoraMateChat"
         tools:targetApi="31">

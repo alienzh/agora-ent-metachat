@@ -207,16 +207,15 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         }
 
         mChatViewModel.createRoomObservable().observe(viewLifecycleOwner) {
-            mChatViewModel.joinRoom(it.roomId, it.password)
+            if (it.roomId.isNotEmpty()) mChatViewModel.joinRoom(it.roomId, it.password)
         }
         mChatViewModel.joinRoomObservable().observe(viewLifecycleOwner) { joinOutput ->
             dismissLoading()
-            if (joinOutput != null) {
+            if (joinOutput.roomId.isNotEmpty()) {
                 activity?.let {
                     findNavController().navigate(R.id.action_crateRoleFragment_to_roomListFragment)
                     MChatGameActivity.startActivity(actLaunch, it, joinOutput.roomId)
                 }
-            } else {
             }
         }
     }

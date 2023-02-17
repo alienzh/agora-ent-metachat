@@ -53,6 +53,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
             val intent = Intent(context, MChatGameActivity::class.java).apply {
                 putExtra(MChatConstant.Params.KEY_ROOM_ID, roomId)
             }
+            intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
             launcher.launch(intent)
         }
     }
@@ -65,9 +66,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private lateinit var gameViewModel: MChatGameViewModel
 
     private val roomId by lazy { intent.getStringExtra(MChatConstant.Params.KEY_ROOM_ID) ?: "" }
-
-    private var mReCreateScene = false
-    private var mSurfaceSizeChange = false
 
     // karaoke manager
     private var karaokeManager: MChatKaraokeManager? = null
@@ -86,13 +84,14 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         window.setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         super.onCreate(savedInstanceState)
         gameViewModel = ViewModelProvider(this).get(MChatGameViewModel::class.java)
+        gameViewModel.resetSceneState()
         initView()
         requestPermission()
         gameObservable()
     }
 
     override fun onNewIntent(intent: Intent?) {
-        mReCreateScene = true
+        gameViewModel.mReCreateScene = true
         //just for call setRequestedOrientation
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         super.onNewIntent(intent)
@@ -245,7 +244,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         }
         gameViewModel.exitGameObservable().observe(this) {
             karaokeManager?.clearSubscribe()
-            this@MChatGameActivity.finish()
+            dismissLoading()
+            MChatMainActivity.startActivity(this@MChatGameActivity)
         }
         gameViewModel.leaveRoomObservable().observe(this) {
             if (it) {
@@ -294,7 +294,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                 }
 
                 override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, i: Int, i1: Int) {
-                    mSurfaceSizeChange = true
                     val result = gameViewModel.maybeCreateScene(this@MChatGameActivity, roomId, it)
                     if (result) resetViewVisibility()
                 }
@@ -306,7 +305,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                 override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {
                 }
             }
-            binding.unityContainer.removeAllViews()
             val layoutParams =
                 ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
             binding.unityContainer.addView(it, layoutParams)

@@ -296,6 +296,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
                 .rightText(resources.getString(R.string.mchat_confirm))
                 .setOnClickListener(object : CommonFragmentAlertDialog.OnClickBottomListener {
                     override fun onConfirmClick() {
+                        onClickSettingBack(view)
                         exitCallback?.invoke()
                     }
                 }).show(childFragmentManager, "exit dialog")

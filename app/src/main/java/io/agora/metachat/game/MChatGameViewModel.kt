@@ -42,8 +42,8 @@ class MChatGameViewModel : ViewModel() {
     fun groupDestroyRoomObservable(): LiveData<Boolean> = _groupDestroyRoom
     fun sceneConnectErrorObservable(): LiveData<Pair<Int, Int>> = _onConnectError
 
-    private var mReCreateScene = false
-    private var mSurfaceSizeChange = false
+    var mReCreateScene = false
+//    var mSurfaceSizeChange = false
 
     private val mchatContext by lazy {
         MChatContext.instance()
@@ -118,11 +118,10 @@ class MChatGameViewModel : ViewModel() {
 
     fun resetSceneState() {
         mReCreateScene = false
-        mSurfaceSizeChange = false
     }
 
     fun maybeCreateScene(activity: Activity, roomId: String, tv: TextureView): Boolean {
-        if (mReCreateScene && mSurfaceSizeChange) {
+        if (mReCreateScene) {
             createScene(activity, roomId, tv)
             return true
         }

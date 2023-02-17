@@ -18,6 +18,7 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseUiFragment
 import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatFragmentCreateRoleBinding
+import io.agora.metachat.game.MChatGameActivity
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.home.dialog.MChatBadgeDialog
@@ -77,11 +78,11 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
     private var downloadDialog: MChatDownloadDialog? = null
 
     private val actLaunch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { actResult ->
-        if (actResult.resultCode == Activity.RESULT_OK) {
-            // 进入游戏成功,回到列表页面
-            LogTools.d("go game success navigate to roomListFragment")
-            findNavController().navigate(R.id.action_crateRoleFragment_to_roomListFragment)
-        }
+//        if (actResult.resultCode == Activity.RESULT_OK) {
+//            // 进入游戏返回,回到列表页面
+//            LogTools.d("go unity page success")
+//            findNavController().navigate(R.id.action_crateRoleFragment_to_roomListFragment)
+//        }
     }
 
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatFragmentCreateRoleBinding? {
@@ -160,8 +161,12 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         mChatViewModel.selectSceneObservable().observe(viewLifecycleOwner) {
             downloadDialog?.dismiss()
             downloadDialog = null
-            dismissLoading()
-            goVirtualAvatarPage()
+            showLoading(false)
+            if (isFromCreate) {
+                mChatViewModel.createRoom(roomName, roomCoverIndex, roomPassword)
+            } else {
+                mChatViewModel.joinRoom(roomId, roomPassword)
+            }
         }
         mChatViewModel.requestDownloadingObservable().observe(viewLifecycleOwner) {
             dismissLoading()
@@ -198,6 +203,20 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
             }
             if (it > 0) {
                 downloadDialog?.updateProgress(it)
+            }
+        }
+
+        mChatViewModel.createRoomObservable().observe(viewLifecycleOwner) {
+            mChatViewModel.joinRoom(it.roomId, it.password)
+        }
+        mChatViewModel.joinRoomObservable().observe(viewLifecycleOwner) { joinOutput ->
+            dismissLoading()
+            if (joinOutput != null) {
+                activity?.let {
+                    findNavController().navigate(R.id.action_crateRoleFragment_to_roomListFragment)
+                    MChatGameActivity.startActivity(actLaunch, it, joinOutput.roomId)
+                }
+            } else {
             }
         }
     }
@@ -252,20 +271,6 @@ class MChatCreateRoleFragment : BaseUiFragment<MchatFragmentCreateRoleBinding>()
         }
         showLoading(false)
         mChatViewModel.getScenes()
-    }
-
-    private fun goVirtualAvatarPage() {
-        activity?.let {
-            MChatVirtualAvatarActivity.startActivity(
-                actLaunch,
-                context = it,
-                isCreate = isFromCreate,
-                roomName = roomName,
-                roomId = roomId,
-                roomCoverIndex = roomCoverIndex,
-                roomPassword = roomPassword,
-            )
-        }
     }
 
     override fun onResume() {

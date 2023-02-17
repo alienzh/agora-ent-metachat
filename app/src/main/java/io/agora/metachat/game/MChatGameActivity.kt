@@ -8,6 +8,7 @@ import android.graphics.SurfaceTexture
 import android.os.Bundle
 import android.view.*
 import android.view.TextureView.SurfaceTextureListener
+import androidx.activity.result.ActivityResultLauncher
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -28,9 +29,9 @@ import io.agora.metachat.game.sence.karaoke.MChatKaraokeManager
 import io.agora.metachat.game.sence.karaoke.OnKaraokeDialogListener
 import io.agora.metachat.global.MChatConstant
 import io.agora.metachat.global.MChatKeyCenter
+import io.agora.metachat.home.MChatMainActivity
 import io.agora.metachat.imkit.MChatMessageDialog
 import io.agora.metachat.service.MChatServiceProtocol
-import io.agora.metachat.service.MChatSubscribeDelegate
 import io.agora.metachat.tools.LogTools
 import io.agora.metachat.tools.ThreadTools
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -48,11 +49,11 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     companion object {
 
         const val RC_PERMISSIONS = 101
-        fun startActivity(context: Context, roomId: String) {
+        fun startActivity(launcher: ActivityResultLauncher<Intent>, context: Context, roomId: String) {
             val intent = Intent(context, MChatGameActivity::class.java).apply {
                 putExtra(MChatConstant.Params.KEY_ROOM_ID, roomId)
             }
-            context.startActivity(intent)
+            launcher.launch(intent)
         }
     }
 
@@ -88,7 +89,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         initView()
         requestPermission()
         gameObservable()
-
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -179,7 +179,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     // 申请麦克风权限
     private fun requestPermission() {
-        val perms = arrayOf(Manifest.permission.RECORD_AUDIO)
+        val perms = arrayOf(Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE)
         if (EasyPermissions.hasPermissions(this, *perms)) {
             onPermissionGrant()
         } else {
@@ -253,11 +253,11 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
             }
         }
         gameViewModel.sceneConnectErrorObservable().observe(this) {
-            if (it.first==4) {
+            if (it.first == 4) {
                 CommonFragmentAlertDialog()
                     .titleText(resources.getString(R.string.mchat_notice))
                     .contentText(
-                        resources.getString(R.string.mchat_scene_error, "${it.first}","${it.second}")
+                        resources.getString(R.string.mchat_scene_error, "${it.first}", "${it.second}")
                     )
                     .rightText(resources.getString(R.string.mchat_exit))
                     .showSingleBtn(true)
@@ -403,15 +403,6 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
                 binding.linearEndSong.isVisible = false
                 binding.ivSettings.isVisible = true
                 dismissKaraokeDialog()
-            }
-        }
-    }
-
-    private val chatDelegate = object: MChatSubscribeDelegate {
-        override fun onGroupDestroyed(groupId: String) {
-            super.onGroupDestroyed(groupId)
-            ThreadTools.get().runOnMainThread {
-
             }
         }
     }

@@ -90,7 +90,9 @@ class MChatGameViewModel : ViewModel() {
 
         override fun onReleasedScene(status: Int) {
             if (status == ErrorCode.ERR_OK) {
-                mchatContext.destroy()
+                ThreadTools.get().runOnMainThread {
+                    mchatContext.destroy()
+                }
                 _exitGame.postValue(true)
             }
         }

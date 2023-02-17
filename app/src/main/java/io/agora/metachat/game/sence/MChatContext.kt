@@ -292,16 +292,6 @@ class MChatContext private constructor() {
     }
 
     fun destroy() {
-        if (ThreadTools.get().isMainThread) {
-            innerDestroy()
-        } else {
-            ThreadTools.get().runOnMainThread {
-                innerDestroy()
-            }
-        }
-    }
-
-    private fun innerDestroy() {
         IMetachatService.destroy()
         metaChatService?.removeEventHandler(mChatEventHandler)
         metaChatService = null

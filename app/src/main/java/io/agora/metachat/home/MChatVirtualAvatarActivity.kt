@@ -1,5 +1,6 @@
 package io.agora.metachat.home
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.TypedArray
@@ -11,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.DrawableRes
 import androidx.core.view.*
 import androidx.lifecycle.ViewModelProvider
@@ -26,6 +28,7 @@ import io.agora.metachat.databinding.MchatItemVirtualAvatarListBinding
 import io.agora.metachat.game.MChatGameActivity
 import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.tools.DeviceTools
+import io.agora.metachat.tools.LogTools
 import io.agora.metachat.widget.OnIntervalClickListener
 
 /**
@@ -148,6 +151,12 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
         binding.linearAvatarBack.setOnClickListener(OnIntervalClickListener(this::onClickBack))
     }
 
+    private val actLaunch = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { actResult ->
+        if (actResult.resultCode == Activity.RESULT_OK) {
+            LogTools.d("go game success")
+        }
+    }
+
     private fun roomObservable() {
         mChatViewModel.createRoomObservable().observe(this) {
             mChatViewModel.joinRoom(it.roomId, it.password)
@@ -157,7 +166,7 @@ class MChatVirtualAvatarActivity : BaseUiActivity<MchatActivityVirtualAvatarBind
             if (joinOutput != null) {
                 setResult(RESULT_OK)
                 finish()
-                MChatGameActivity.startActivity(context = this, roomId = joinOutput.roomId)
+                MChatGameActivity.startActivity(actLaunch, this, joinOutput.roomId)
             } else {
             }
         }

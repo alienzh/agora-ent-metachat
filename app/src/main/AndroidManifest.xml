@@ -11,7 +11,6 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
     <application
         android:name=".MChatApp"
@@ -29,7 +28,6 @@
         <activity
             android:name=".home.MChatMainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,11 +35,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".home.MChatVirtualAvatarActivity"
-            android:exported="false"
-            android:screenOrientation="landscape"
-            android:theme="@style/Theme.MetaChatScene" />
+<!--        <activity-->
+<!--            android:name=".home.MChatVirtualAvatarActivity"-->
+<!--            android:exported="false"-->
+<!--            android:screenOrientation="landscape"-->
+<!--            android:theme="@style/Theme.MetaChatScene" />-->
 
         <activity
             android:name=".game.MChatGameActivity"

@@ -245,6 +245,8 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
         gameViewModel.exitGameObservable().observe(this) {
             karaokeManager?.clearSubscribe()
             dismissLoading()
+            settingDialog?.dismiss()
+            settingDialog = null
             MChatMainActivity.startActivity(this@MChatGameActivity)
         }
         gameViewModel.leaveRoomObservable().observe(this) {

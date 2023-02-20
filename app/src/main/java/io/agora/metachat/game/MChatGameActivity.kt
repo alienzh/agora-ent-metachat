@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.content.res.TypedArray
 import android.graphics.SurfaceTexture
 import android.os.Bundle
 import android.view.*
@@ -19,6 +20,7 @@ import io.agora.metachat.baseui.dialog.CommonFragmentAlertDialog
 import io.agora.metachat.databinding.MchatActivityGameBinding
 import io.agora.metachat.game.dialog.MChatBeginnerDialog
 import io.agora.metachat.game.dialog.MChatSettingsDialog
+import io.agora.metachat.game.dialog.OnUpdateUserListener
 import io.agora.metachat.game.model.MusicDetail
 import io.agora.metachat.game.sence.MChatContext
 import io.agora.metachat.game.sence.SceneCmdListener
@@ -48,6 +50,7 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
 
     companion object {
 
+        private const val defaultPortrait = R.drawable.mchat_portrait0
         const val RC_PERMISSIONS = 101
         fun startActivity(launcher: ActivityResultLauncher<Intent>, context: Context, roomId: String) {
             val intent = Intent(context, MChatGameActivity::class.java).apply {
@@ -73,6 +76,9 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private var messageDialog: MChatMessageDialog? = null
     private var karaokeDialog: MChatKaraokeDialog? = null
     private var settingDialog: MChatSettingsDialog? = null
+
+    /**portrait */
+    private lateinit var portraitArray: TypedArray
 
     override fun getViewBinding(inflater: LayoutInflater): MchatActivityGameBinding {
         return MchatActivityGameBinding.inflate(inflater)
@@ -102,7 +108,11 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     }
 
     private fun initView() {
+        portraitArray = resources.obtainTypedArray(R.array.mchat_portrait)
         binding.tvNickname.text = MChatKeyCenter.nickname
+        binding.ivUserPortrait.setImageResource(
+            portraitArray.getResourceId(MChatKeyCenter.portraitIndex, defaultPortrait)
+        )
         binding.tvMicOnline.setOnClickListener(OnIntervalClickListener(this::onClickMicOnline))
         binding.layoutMuteRemote.setOnClickListener(OnIntervalClickListener(this::onClickMuteRemote))
         binding.layoutMuteLocal.setOnClickListener(OnIntervalClickListener(this::onClickMuteLocal))
@@ -137,6 +147,18 @@ class MChatGameActivity : BaseUiActivity<MchatActivityGameBinding>(), EasyPermis
     private fun onClickSettings(view: View) {
         if (settingDialog == null) {
             settingDialog = MChatSettingsDialog()
+            settingDialog?.setOnUpdateUserListener(object : OnUpdateUserListener {
+                override fun onNickname() {
+                    binding.tvNickname.text = MChatKeyCenter.nickname
+                }
+
+                override fun onUserPortrait() {
+                    binding.ivUserPortrait.setImageResource(
+                        portraitArray.getResourceId(MChatKeyCenter.portraitIndex, defaultPortrait)
+                    )
+                }
+
+            })
             settingDialog?.setExitCallback {
                 showLoading(false)
                 gameViewModel.leaveRoom()

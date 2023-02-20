@@ -60,6 +60,12 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
         this.exitCallback = exitCallback
     }
 
+    private var updateUserListener: OnUpdateUserListener? = null
+
+    fun setOnUpdateUserListener(updateUserListener: OnUpdateUserListener) {
+        this.updateUserListener = updateUserListener
+    }
+
     override fun getViewBinding(inflater: LayoutInflater, container: ViewGroup?): MchatDialogSettingsBinding {
         return MchatDialogSettingsBinding.inflate(inflater)
     }
@@ -191,7 +197,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
 
                 override fun onStopTrackingTouch(seekBar: SeekBar) {
                     LogTools.d("onStopTrackingTouch recv range volume:${seekBar.progress}")
-                   val recvRange = seekBar.progress / 10.0F
+                    val recvRange = seekBar.progress / 10.0F
                     it.tvRecvRangeValue.text = "${recvRange}"
                     mchatContext.chatSpatialAudio()?.setAudioRecvRange(recvRange)
                 }
@@ -224,6 +230,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             }
             localUserAvatar.userInfo = userInfo
             localUserAvatar.applyInfo()
+            updateUserListener?.onNickname()
         }
     }
 
@@ -261,6 +268,7 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             if (MChatKeyCenter.portraitIndex == it) resources
             MChatKeyCenter.portraitIndex = it
             binding?.ivUserPortrait?.setImageResource(portraitArray.getResourceId(it, defaultPortrait))
+            updateUserListener?.onUserPortrait()
         }.show(childFragmentManager, "portrait dialog")
     }
 
@@ -304,4 +312,10 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             exitCallback?.invoke()
         }
     }
+}
+
+interface OnUpdateUserListener {
+    fun onNickname()
+
+    fun onUserPortrait()
 }

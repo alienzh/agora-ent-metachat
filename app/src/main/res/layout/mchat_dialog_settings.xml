@@ -226,47 +226,6 @@
             app:dividerColor="@color/mchat_black_10"
             app:layout_constraintTop_toBottomOf="@id/tv_user_badge" />
 
-        <!--   virtual avatar     -->
-        <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/tv_virtual_avatar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingVertical="18dp"
-            android:text="@string/mchat_virtual_avatar"
-            android:textColor="@color/mchat_white"
-            android:textSize="@dimen/mchat_sp_12"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/tv_user_badge" />
-
-        <LinearLayout
-            android:id="@+id/layout_virtual_avatar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical|end"
-            android:orientation="horizontal"
-            app:layout_constraintBottom_toBottomOf="@id/tv_virtual_avatar"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@id/tv_virtual_avatar">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/iv_virtual_avatar"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginEnd="10dp"
-                android:src="@drawable/mchat_male0" />
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:src="@drawable/mchat_ic_down_arrow" />
-        </LinearLayout>
-
-        <com.google.android.material.divider.MaterialDivider
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            app:dividerColor="@color/mchat_black_10"
-            app:layout_constraintTop_toBottomOf="@id/tv_virtual_avatar" />
-
         <LinearLayout
             android:id="@+id/layout_quit_room"
             android:layout_width="wrap_content"

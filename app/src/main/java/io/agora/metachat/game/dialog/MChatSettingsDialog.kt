@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.widget.SeekBar
-import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
@@ -49,9 +48,6 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
     /**badge */
     private lateinit var badgeArray: TypedArray
 
-    /**virtual avatar */
-    private lateinit var virtualAvatarArray: TypedArray
-
     private var defaultVirtualAvatar = R.drawable.mchat_female0
 
     private var exitCallback: (() -> Unit)? = null
@@ -81,22 +77,11 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
     private fun initData() {
         portraitArray = resources.obtainTypedArray(R.array.mchat_portrait)
         badgeArray = resources.obtainTypedArray(R.array.mchat_user_badge)
-        virtualAvatarArray = if (MChatKeyCenter.gender == MChatConstant.Gender.MALE) {
-            resources.obtainTypedArray(R.array.mchat_avatar_male)
-        } else {
-            resources.obtainTypedArray(R.array.mchat_avatar_female)
-        }
         defaultVirtualAvatar = if (MChatKeyCenter.gender == MChatConstant.Gender.MALE) {
             R.drawable.mchat_male0
         } else {
             R.drawable.mchat_female0
         }
-    }
-
-    @DrawableRes
-    private fun getVirtualAvatarRes(avatarIndex: Int): Int {
-        val localAvatarIndex = if (avatarIndex >= 0 && avatarIndex < virtualAvatarArray.length()) avatarIndex else 0
-        return virtualAvatarArray.getResourceId(localAvatarIndex, defaultVirtualAvatar)
     }
 
     override fun onStart() {
@@ -129,7 +114,6 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             it.layoutSoundTab.setOnClickListener(OnIntervalClickListener(this::onClickSoundTab))
             it.layoutUserPortrait.setOnClickListener(OnIntervalClickListener(this::onClickUserPortrait))
             it.layoutUserBadge.setOnClickListener(OnIntervalClickListener(this::onClickUserBadge))
-            it.layoutVirtualAvatar.setOnClickListener(OnIntervalClickListener(this::onClickVirtualAvatar))
             it.layoutQuitRoom.setOnClickListener(OnIntervalClickListener(this::onClickExitRoom))
             it.etNickname.setText(MChatKeyCenter.nickname)
             it.etNickname.setOnEditorActionListener { textView, actionId, keyEvent ->
@@ -148,8 +132,6 @@ class MChatSettingsDialog constructor() : BaseFragmentDialog<MchatDialogSettings
             it.ivUserBadge.setImageResource(
                 badgeArray.getResourceId(MChatKeyCenter.badgeIndex, defaultBadge)
             )
-            it.ivVirtualAvatar.setImageResource(getVirtualAvatarRes(MChatKeyCenter.virtualAvatarIndex))
-
             mchatContext.chatMediaPlayer()?.apply {
                 it.pbTvVol.progress = tvVolume
                 it.tvVolumeTvVol.text = "$tvVolume"

@@ -18,6 +18,7 @@ import io.agora.metachat.R
 import io.agora.metachat.baseui.BaseFragmentDialog
 import io.agora.metachat.databinding.MchatDialogSelectPortraitBinding
 import io.agora.metachat.databinding.MchatItemPortraitListBinding
+import io.agora.metachat.global.MChatKeyCenter
 import io.agora.metachat.tools.DeviceTools
 import io.agora.metachat.tools.ToastTools
 import io.agora.metachat.widget.OnIntervalClickListener
@@ -29,7 +30,7 @@ class MChatPortraitDialog constructor() : BaseFragmentDialog<MchatDialogSelectPo
 
     private lateinit var portraitArray: TypedArray
     private var defaultPortrait = R.drawable.mchat_portrait0
-    private var selPortraitIndex: Int = 0
+    private var selPortraitIndex: Int = MChatKeyCenter.portraitIndex
 
     private var confirmCallback: ((selPortraitIndex: Int) -> Unit)? = null
 
